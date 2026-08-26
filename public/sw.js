@@ -1,5 +1,5 @@
-const CACHE_SHELL_NAME = 'bakas-shell-v1';
-const CACHE_TILES_NAME = 'bakas-tiles-v1';
+const CACHE_SHELL_NAME = 'bakas-shell-v2';
+const CACHE_TILES_NAME = 'bakas-tiles-v2';
 const MAX_TILES = 600;
 
 const STATIC_ASSETS = [
@@ -7,6 +7,7 @@ const STATIC_ASSETS = [
   '/index.html',
   '/manifest.webmanifest',
   '/favicon.svg',
+  '/bakas-logo.svg',
 ];
 
 // 1. Install: Cache static shell assets
@@ -19,7 +20,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// 2. Activate: Cleanup outdated caches
+// 2. Activate: Purge ALL old v1 caches (including old watermarked tiles)
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -45,13 +46,17 @@ async function trimTileCache(cacheName, maxItems) {
   }
 }
 
-// 3. Fetch: Cache-first for CartoDB Map Tiles & Stale-while-revalidate for Shell
+// 3. Fetch: Cache-first for Clean Map Tiles & Stale-while-revalidate for Shell
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // A. CartoDB Dark Matter Tiles (Cache-First strategy)
-  if (url.hostname.includes('cartocdn.com') || url.pathname.includes('/dark_all/')) {
+  // A. Map Tiles (Esri World Dark Gray, OSM, or CARTO)
+  if (
+    url.hostname.includes('arcgisonline.com') ||
+    url.hostname.includes('openstreetmap.org') ||
+    url.hostname.includes('cartocdn.com')
+  ) {
     event.respondWith(
       caches.open(CACHE_TILES_NAME).then(async (cache) => {
         const cachedResponse = await cache.match(request);
@@ -67,7 +72,6 @@ self.addEventListener('fetch', (event) => {
           }
           return networkResponse;
         } catch {
-          // If completely offline and tile is not in cache, return fallback or cached response
           return cachedResponse || new Response('', { status: 408, statusText: 'Tile Offline' });
         }
       })
