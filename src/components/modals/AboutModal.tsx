@@ -1,0 +1,124 @@
+import React from 'react';
+import { X, Shield, Radio, EyeOff, Zap, Lock, AlertTriangle } from 'lucide-react';
+
+interface AboutModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="about-bakas-title"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn"
+    >
+      <div className="w-full max-w-md max-h-[85vh] bg-slate-900 border border-slate-700 rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden text-slate-100">
+        {/* Header */}
+        <div className="p-4 px-6 flex items-center justify-between border-b border-slate-800">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-slate-800 border border-slate-700 text-sky-400">
+              <Radio className="w-5 h-5 animate-pulse" />
+            </div>
+            <div>
+              <h2 id="about-bakas-title" className="text-base font-bold text-slate-100">
+                About Bakás
+              </h2>
+              <span className="text-xs text-slate-400">Tagalog for "traces" or "tracks"</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close about dialog"
+            className="p-2 -mr-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors focus-visible:ring-2 focus-visible:ring-sky-400"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 overflow-y-auto space-y-4 text-xs text-slate-300">
+          <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 leading-relaxed text-slate-200">
+            <p className="font-semibold text-slate-100 text-sm mb-1">
+              Leaving digital traces to navigate urban road hazards.
+            </p>
+            <p className="text-xs text-slate-400">
+              Bakás is a lightweight, civic road safety radar engineered to protect commuters, motorcyclists, cyclists,
+              and pedestrians from dangerous potholes, open manholes, flash floods, and unlit streets.
+            </p>
+          </div>
+
+          {/* Key Tenets */}
+          <div className="space-y-2.5">
+            <div className="flex items-start gap-3 p-2.5 rounded-xl bg-slate-800/40 border border-slate-800">
+              <Zap className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-slate-200 block">Zero-Login Barrier</span>
+                <span className="text-slate-400 text-[11px]">
+                  Submit hazard traces in under 5 seconds with zero account creation or forms.
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 p-2.5 rounded-xl bg-slate-800/40 border border-slate-800">
+              <Shield className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-slate-200 block">Offline-First Resilience</span>
+                <span className="text-slate-400 text-[11px]">
+                  Operates seamlessly in cellular dead zones (tunnels, underpasses) using IndexedDB.
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 p-2.5 rounded-xl bg-slate-800/40 border border-slate-800">
+              <EyeOff className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-slate-200 block">Zero Tracking / Absolute Privacy</span>
+                <span className="text-slate-400 text-[11px]">
+                  No movement histories, cookies, or user PII are ever collected or stored.
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 p-2.5 rounded-xl bg-slate-800/40 border border-slate-800">
+              <Lock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-slate-200 block">Automated Data Decay (TTL)</span>
+                <span className="text-slate-400 text-[11px]">
+                  Pins automatically expire after 24h to 7d to prevent outdated ghost markers.
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Passenger Safety Disclaimer */}
+          <div className="p-3.5 rounded-2xl bg-slate-950/90 border border-amber-500/40 flex items-start gap-3 text-amber-300">
+            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+            <div className="text-[11px] leading-tight space-y-1">
+              <span className="font-bold text-amber-200 block">Passenger & Stationary Safety Rule:</span>
+              <p className="text-amber-300/80">
+                Never interact with Bakás while driving. Use handlebar mounts in glanceable radar mode or report while
+                safely stopped or as a passenger.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-4 border-t border-slate-800 text-center">
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full py-2.5 rounded-2xl bg-white text-slate-950 font-bold text-xs hover:bg-slate-100 transition-colors"
+          >
+            Back to Radar Canvas
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};

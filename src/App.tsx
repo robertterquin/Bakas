@@ -1,122 +1,173 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useState, useCallback } from 'react';
+import { useGeolocation } from './hooks/useGeolocation';
+import { useSyncManager } from './hooks/useSyncManager';
+import { useHazardManager } from './hooks/useHazardManager';
+import { MapRadarCanvas } from './components/map/MapRadarCanvas';
+import { TopHUD } from './components/hud/TopHUD';
+import { CategoryFilterBar } from './components/hud/CategoryFilterBar';
+import { ActionHUD } from './components/hud/ActionHUD';
+import { ReportBottomSheet } from './components/modals/ReportBottomSheet';
+import { HazardDetailBottomSheet } from './components/modals/HazardDetailBottomSheet';
+import { FilterDrawer } from './components/modals/FilterDrawer';
+import { SyncStatusModal } from './components/modals/SyncStatusModal';
+import { AboutModal } from './components/modals/AboutModal';
+import { ToastNotification } from './components/ui/ToastNotification';
+import { HazardPayload } from './types/hazard';
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  // 1. Geolocation Tracking
+  const {
+    location: userLocation,
+    isTracking,
+    recenterCount,
+    recenter,
+  } = useGeolocation();
+
+  // 2. Offline Sync Engine
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const handleSyncComplete = useCallback((count: number) => {
+    setToastMessage(`Synced ${count} offline ${count === 1 ? 'trace' : 'traces'} to radar.`);
+  }, []);
+
+  const {
+    isOnline,
+    pendingCount,
+    isSyncing,
+    refreshPendingCount,
+    syncPendingItems,
+  } = useSyncManager(handleSyncComplete);
+
+  // 3. Hazard Manager & Spatial Queries
+  const {
+    filteredHazards,
+    activeFilter,
+    setActiveFilter,
+    radiusFilter,
+    setRadiusFilter,
+    selectedHazardId,
+    setSelectedHazardId,
+    selectedHazard,
+    checkNearbyDuplicate,
+    reportHazard,
+    upvoteHazard,
+    resolveHazard,
+  } = useHazardManager(userLocation, isOnline, refreshPendingCount);
+
+  // 4. Modal & Sheet UI States
+  const [isReportOpen, setIsReportOpen] = useState<boolean>(false);
+  const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
+  const [isSyncModalOpen, setIsSyncModalOpen] = useState<boolean>(false);
+  const [isAboutModalOpen, setIsAboutModalOpen] = useState<boolean>(false);
+
+  // Handle Hazard Submission
+  const handleReportSubmit = async (payload: HazardPayload) => {
+    const result = await reportHazard(payload);
+    if (result.isOffline) {
+      setToastMessage('Hazard saved offline in IndexedDB! Will sync when online.');
+    } else {
+      setToastMessage('Hazard trace live on 5km radar!');
+    }
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <main className="relative w-screen h-screen overflow-hidden bg-slate-950 text-slate-100 font-sans select-none">
+      {/* 1. Fullscreen Map Radar Canvas (Leaflet + CartoDB Dark Matter) */}
+      <MapRadarCanvas
+        userLocation={userLocation}
+        hazards={filteredHazards}
+        selectedHazardId={selectedHazardId}
+        onSelectHazard={(id) => setSelectedHazardId(id)}
+        recenterCount={recenterCount}
+        radiusFilter={radiusFilter}
+        activeFilter={activeFilter}
+      />
 
-      <div className="ticks"></div>
+      {/* 2. Top HUD Header */}
+      <TopHUD
+        hazardCount={filteredHazards.length}
+        radiusFilter={radiusFilter}
+        isOnline={isOnline}
+        pendingCount={pendingCount}
+        isSyncing={isSyncing}
+        onOpenAbout={() => setIsAboutModalOpen(true)}
+        onOpenFilter={() => setIsFilterOpen(true)}
+        onOpenSync={() => setIsSyncModalOpen(true)}
+        onManualSync={syncPendingItems}
+      />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      {/* 3. Horizontal Category Filter Chips */}
+      <CategoryFilterBar
+        activeFilter={activeFilter}
+        onSelectFilter={(cat) => setActiveFilter(cat)}
+      />
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      {/* 4. Bottom Action HUD Controls */}
+      <ActionHUD
+        onOpenReport={() => setIsReportOpen(true)}
+        onRecenter={recenter}
+        isTracking={isTracking}
+      />
+
+      {/* 5. Modals & Bottom Sheets */}
+      {/* Report Modal */}
+      <ReportBottomSheet
+        isOpen={isReportOpen}
+        onClose={() => setIsReportOpen(false)}
+        userLocation={userLocation}
+        onSubmit={handleReportSubmit}
+        checkNearbyDuplicate={checkNearbyDuplicate}
+        onSelectExisting={(id) => {
+          setSelectedHazardId(id);
+          setIsReportOpen(false);
+        }}
+      />
+
+      {/* Hazard Detail Sheet */}
+      <HazardDetailBottomSheet
+        hazard={selectedHazard}
+        userLocation={userLocation}
+        onClose={() => setSelectedHazardId(null)}
+        onUpvote={upvoteHazard}
+        onResolve={resolveHazard}
+        onShowToast={(msg) => setToastMessage(msg)}
+      />
+
+      {/* Filter & Radius Drawer */}
+      <FilterDrawer
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        radiusFilter={radiusFilter}
+        onChangeRadius={(r) => {
+          setRadiusFilter(r);
+        }}
+        activeFilter={activeFilter}
+        onChangeCategory={(c) => {
+          setActiveFilter(c);
+        }}
+      />
+
+      {/* Offline Sync Status Modal */}
+      <SyncStatusModal
+        isOpen={isSyncModalOpen}
+        onClose={() => setIsSyncModalOpen(false)}
+        isOnline={isOnline}
+        isSyncing={isSyncing}
+        onTriggerSync={syncPendingItems}
+        onShowToast={(msg) => setToastMessage(msg)}
+      />
+
+      {/* About & Safety Guidance Modal */}
+      <AboutModal
+        isOpen={isAboutModalOpen}
+        onClose={() => setIsAboutModalOpen(false)}
+      />
+
+      {/* Toast Notification Alert */}
+      <ToastNotification
+        message={toastMessage}
+        onDismiss={() => setToastMessage(null)}
+      />
+    </main>
+  );
 }
-
-export default App
