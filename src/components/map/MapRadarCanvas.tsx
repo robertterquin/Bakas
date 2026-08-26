@@ -46,18 +46,16 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
       zoomAnimation: true,
     });
 
-    // CARTO Dark Matter Base Layer
-    const cartoApiKey = import.meta.env.VITE_CARTO_API_KEY || '';
-    const tileUrl = cartoApiKey
-      ? `https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png?api_key=${cartoApiKey}`
-      : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png';
+    // MapTiler Cloud — Dataviz Dark Base Layer
+    const maptilerApiKey = import.meta.env.VITE_MAPTILER_API_KEY || 'wxBU6hRFpwh0CToee5UJ';
+    const tileUrl = `https://api.maptiler.com/maps/dataviz-dark/256/{z}/{x}/{y}.png?key=${maptilerApiKey}`;
 
     L.tileLayer(tileUrl, {
       attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
-      subdomains: 'abcd',
-      maxZoom: 19,
+        '&copy; <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors',
+      maxZoom: 20,
       minZoom: 4,
+      tileSize: 256,
     }).addTo(map);
 
     // Zoom controls positioned at top right (safe from thumb HUD)

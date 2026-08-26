@@ -1,26 +1,41 @@
--- Enable PostGIS extension
+-- Bakás Core PostGIS Spatial Schema & Dynamic TTL Engine
+-- Optimized for Supabase PostgreSQL with PostGIS Geography indexing
+
+-- 1. Enable PostGIS Extension
 CREATE EXTENSION IF NOT EXISTS postgis;
 
--- 1. Hazard Categories and Severity Enums
-CREATE TYPE hazard_category AS ENUM (
-  'pothole',
-  'clogged_drainage',
-  'road_obstruction',
-  'dark_street'
-);
+-- 2. Enumerated Types
+DO $$ BEGIN
+  CREATE TYPE hazard_category AS ENUM (
+    'pothole',
+    'clogged_drainage',
+    'road_obstruction',
+    'dark_street'
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
-CREATE TYPE hazard_severity AS ENUM (
-  'low',
-  'medium',
-  'high'
-);
+DO $$ BEGIN
+  CREATE TYPE hazard_severity AS ENUM (
+    'low',
+    'medium',
+    'high'
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
-CREATE TYPE validation_action_type AS ENUM (
-  'upvote',
-  'resolve'
-);
+DO $$ BEGIN
+  CREATE TYPE validation_action_type AS ENUM (
+    'upvote',
+    'resolve'
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
--- 2. Core Hazards Table
+-- 3. Core Hazards Table
 CREATE TABLE IF NOT EXISTS public.hazards (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   category hazard_category NOT NULL,
@@ -39,12 +54,13 @@ CREATE TABLE IF NOT EXISTS public.hazards (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Spatial GIST Index for Sub-10ms 5km Radius Queries
+-- 4. Spatial & Operational Indexes
 CREATE INDEX IF NOT EXISTS idx_hazards_location ON public.hazards USING GIST (location);
 CREATE INDEX IF NOT EXISTS idx_hazards_expires_at ON public.hazards (expires_at);
 CREATE INDEX IF NOT EXISTS idx_hazards_category ON public.hazards (category);
+CREATE INDEX IF NOT EXISTS idx_hazards_created_at ON public.hazards (created_at DESC);
 
--- 3. Hazard Validations Table (Audit trail & device deduplication)
+-- 5. Hazard Validations Audit Table (Anti-Spam Device Deduplication)
 CREATE TABLE IF NOT EXISTS public.hazard_validations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   hazard_id UUID NOT NULL REFERENCES public.hazards(id) ON DELETE CASCADE,
@@ -55,30 +71,43 @@ CREATE TABLE IF NOT EXISTS public.hazard_validations (
 );
 
 CREATE INDEX IF NOT EXISTS idx_validations_hazard ON public.hazard_validations(hazard_id);
+CREATE INDEX IF NOT EXISTS idx_validations_device ON public.hazard_validations(device_hash);
 
--- 4. Row Level Security (RLS) - Anonymous Civic Access
+-- 6. Row Level Security (RLS) - Anonymous Civic Access
 ALTER TABLE public.hazards ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.hazard_validations ENABLE ROW LEVEL SECURITY;
 
--- Allow anonymous public reads on non-expired hazards
+DROP POLICY IF EXISTS "Public anonymous select active hazards" ON public.hazards;
 CREATE POLICY "Public anonymous select active hazards"
   ON public.hazards
   FOR SELECT
-  USING (expires_at > NOW() AND (is_resolved = FALSE OR expires_at > NOW()));
+  USING (expires_at > NOW());
 
--- Allow anonymous public inserts
+DROP POLICY IF EXISTS "Public anonymous insert hazards" ON public.hazards;
 CREATE POLICY "Public anonymous insert hazards"
   ON public.hazards
   FOR INSERT
   WITH CHECK (true);
 
--- Allow anonymous validation inserts
+DROP POLICY IF EXISTS "Public anonymous update hazards" ON public.hazards;
+CREATE POLICY "Public anonymous update hazards"
+  ON public.hazards
+  FOR UPDATE
+  USING (true);
+
+DROP POLICY IF EXISTS "Public anonymous insert validations" ON public.hazard_validations;
 CREATE POLICY "Public anonymous insert validations"
   ON public.hazard_validations
   FOR INSERT
   WITH CHECK (true);
 
--- 5. Stored Procedure: Get Hazards within Radius (meters)
+DROP POLICY IF EXISTS "Public anonymous select validations" ON public.hazard_validations;
+CREATE POLICY "Public anonymous select validations"
+  ON public.hazard_validations
+  FOR SELECT
+  USING (true);
+
+-- 7. Stored Procedure: Get Hazards within Radius (meters) using ST_DWithin
 CREATE OR REPLACE FUNCTION public.get_hazards_in_radius(
   user_lat DOUBLE PRECISION,
   user_lng DOUBLE PRECISION,
@@ -125,7 +154,7 @@ AS $$
   ORDER BY h.created_at DESC;
 $$;
 
--- 6. Stored Procedure: Upvote Hazard with TTL Bonus
+-- 8. Stored Procedure: Upvote Hazard with Philippine-Tuned Dynamic TTL Extension
 CREATE OR REPLACE FUNCTION public.upvote_hazard(
   target_hazard_id UUID,
   voter_device_hash TEXT
@@ -140,7 +169,7 @@ DECLARE
   max_interval INTERVAL;
   new_expiry TIMESTAMPTZ;
 BEGIN
-  -- Check duplicate vote
+  -- 1. Anti-Spam: Check if device already upvoted
   IF EXISTS (
     SELECT 1 FROM public.hazard_validations
     WHERE hazard_id = target_hazard_id AND device_hash = voter_device_hash AND action_type = 'upvote'
@@ -148,32 +177,32 @@ BEGIN
     RAISE EXCEPTION 'Device already upvoted this hazard.';
   END IF;
 
-  -- Fetch target hazard
+  -- 2. Fetch target hazard
   SELECT * INTO target_rec FROM public.hazards WHERE id = target_hazard_id;
   IF NOT FOUND THEN
-    RAISE EXCEPTION 'Hazard not found.';
+    RAISE EXCEPTION 'Hazard not found or expired.';
   END IF;
 
-  -- Determine category TTL extension bonuses & max caps
+  -- 3. Philippine Road Reality TTL Extensions
   CASE target_rec.category
     WHEN 'road_obstruction' THEN
-      bonus_interval := INTERVAL '12 hours';
-      max_interval := INTERVAL '48 hours';
+      bonus_interval := INTERVAL '2 days';
+      max_interval := INTERVAL '14 days';
     WHEN 'clogged_drainage' THEN
-      bonus_interval := INTERVAL '24 hours';
-      max_interval := INTERVAL '5 days';
-    WHEN 'dark_street' THEN
-      bonus_interval := INTERVAL '24 hours';
-      max_interval := INTERVAL '7 days';
-    WHEN 'pothole' THEN
-      bonus_interval := INTERVAL '48 hours';
+      bonus_interval := INTERVAL '7 days';
       max_interval := INTERVAL '30 days';
+    WHEN 'dark_street' THEN
+      bonus_interval := INTERVAL '7 days';
+      max_interval := INTERVAL '60 days';
+    WHEN 'pothole' THEN
+      bonus_interval := INTERVAL '14 days';
+      max_interval := INTERVAL '90 days';
   END CASE;
 
-  -- Calculate bounded new expiry
-  new_expiry := LEAST(target_rec.expires_at + bonus_interval, target_rec.created_at + max_interval);
+  -- 4. Calculate bounded expiry from now or current expiry
+  new_expiry := LEAST(GREATEST(target_rec.expires_at, NOW()) + bonus_interval, target_rec.created_at + max_interval);
 
-  -- Update hazard
+  -- 5. Update hazard record
   UPDATE public.hazards
   SET
     upvotes = upvotes + 1,
@@ -182,7 +211,7 @@ BEGIN
   WHERE id = target_hazard_id
   RETURNING * INTO target_rec;
 
-  -- Record validation
+  -- 6. Insert audit record
   INSERT INTO public.hazard_validations (hazard_id, action_type, device_hash)
   VALUES (target_hazard_id, 'upvote', voter_device_hash);
 
@@ -190,7 +219,7 @@ BEGIN
 END;
 $$;
 
--- 7. Stored Procedure: Mark Resolved / Cleared
+-- 9. Stored Procedure: Mark Resolved / Fixed (3-Vote Community Consensus)
 CREATE OR REPLACE FUNCTION public.resolve_hazard(
   target_hazard_id UUID,
   resolver_device_hash TEXT
@@ -201,27 +230,48 @@ SECURITY DEFINER
 AS $$
 DECLARE
   target_rec RECORD;
+  new_resolved_count INT;
+  is_now_resolved BOOLEAN;
+  new_expiry TIMESTAMPTZ;
 BEGIN
-  -- Fetch target hazard
-  SELECT * INTO target_rec FROM public.hazards WHERE id = target_hazard_id;
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'Hazard not found.';
+  -- 1. Anti-Spam: Check if device already voted resolve
+  IF EXISTS (
+    SELECT 1 FROM public.hazard_validations
+    WHERE hazard_id = target_hazard_id AND device_hash = resolver_device_hash AND action_type = 'resolve'
+  ) THEN
+    RAISE EXCEPTION 'Device already voted to resolve this hazard.';
   END IF;
 
-  -- Record validation
-  INSERT INTO public.hazard_validations (hazard_id, action_type, device_hash)
-  VALUES (target_hazard_id, 'resolve', resolver_device_hash)
-  ON CONFLICT (hazard_id, device_hash, action_type) DO NOTHING;
+  -- 2. Fetch target hazard
+  SELECT * INTO target_rec FROM public.hazards WHERE id = target_hazard_id;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Hazard not found or expired.';
+  END IF;
 
-  -- Increment resolved counter
+  -- 3. Calculate 3-vote resolution consensus
+  new_resolved_count := target_rec.resolved_count + 1;
+  is_now_resolved := (new_resolved_count >= 3);
+
+  -- 4. If community consensus reached, fade pin over 2 hours
+  IF is_now_resolved THEN
+    new_expiry := LEAST(target_rec.expires_at, NOW() + INTERVAL '2 hours');
+  ELSE
+    new_expiry := target_rec.expires_at;
+  END IF;
+
+  -- 5. Update hazard record
   UPDATE public.hazards
   SET
-    resolved_count = resolved_count + 1,
-    is_resolved = CASE WHEN resolved_count + 1 >= 3 THEN TRUE ELSE is_resolved END,
-    expires_at = CASE WHEN resolved_count + 1 >= 3 THEN LEAST(expires_at, NOW() + INTERVAL '2 hours') ELSE expires_at END,
+    resolved_count = new_resolved_count,
+    is_resolved = is_now_resolved,
+    expires_at = new_expiry,
     updated_at = NOW()
   WHERE id = target_hazard_id
   RETURNING * INTO target_rec;
+
+  -- 6. Record audit validation
+  INSERT INTO public.hazard_validations (hazard_id, action_type, device_hash)
+  VALUES (target_hazard_id, 'resolve', resolver_device_hash);
 
   RETURN to_jsonb(target_rec);
 END;

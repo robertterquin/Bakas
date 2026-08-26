@@ -51,8 +51,9 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // A. Map Tiles (Stadia Maps, Esri, OSM, or CARTO)
+  // A. Map Tiles (MapTiler, Stadia Maps, Esri, OSM, or CARTO)
   if (
+    url.hostname.includes('maptiler.com') ||
     url.hostname.includes('stadiamaps.com') ||
     url.hostname.includes('arcgisonline.com') ||
     url.hostname.includes('openstreetmap.org') ||
