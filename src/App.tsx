@@ -76,12 +76,6 @@ export default function App() {
     notifyUser('Pinned location on map.');
   }, [setSelectedHazardId, notifyUser]);
 
-  // Handle opening report via bottom FAB button
-  const handleOpenReportFAB = useCallback(() => {
-    setCustomReportCoords(null);
-    setIsReportOpen(true);
-  }, []);
-
   // Handle closing report sheet
   const handleCloseReport = useCallback(() => {
     setIsReportOpen(false);
@@ -136,9 +130,8 @@ export default function App() {
         onOpenAbout={() => setIsAboutModalOpen(true)}
       />
 
-      {/* 3. Sleek Bottom Action Controls */}
+      {/* 3. Minimal Corner Recenter Control */}
       <ActionHUD
-        onOpenReport={handleOpenReportFAB}
         onRecenter={() => {
           recenter();
           notifyUser('Recentering radar.');

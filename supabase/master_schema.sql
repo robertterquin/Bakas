@@ -2,7 +2,7 @@
 -- BAKÁS: URBAN ROAD HAZARD RADAR — MASTER DATABASE SCHEMA & STORED PROCEDURES
 -- ==============================================================================
 -- Target: Supabase PostgreSQL with PostGIS extension
--- Scope: Spatial Indexing, Anonymous RLS, Dynamic TTL Decay, Anti-Spam Voting, Golden Seeds
+-- Scope: Spatial Indexing, Anonymous RLS, Dynamic TTL Decay (PH Road Reality), Anti-Spam Voting, Golden Seeds
 -- ==============================================================================
 
 -- 1. Enable PostGIS & Cryptographic Extensions
@@ -160,7 +160,7 @@ AS $$
   ORDER BY h.created_at DESC;
 $$;
 
--- 8. Stored Procedure: Upvote Hazard with Category-bounded TTL Extension
+-- 8. Stored Procedure: Upvote Hazard with Philippine-Tuned Dynamic TTL Extension
 CREATE OR REPLACE FUNCTION public.upvote_hazard(
   target_hazard_id UUID,
   voter_device_hash TEXT
@@ -189,24 +189,24 @@ BEGIN
     RAISE EXCEPTION 'Hazard not found or expired.';
   END IF;
 
-  -- 3. Calculate category TTL extension bonus and cap
+  -- 3. Philippine Road Reality TTL Extensions
   CASE target_rec.category
     WHEN 'road_obstruction' THEN
-      bonus_interval := INTERVAL '12 hours';
-      max_interval := INTERVAL '48 hours';
+      bonus_interval := INTERVAL '2 days';
+      max_interval := INTERVAL '14 days';
     WHEN 'clogged_drainage' THEN
-      bonus_interval := INTERVAL '24 hours';
-      max_interval := INTERVAL '5 days';
-    WHEN 'dark_street' THEN
-      bonus_interval := INTERVAL '24 hours';
-      max_interval := INTERVAL '7 days';
-    WHEN 'pothole' THEN
-      bonus_interval := INTERVAL '48 hours';
+      bonus_interval := INTERVAL '7 days';
       max_interval := INTERVAL '30 days';
+    WHEN 'dark_street' THEN
+      bonus_interval := INTERVAL '7 days';
+      max_interval := INTERVAL '60 days';
+    WHEN 'pothole' THEN
+      bonus_interval := INTERVAL '14 days';
+      max_interval := INTERVAL '90 days';
   END CASE;
 
-  -- 4. Calculate bounded expiry
-  new_expiry := LEAST(target_rec.expires_at + bonus_interval, target_rec.created_at + max_interval);
+  -- 4. Calculate bounded expiry from now or current expiry
+  new_expiry := LEAST(GREATEST(target_rec.expires_at, NOW()) + bonus_interval, target_rec.created_at + max_interval);
 
   -- 5. Update hazard record
   UPDATE public.hazards
@@ -268,7 +268,7 @@ BEGIN
 END;
 $$;
 
--- 10. Maintenance Procedure: Purge Expired Hazards (Can be scheduled via pg_cron)
+-- 10. Maintenance Procedure: Purge Expired Hazards
 CREATE OR REPLACE FUNCTION public.purge_expired_hazards()
 RETURNS INTEGER
 LANGUAGE plpgsql
@@ -283,78 +283,3 @@ BEGIN
   RETURN deleted_count;
 END;
 $$;
-
--- 11. Initial Golden Fixtures Seed Data (Metro Manila Corridors)
-INSERT INTO public.hazards (id, category, severity, location, lat, lng, title, description, address, upvotes, expires_at, created_at)
-VALUES
-  (
-    'f47ac10b-58cc-4372-a567-0e02b2c3d479',
-    'pothole',
-    'high',
-    ST_SetSRID(ST_MakePoint(121.0545, 14.5839), 4326)::geography,
-    14.5839,
-    121.0545,
-    'Deep Crater Pothole (EDSA Ortigas)',
-    'Deep rim-bending pothole on the inner northbound lane after Ortigas flyover.',
-    'EDSA Northbound, near Ortigas Ave Flyover, Mandaluyong',
-    18,
-    NOW() + INTERVAL '5 days',
-    NOW() - INTERVAL '2 days'
-  ),
-  (
-    '7c9e6679-7425-40de-944b-e07fc1f90ae7',
-    'clogged_drainage',
-    'high',
-    ST_SetSRID(ST_MakePoint(120.9897, 14.6074), 4326)::geography,
-    14.6074,
-    120.9897,
-    'Severe Gutter Flood & Clogged Inlets',
-    'Submerged sidewalk and knee-deep gutter flooding obscuring open curb inlets.',
-    'España Blvd cor. P. Noval St, Sampaloc, Manila',
-    24,
-    NOW() + INTERVAL '40 hours',
-    NOW() - INTERVAL '8 hours'
-  ),
-  (
-    '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
-    'dark_street',
-    'medium',
-    ST_SetSRID(ST_MakePoint(121.0743, 14.6492), 4326)::geography,
-    14.6492,
-    121.0743,
-    'Unlit Service Road & Broken Lampposts',
-    'Series of 5 non-functional streetlights creating complete blackout corridor for cyclists.',
-    'Katipunan Ave Service Rd, Loyola Heights, Quezon City',
-    9,
-    NOW() + INTERVAL '52 hours',
-    NOW() - INTERVAL '20 hours'
-  ),
-  (
-    '550e8400-e29b-41d4-a716-446655440000',
-    'road_obstruction',
-    'medium',
-    ST_SetSRID(ST_MakePoint(121.0664, 14.5678), 4326)::geography,
-    14.5678,
-    121.0664,
-    'Fallen Construction Scaffold & Gravel',
-    'Fallen metal brackets and loose gravel spilled onto the rightmost motorcycle lane.',
-    'C-5 Road Southbound, near Bagong Ilog Overpass, Pasig',
-    7,
-    NOW() + INTERVAL '20 hours',
-    NOW() - INTERVAL '4 hours'
-  ),
-  (
-    'e3b0c442-98fc-1c14-9afb-f4c8996fb924',
-    'pothole',
-    'high',
-    ST_SetSRID(ST_MakePoint(120.9835, 14.5985), 4326)::geography,
-    14.5985,
-    120.9835,
-    'Open Sewer Grate / Missing Manhole Lid',
-    'Coverless manhole trap marked only with a tree branch in center lane.',
-    'Taft Ave cor. Ayala Blvd, Ermita, Manila',
-    31,
-    NOW() + INTERVAL '6 days',
-    NOW() - INTERVAL '14 hours'
-  )
-ON CONFLICT (id) DO NOTHING;

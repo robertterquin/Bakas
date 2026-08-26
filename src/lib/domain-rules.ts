@@ -11,46 +11,49 @@ export interface CategoryMeta {
   iconName: string;
 }
 
+/**
+ * Tuned for Philippine Urban Road Reality (DPWH / LGU road repair timelines)
+ */
 export const HAZARD_CATEGORIES: Record<HazardCategory, CategoryMeta> = {
   pothole: {
     id: 'pothole',
     name: 'Pothole & Manhole',
     tagalogName: 'Butas / Lubak / Bukas na Manhole',
     description: 'Damaged asphalt, deep road craters, or missing sewer covers.',
-    initialTtlHours: 7 * 24, // 7 days (168h)
-    upvoteBonusHours: 48,
-    maxTtlHours: 30 * 24, // 30 days (720h)
+    initialTtlHours: 30 * 24, // 30 days (1 Month base)
+    upvoteBonusHours: 14 * 24, // +14 days per community upvote
+    maxTtlHours: 90 * 24, // Up to 90 days (3 Months max cap)
     iconName: 'AlertCircle',
-  },
-  clogged_drainage: {
-    id: 'clogged_drainage',
-    name: 'Clogged Drainage / Flood',
-    tagalogName: 'Baradong Kanal / Baha',
-    description: 'Waterlogged road section, flash flood risk, or overflowing culvert.',
-    initialTtlHours: 48, // 48 hours
-    upvoteBonusHours: 24,
-    maxTtlHours: 5 * 24, // 5 days (120h)
-    iconName: 'Droplets',
-  },
-  road_obstruction: {
-    id: 'road_obstruction',
-    name: 'Road Obstruction',
-    tagalogName: 'Harang sa Daan',
-    description: 'Stalled vehicle, fallen branch, tire debris, or construction spill.',
-    initialTtlHours: 24, // 24 hours
-    upvoteBonusHours: 12,
-    maxTtlHours: 48, // 48 hours
-    iconName: 'ShieldAlert',
   },
   dark_street: {
     id: 'dark_street',
     name: 'Unlit / Dark Street',
     tagalogName: 'Madilim na Kalsada',
     description: 'Broken lamppost, zero visibility road sector, or blackout zone.',
-    initialTtlHours: 72, // 72 hours
-    upvoteBonusHours: 24,
-    maxTtlHours: 7 * 24, // 7 days (168h)
+    initialTtlHours: 14 * 24, // 14 days (2 Weeks base)
+    upvoteBonusHours: 7 * 24, // +7 days per upvote
+    maxTtlHours: 60 * 24, // Up to 60 days (2 Months max cap)
     iconName: 'Moon',
+  },
+  clogged_drainage: {
+    id: 'clogged_drainage',
+    name: 'Clogged Drainage / Flood',
+    tagalogName: 'Baradong Kanal / Baha',
+    description: 'Waterlogged road section, flash flood risk, or overflowing culvert.',
+    initialTtlHours: 7 * 24, // 7 days (1 Week base)
+    upvoteBonusHours: 7 * 24, // +7 days per upvote
+    maxTtlHours: 30 * 24, // Up to 30 days (1 Month max cap)
+    iconName: 'Droplets',
+  },
+  road_obstruction: {
+    id: 'road_obstruction',
+    name: 'Road Obstruction',
+    tagalogName: 'Harang sa Daan / Debris',
+    description: 'Construction debris, stalled vehicle, fallen branches, or road works.',
+    initialTtlHours: 3 * 24, // 3 days (72 hours base)
+    upvoteBonusHours: 2 * 24, // +48 hours per upvote
+    maxTtlHours: 14 * 24, // Up to 14 days (2 Weeks max cap)
+    iconName: 'ShieldAlert',
   },
 };
 
@@ -96,7 +99,7 @@ export function calculateInitialExpiry(category: HazardCategory, fromDate: Date 
 }
 
 /**
- * Calculates extended expires_at timestamp upon upvoting, bounded by max cap
+ * Calculates extended expires_at timestamp upon upvoting, bounded by category max cap
  */
 export function calculateExtendedExpiry(
   category: HazardCategory,
@@ -109,7 +112,9 @@ export function calculateExtendedExpiry(
   const maxExpiryTime = createdTime + meta.maxTtlHours * 60 * 60 * 1000;
 
   const bonusMs = meta.upvoteBonusHours * 60 * 60 * 1000;
-  const newExpiryTime = Math.min(currentExpiryTime + bonusMs, maxExpiryTime);
+  // Extend from either current expiry or from now, whichever is further
+  const baseTime = Math.max(currentExpiryTime, Date.now());
+  const newExpiryTime = Math.min(baseTime + bonusMs, maxExpiryTime);
 
   return new Date(newExpiryTime).toISOString();
 }
@@ -147,7 +152,7 @@ export function formatDistance(meters: number): string {
 }
 
 /**
- * Formats remaining TTL countdown (e.g., "Expires in 18 hrs" or "Expires in 4 days")
+ * Formats remaining TTL countdown (e.g., "Expires in 18 hrs" or "Expires in 45 days")
  */
 export function formatTtlRemaining(expiresAtIso: string): { label: string; isExpiringSoon: boolean; isExpired: boolean } {
   const diffMs = new Date(expiresAtIso).getTime() - Date.now();
@@ -158,13 +163,13 @@ export function formatTtlRemaining(expiresAtIso: string): { label: string; isExp
   const hours = Math.floor(diffMs / (1000 * 60 * 60));
   if (hours < 1) {
     const mins = Math.floor(diffMs / (1000 * 60));
-    return { label: `Expires in ${mins} mins`, isExpiringSoon: true, isExpired: false };
+    return { label: `Expires in ${mins}m`, isExpiringSoon: true, isExpired: false };
   }
   if (hours < 24) {
-    return { label: `Expires in ${hours} hrs`, isExpiringSoon: hours <= 3, isExpired: false };
+    return { label: `Expires in ${hours}h`, isExpiringSoon: hours <= 6, isExpired: false };
   }
   const days = Math.floor(hours / 24);
-  return { label: `Expires in ${days} ${days === 1 ? 'day' : 'days'}`, isExpiringSoon: false, isExpired: false };
+  return { label: `Expires in ${days}d`, isExpiringSoon: days <= 2, isExpired: false };
 }
 
 /**
