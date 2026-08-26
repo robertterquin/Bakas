@@ -6,7 +6,11 @@ import { GOLDEN_HAZARDS } from '../data/golden-fixtures';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-export const isSupabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+export const isSupabaseConfigured = Boolean(
+  SUPABASE_URL &&
+  SUPABASE_ANON_KEY &&
+  !SUPABASE_URL.includes('your-project')
+);
 
 export const supabase: SupabaseClient | null = isSupabaseConfigured
   ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
@@ -14,6 +18,21 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured
 
 // In-memory runtime store for live session when backend is not configured or in offline demo mode
 let liveLocalHazards: Hazard[] = [...GOLDEN_HAZARDS];
+
+/**
+ * Generate a standard UUID v4 compatible with PostgreSQL UUID column
+ */
+export function generateUUID(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  // Fallback RFC4122 version 4 UUID generator
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
 
 /**
  * Fetch active hazards within a specific radius using Supabase PostGIS RPC or local spatial query
@@ -32,22 +51,31 @@ export async function fetchHazardsInRadius(
       });
 
       if (!error && Array.isArray(data)) {
-        return data.map((item: Record<string, unknown>) => ({
-          id: String(item.id),
-          category: item.category as Hazard['category'],
-          severity: item.severity as Hazard['severity'],
-          lat: Number(item.lat),
-          lng: Number(item.lng),
-          title: item.title ? String(item.title) : undefined,
-          description: item.description ? String(item.description) : undefined,
-          address: item.address ? String(item.address) : undefined,
-          upvotes: Number(item.upvotes || 0),
-          resolvedCount: Number(item.resolved_count || 0),
-          isResolved: Boolean(item.is_resolved),
-          expiresAt: String(item.expires_at),
-          createdAt: String(item.created_at),
-          syncStatus: 'synced' as const,
-        }));
+        if (data.length > 0) {
+          return data.map((item: Record<string, unknown>) => ({
+            id: String(item.id),
+            category: item.category as Hazard['category'],
+            severity: item.severity as Hazard['severity'],
+            lat: Number(item.lat),
+            lng: Number(item.lng),
+            title: item.title ? String(item.title) : undefined,
+            description: item.description ? String(item.description) : undefined,
+            address: item.address ? String(item.address) : undefined,
+            upvotes: Number(item.upvotes || 0),
+            resolvedCount: Number(item.resolved_count || 0),
+            isResolved: Boolean(item.is_resolved),
+            expiresAt: String(item.expires_at),
+            createdAt: String(item.created_at),
+            syncStatus: 'synced' as const,
+          }));
+        }
+        // If remote database has 0 records yet, seed with local fixtures
+        return liveLocalHazards.filter((h) => {
+          const distance = calculateDistanceInMeters(lat, lng, h.lat, h.lng);
+          return distance <= radiusMeters;
+        });
+      } else if (error) {
+        console.warn('Supabase RPC get_hazards_in_radius notice:', error.message);
       }
     } catch (err) {
       console.warn('Supabase fetch failed, falling back to local storage', err);
@@ -94,9 +122,11 @@ export async function submitHazardToBackend(hazard: Hazard): Promise<Hazard> {
           ...hazard,
           syncStatus: 'synced',
         };
+      } else if (error) {
+        console.warn('Supabase insert notice:', error.message);
       }
     } catch (err) {
-      console.warn('Supabase insert failed:', err);
+      console.warn('Supabase insert exception:', err);
     }
   }
 
@@ -125,6 +155,8 @@ export async function submitUpvoteToBackend(hazardId: string, deviceHash: string
 
       if (!error && data) {
         return data as Hazard;
+      } else if (error) {
+        console.warn('Supabase upvote notice:', error.message);
       }
     } catch (err) {
       console.warn('Supabase upvote RPC failed:', err);
@@ -144,15 +176,18 @@ export async function submitUpvoteToBackend(hazardId: string, deviceHash: string
 /**
  * Submit resolve action
  */
-export async function submitResolveToBackend(hazardId: string, _deviceHash: string): Promise<Hazard | null> {
+export async function submitResolveToBackend(hazardId: string, deviceHash: string): Promise<Hazard | null> {
   if (isSupabaseConfigured && supabase) {
     try {
       const { data, error } = await supabase.rpc('resolve_hazard', {
         target_hazard_id: hazardId,
+        resolver_device_hash: deviceHash,
       });
 
       if (!error && data) {
         return data as Hazard;
+      } else if (error) {
+        console.warn('Supabase resolve notice:', error.message);
       }
     } catch (err) {
       console.warn('Supabase resolve RPC failed:', err);
@@ -178,17 +213,21 @@ export async function submitResolveToBackend(hazardId: string, _deviceHash: stri
  */
 export function createNewHazardObject(payload: HazardPayload): Hazard {
   const now = new Date();
-  const id = 'hzd_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now().toString(36);
+  const id = generateUUID();
   return {
     id,
     category: payload.category,
     severity: payload.severity,
     lat: payload.lat,
     lng: payload.lng,
-    title: payload.category === 'pothole' ? 'Reported Pothole / Defect'
-      : payload.category === 'clogged_drainage' ? 'Reported Flooding / Drainage'
-      : payload.category === 'road_obstruction' ? 'Reported Road Obstruction'
-      : 'Reported Unlit Street',
+    title:
+      payload.category === 'pothole'
+        ? 'Reported Pothole / Defect'
+        : payload.category === 'clogged_drainage'
+        ? 'Reported Flooding / Drainage'
+        : payload.category === 'road_obstruction'
+        ? 'Reported Road Obstruction'
+        : 'Reported Unlit Street',
     description: payload.description || 'Civic trace dropped by commuter.',
     address: payload.address || `${payload.lat.toFixed(5)}, ${payload.lng.toFixed(5)}`,
     upvotes: 1,
