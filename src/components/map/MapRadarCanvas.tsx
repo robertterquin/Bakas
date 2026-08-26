@@ -46,37 +46,19 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
       zoomAnimation: true,
     });
 
-    const cartoApiKey = import.meta.env.VITE_CARTO_API_KEY;
+    // CARTO Dark Matter Base Layer
+    const cartoApiKey = import.meta.env.VITE_CARTO_API_KEY || '';
+    const tileUrl = cartoApiKey
+      ? `https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png?api_key=${cartoApiKey}`
+      : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png';
 
-    if (cartoApiKey) {
-      // If user provides official CARTO API key
-      L.tileLayer(`https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png?api_key=${cartoApiKey}`, {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
-        subdomains: 'abcd',
-        maxZoom: 19,
-        minZoom: 4,
-      }).addTo(map);
-    } else {
-      // 100% Free, Zero-Key, Zero-Watermark Dark Tactical Canvas (Esri World Dark Gray + Reference Labels)
-      L.tileLayer(
-        'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
-        {
-          attribution: '&copy; Esri, HERE, Garmin, OpenStreetMap contributors',
-          maxZoom: 16,
-          minZoom: 3,
-        }
-      ).addTo(map);
-
-      L.tileLayer(
-        'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
-        {
-          attribution: '',
-          maxZoom: 16,
-          minZoom: 3,
-        }
-      ).addTo(map);
-    }
+    L.tileLayer(tileUrl, {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+      subdomains: 'abcd',
+      maxZoom: 19,
+      minZoom: 4,
+    }).addTo(map);
 
     // Zoom controls positioned at top right (safe from thumb HUD)
     L.control.zoom({ position: 'topright' }).addTo(map);
