@@ -194,7 +194,7 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
     }
   }, [tempPinLocation]);
 
-  // Update Hazard Markers on map
+  // Update Hazard Markers on map with accurate Category Vector Icons (matching TopHUD)
   useEffect(() => {
     const markersLayer = markersLayerRef.current;
     if (!markersLayer) return;
@@ -210,7 +210,7 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
 
       // Pin styling based on tactical visual rules
       let outerRing = '';
-      let markerColor = 'bg-slate-800 border-slate-600 text-slate-300';
+      let markerColor = 'bg-slate-950 border-slate-600 text-slate-300';
       let iconColor = '#cbd5e1';
 
       if (isHigh) {
@@ -218,7 +218,7 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
         iconColor = '#ffffff';
         outerRing = '<div class="absolute -inset-1.5 rounded-full border border-white/60 animate-ping opacity-75 pointer-events-none"></div>';
       } else if (isMedium) {
-        markerColor = 'bg-slate-900 border-slate-400 text-slate-100 shadow-[0_0_10px_rgba(203,213,225,0.5)]';
+        markerColor = 'bg-slate-950 border-slate-400 text-slate-100 shadow-[0_0_10px_rgba(203,213,225,0.5)]';
         iconColor = '#f8fafc';
       }
 
@@ -233,6 +233,7 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
         outerRing = '';
       }
 
+      // Accurate vector SVG icon matching top navigation
       const svgIconMarkup = getCategorySvgMarkup(hazard.category, iconColor);
 
       const selectedClass = isSelected

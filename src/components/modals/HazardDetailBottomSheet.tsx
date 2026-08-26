@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { X, ThumbsUp, CheckCircle2, Copy } from 'lucide-react';
+import { X, ThumbsUp, CheckCircle2, Copy, ShieldCheck } from 'lucide-react';
 import { Hazard, UserLocation } from '../../types/hazard';
 import {
   HAZARD_CATEGORIES,
@@ -95,7 +95,7 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
         {/* Header */}
         <div className="flex items-center justify-between pb-2 border-b border-slate-800">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-slate-950 border border-slate-800 text-sky-400">
+            <div className="p-2 rounded-xl bg-slate-950 border border-slate-800 text-white">
               <HazardIcon category={hazard.category} size={20} />
             </div>
             <div>
@@ -103,7 +103,7 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
                 {categoryMeta.name}
               </h2>
               <div className="flex items-center gap-2 text-[11px] text-slate-400 font-mono mt-0.5">
-                <span className="text-sky-400 font-semibold">{formatDistance(distanceMeters)}</span>
+                <span className="text-white font-semibold">{formatDistance(distanceMeters)}</span>
                 <span>•</span>
                 <span className="capitalize">{hazard.severity} Severity</span>
                 <span>•</span>
@@ -120,6 +120,26 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
           >
             <X className="w-5 h-5" />
           </button>
+        </div>
+
+        {/* Civic Verification Badge with Lucide ShieldCheck */}
+        <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/50 border border-slate-800/80 text-xs">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-emerald-400">
+              <ShieldCheck className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-[11px] font-semibold text-slate-200">
+                Verified Civic Trace
+              </div>
+              <div className="text-[10px] text-slate-400 font-mono">
+                ID: {hazard.id.substring(0, 8)}... • Community Reported
+              </div>
+            </div>
+          </div>
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-mono">
+            {hazard.upvotes} {hazard.upvotes === 1 ? 'vouch' : 'vouches'}
+          </span>
         </div>
 
         {/* Resolved badge if marked */}

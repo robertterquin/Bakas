@@ -1,5 +1,6 @@
 import React, { useEffect, useCallback } from 'react';
-import { X, Shield, Radio, EyeOff, Zap, Lock, AlertTriangle } from 'lucide-react';
+import { X, Shield, EyeOff, Zap, Lock, AlertTriangle, Radio } from 'lucide-react';
+import { getOrCreateDeviceFingerprint } from '../../lib/domain-rules';
 
 interface AboutModalProps {
   isOpen: boolean;
@@ -7,6 +8,8 @@ interface AboutModalProps {
 }
 
 export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
+  const deviceHash = getOrCreateDeviceFingerprint();
+
   // Escape key accessibility
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -40,12 +43,12 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
         {/* Header */}
         <div className="p-4 px-6 flex items-center justify-between border-b border-slate-800">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-slate-800 border border-slate-700 text-sky-400">
-              <Radio className="w-5 h-5 animate-pulse" />
+            <div className="w-8 h-8 rounded-full bg-white text-slate-950 flex items-center justify-center shadow-md shrink-0">
+              <Radio className="w-4 h-4 text-slate-950" />
             </div>
             <div>
               <h2 id="about-bakas-title" className="text-base font-bold text-slate-100">
-                About Bakás
+                Bakás Radar
               </h2>
               <span className="text-xs text-slate-400">Tagalog for "traces" or "tracks"</span>
             </div>
@@ -63,6 +66,22 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
 
         {/* Content */}
         <div className="p-6 overflow-y-auto space-y-4 text-xs text-slate-300">
+          {/* User Anonymous Civic Token Card */}
+          <div className="p-3 rounded-2xl bg-slate-950/90 border border-slate-800 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-sky-400">
+                <Shield className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="font-bold text-xs text-slate-200">Anonymous Civic ID</div>
+                <div className="text-[10px] font-mono text-slate-400">Token: {deviceHash.substring(0, 16)}...</div>
+              </div>
+            </div>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-700">
+              Verified
+            </span>
+          </div>
+
           <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 leading-relaxed text-slate-200">
             <p className="font-semibold text-slate-100 text-sm mb-1">
               Leaving digital traces to navigate urban road hazards.
@@ -110,7 +129,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
               <div>
                 <span className="font-bold text-slate-200 block">Automated Data Decay (TTL)</span>
                 <span className="text-slate-400 text-[11px]">
-                  Pins automatically expire after 24h to 7d to prevent outdated ghost markers.
+                  Pins automatically expire up to 90 days to prevent outdated ghost markers.
                 </span>
               </div>
             </div>

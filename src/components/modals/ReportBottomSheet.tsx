@@ -95,7 +95,7 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
               Report Road Hazard
             </h2>
             <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono mt-0.5">
-              <MapPin className="w-3.5 h-3.5 text-sky-400" />
+              <MapPin className="w-3.5 h-3.5 text-slate-300" />
               <span>{isCustomLocation ? 'Pinned Location' : 'GPS Location'}:</span>
               <span className="text-slate-300">
                 {targetCoords.lat.toFixed(5)}, {targetCoords.lng.toFixed(5)}
@@ -133,7 +133,7 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Modern Category Picker */}
+          {/* Accurate Lucide Category Picker */}
           <div>
             <label className="block text-xs font-semibold text-slate-400 mb-2">Category</label>
             <div className="grid grid-cols-2 gap-2">
@@ -151,7 +151,7 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
                         : 'bg-slate-800/60 border-slate-700/60 text-slate-300 hover:border-slate-500'
                     }`}
                   >
-                    <div className={`p-1.5 rounded-lg shrink-0 mt-0.5 ${isSelected ? 'bg-slate-950 text-white' : 'bg-slate-900 text-sky-400 border border-slate-700'}`}>
+                    <div className={`p-1.5 rounded-lg shrink-0 mt-0.5 ${isSelected ? 'bg-slate-950 text-white' : 'bg-slate-900 border border-slate-700 text-slate-400'}`}>
                       <HazardIcon category={item.id} size={16} />
                     </div>
                     <div>
@@ -204,7 +204,7 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
             />
           </div>
 
-          {/* Submit with Modern Spinner */}
+          {/* Submit */}
           <button
             type="submit"
             disabled={isSubmitting}

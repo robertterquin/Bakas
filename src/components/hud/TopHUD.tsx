@@ -1,5 +1,5 @@
 import React from 'react';
-import { WifiOff } from 'lucide-react';
+import { WifiOff, Radio } from 'lucide-react';
 import { RadiusFilter, CategoryFilter } from '../../types/hazard';
 import { HazardIcon } from '../ui/HazardIcon';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
@@ -39,20 +39,22 @@ export const TopHUD: React.FC<TopHUDProps> = ({
 }) => {
   return (
     <header className="absolute top-3 left-0 right-0 z-30 pointer-events-none px-3">
-      <div className="max-w-xl mx-auto flex items-center justify-between gap-2 p-1.5 rounded-full bg-slate-950/80 border border-slate-800/80 shadow-2xl backdrop-blur-xl pointer-events-auto">
-        {/* Brand & Count */}
+      <div className="max-w-xl mx-auto flex items-center justify-between gap-2 p-1.5 rounded-full bg-slate-950/90 border border-slate-800/80 shadow-2xl backdrop-blur-xl pointer-events-auto">
+        {/* Brand Mark with Lucide Radio Icon */}
         <button
           type="button"
           onClick={onOpenAbout}
-          className="flex items-center gap-1.5 pl-2.5 pr-2 py-1 rounded-full hover:bg-slate-800/60 transition-colors"
+          className="flex items-center gap-1.5 pl-1.5 pr-2 py-1 rounded-full hover:bg-slate-800/60 transition-colors"
           title="About Bakás"
         >
-          <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse shadow-[0_0_8px_#38bdf8]" />
+          <div className="w-5 h-5 rounded-full bg-white text-slate-950 flex items-center justify-center shadow-sm shrink-0">
+            <Radio className="w-3 h-3 text-slate-950" />
+          </div>
           <span className="font-bold text-xs tracking-tight text-white">Bakás</span>
           <span className="text-[11px] font-mono text-slate-400 pl-0.5">({hazardCount})</span>
         </button>
 
-        {/* Minimal Category Filter Tabs with Modern Icons */}
+        {/* Pure Lucide Category Filter Tabs */}
         <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
           {CATEGORIES.map((cat) => {
             const isSelected = activeFilter === cat.id;
@@ -79,7 +81,7 @@ export const TopHUD: React.FC<TopHUDProps> = ({
           <button
             type="button"
             onClick={onOpenFilter}
-            className="px-2 py-1 rounded-full bg-slate-900 border border-slate-800 text-[10px] font-mono text-sky-400 hover:border-slate-700"
+            className="px-2 py-1 rounded-full bg-slate-900 border border-slate-800 text-[10px] font-mono text-slate-300 hover:border-slate-700"
             title="Change range"
           >
             {(radiusFilter / 1000).toFixed(0)}km
@@ -97,7 +99,7 @@ export const TopHUD: React.FC<TopHUDProps> = ({
           )}
 
           {isSyncing && (
-            <LoadingSpinner variant="dual-arc" size={14} className="text-sky-400 ml-1" />
+            <LoadingSpinner variant="dual-arc" size={14} className="text-white ml-1" />
           )}
         </div>
       </div>

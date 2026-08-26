@@ -9,14 +9,19 @@ import {
 } from 'lucide-react';
 import { HazardCategory, CategoryFilter } from '../../types/hazard';
 
-interface HazardIconProps extends LucideProps {
+interface HazardIconProps extends Omit<LucideProps, 'ref'> {
   category: CategoryFilter;
   size?: number;
   className?: string;
 }
 
 /**
- * Modern geometric vector icon for each hazard category
+ * Accurate hazard category icons using Lucide (hand-picked to match each category).
+ *
+ * DiceBear Icons style generates RANDOM Bootstrap Icons from a seed hash —
+ * you cannot select a specific icon. So we use Lucide for category icons
+ * (where accuracy matters) and reserve DiceBear for avatars/identicons
+ * (where uniqueness from randomness is the point).
  */
 export const HazardIcon: React.FC<HazardIconProps> = ({
   category,
@@ -40,12 +45,11 @@ export const HazardIcon: React.FC<HazardIconProps> = ({
 };
 
 /**
- * Returns raw SVG markup string for Leaflet DivIcon rendering
+ * Raw SVG markup for Leaflet map markers (monochrome)
  */
-export function getCategorySvgMarkup(category: HazardCategory, color: string = 'currentColor'): string {
+export function getCategorySvgMarkup(category: HazardCategory, color: string = '#f8fafc'): string {
   switch (category) {
     case 'pothole':
-      // Modern crater / road defect icon
       return `
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"></circle>
@@ -54,7 +58,6 @@ export function getCategorySvgMarkup(category: HazardCategory, color: string = '
         </svg>
       `;
     case 'clogged_drainage':
-      // Modern water surge / flood wave icon
       return `
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
           <path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"></path>
@@ -63,7 +66,6 @@ export function getCategorySvgMarkup(category: HazardCategory, color: string = '
         </svg>
       `;
     case 'road_obstruction':
-      // Modern tactical traffic cone / obstacle barrier icon
       return `
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
           <path d="m14 2 6.5 16.5a1 1 0 0 1-.9 1.5H4.4a1 1 0 0 1-.9-1.5L10 2a2 2 0 0 1 4 0Z"></path>
@@ -72,7 +74,6 @@ export function getCategorySvgMarkup(category: HazardCategory, color: string = '
         </svg>
       `;
     case 'dark_street':
-      // Modern unlit streetlight / broken lamp icon
       return `
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
           <path d="M9 18h6"></path>
