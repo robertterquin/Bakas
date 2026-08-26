@@ -1,5 +1,6 @@
 import React, { useEffect, useCallback } from 'react';
-import { X, Shield, EyeOff, Zap, Lock, AlertTriangle, Radio } from 'lucide-react';
+import { X, Shield, EyeOff, Zap, Lock, AlertTriangle } from 'lucide-react';
+import { BakasLogo } from '../ui/BakasLogo';
 import { getOrCreateDeviceFingerprint } from '../../lib/domain-rules';
 
 interface AboutModalProps {
@@ -43,9 +44,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
         {/* Header */}
         <div className="p-4 px-6 flex items-center justify-between border-b border-slate-800">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-white text-slate-950 flex items-center justify-center shadow-md shrink-0">
-              <Radio className="w-4 h-4 text-slate-950" />
-            </div>
+            <BakasLogo size={32} withGlow={true} className="shrink-0" />
             <div>
               <h2 id="about-bakas-title" className="text-base font-bold text-slate-100">
                 Bakás Radar

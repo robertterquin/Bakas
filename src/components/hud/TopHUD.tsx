@@ -1,8 +1,9 @@
 import React from 'react';
-import { WifiOff, Radio } from 'lucide-react';
+import { WifiOff } from 'lucide-react';
 import { RadiusFilter, CategoryFilter } from '../../types/hazard';
 import { HazardIcon } from '../ui/HazardIcon';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
+import { BakasLogo } from '../ui/BakasLogo';
 
 interface TopHUDProps {
   hazardCount: number;
@@ -40,16 +41,14 @@ export const TopHUD: React.FC<TopHUDProps> = ({
   return (
     <header className="absolute top-3 left-0 right-0 z-30 pointer-events-none px-3">
       <div className="max-w-xl mx-auto flex items-center justify-between gap-2 p-1.5 rounded-full bg-slate-950/90 border border-slate-800/80 shadow-2xl backdrop-blur-xl pointer-events-auto">
-        {/* Brand Mark with Lucide Radio Icon */}
+        {/* Brand Mark with Official Bakas Logo */}
         <button
           type="button"
           onClick={onOpenAbout}
           className="flex items-center gap-1.5 pl-1.5 pr-2 py-1 rounded-full hover:bg-slate-800/60 transition-colors"
           title="About Bakás"
         >
-          <div className="w-5 h-5 rounded-full bg-white text-slate-950 flex items-center justify-center shadow-sm shrink-0">
-            <Radio className="w-3 h-3 text-slate-950" />
-          </div>
+          <BakasLogo size={20} className="shrink-0" />
           <span className="font-bold text-xs tracking-tight text-white">Bakás</span>
           <span className="text-[11px] font-mono text-slate-400 pl-0.5">({hazardCount})</span>
         </button>
