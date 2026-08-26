@@ -1,6 +1,7 @@
 import React from 'react';
 import { WifiOff, RefreshCw } from 'lucide-react';
 import { RadiusFilter, CategoryFilter } from '../../types/hazard';
+import { HazardIcon } from '../ui/HazardIcon';
 
 interface TopHUDProps {
   hazardCount: number;
@@ -15,12 +16,12 @@ interface TopHUDProps {
   onOpenAbout: () => void;
 }
 
-const CATEGORIES: { id: CategoryFilter; label: string; emoji: string }[] = [
-  { id: 'all', label: 'All', emoji: '🧭' },
-  { id: 'pothole', label: 'Pothole', emoji: '🕳️' },
-  { id: 'clogged_drainage', label: 'Flood', emoji: '💧' },
-  { id: 'road_obstruction', label: 'Obstacle', emoji: '🚧' },
-  { id: 'dark_street', label: 'Dark', emoji: '🌑' },
+const CATEGORIES: { id: CategoryFilter; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'pothole', label: 'Pothole' },
+  { id: 'clogged_drainage', label: 'Flood' },
+  { id: 'road_obstruction', label: 'Obstacle' },
+  { id: 'dark_street', label: 'Dark' },
 ];
 
 export const TopHUD: React.FC<TopHUDProps> = ({
@@ -50,7 +51,7 @@ export const TopHUD: React.FC<TopHUDProps> = ({
           <span className="text-[11px] font-mono text-slate-400 pl-0.5">({hazardCount})</span>
         </button>
 
-        {/* Minimal Category Filter Tabs */}
+        {/* Minimal Category Filter Tabs with Modern Icons */}
         <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
           {CATEGORIES.map((cat) => {
             const isSelected = activeFilter === cat.id;
@@ -59,13 +60,13 @@ export const TopHUD: React.FC<TopHUDProps> = ({
                 key={cat.id}
                 type="button"
                 onClick={() => onSelectFilter(cat.id)}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all ${
                   isSelected
                     ? 'bg-white text-slate-950 font-bold shadow-sm'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
                 }`}
               >
-                <span>{cat.emoji}</span>
+                <HazardIcon category={cat.id} size={13} className={isSelected ? 'text-slate-950' : 'text-slate-400'} />
                 <span className="hidden sm:inline">{cat.label}</span>
               </button>
             );

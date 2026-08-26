@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import { Hazard, UserLocation, CategoryFilter, RadiusFilter } from '../../types/hazard';
+import { getCategorySvgMarkup } from '../ui/HazardIcon';
 
 interface MapRadarCanvasProps {
   userLocation: UserLocation;
@@ -168,7 +169,10 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
           <div class="relative flex items-center justify-center w-10 h-10 animate-bounce">
             <div class="absolute -inset-2 rounded-full border-2 border-white/80 animate-ping opacity-75"></div>
             <div class="w-8 h-8 rounded-full bg-white text-slate-950 border-2 border-sky-400 flex items-center justify-center font-bold text-sm shadow-[0_0_20px_#ffffff]">
-              📍
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
             </div>
           </div>
         `,
@@ -204,32 +208,32 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
       const isPending = hazard.syncStatus === 'pending_sync';
       const isResolved = hazard.isResolved;
 
-      // Category Icon Symbol
-      let symbol = '⚠️';
-      if (hazard.category === 'clogged_drainage') symbol = '💧';
-      if (hazard.category === 'road_obstruction') symbol = '🚧';
-      if (hazard.category === 'dark_street') symbol = '🌑';
-      if (hazard.category === 'pothole') symbol = '🕳️';
-
       // Pin styling based on tactical visual rules
       let outerRing = '';
-      let markerColor = 'bg-slate-500 border-slate-400 text-slate-200';
+      let markerColor = 'bg-slate-800 border-slate-600 text-slate-300';
+      let iconColor = '#cbd5e1';
 
       if (isHigh) {
-        markerColor = 'bg-slate-900 border-white text-white shadow-[0_0_16px_rgba(255,255,255,0.9)]';
+        markerColor = 'bg-slate-950 border-white text-white shadow-[0_0_18px_rgba(255,255,255,0.95)]';
+        iconColor = '#ffffff';
         outerRing = '<div class="absolute -inset-1.5 rounded-full border border-white/60 animate-ping opacity-75 pointer-events-none"></div>';
       } else if (isMedium) {
-        markerColor = 'bg-slate-800 border-slate-300 text-slate-100 shadow-[0_0_10px_rgba(203,213,225,0.6)]';
+        markerColor = 'bg-slate-900 border-slate-400 text-slate-100 shadow-[0_0_10px_rgba(203,213,225,0.5)]';
+        iconColor = '#f8fafc';
       }
 
       if (isPending) {
         markerColor += ' border-dashed border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.7)]';
+        iconColor = '#fbbf24';
       }
 
       if (isResolved) {
-        markerColor = 'bg-slate-900/60 border-slate-700 text-slate-500 opacity-40';
+        markerColor = 'bg-slate-950/60 border-slate-800 text-slate-600 opacity-40';
+        iconColor = '#475569';
         outerRing = '';
       }
+
+      const svgIconMarkup = getCategorySvgMarkup(hazard.category, iconColor);
 
       const selectedClass = isSelected
         ? 'ring-4 ring-sky-400 ring-offset-2 ring-offset-slate-950 scale-125 z-50'
@@ -240,8 +244,8 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
         html: `
           <div class="relative flex items-center justify-center cursor-pointer ${selectedClass}">
             ${outerRing}
-            <div class="w-9 h-9 rounded-full ${markerColor} border-2 flex items-center justify-center text-sm font-bold select-none transition-all">
-              <span>${symbol}</span>
+            <div class="w-9 h-9 rounded-full ${markerColor} border-2 flex items-center justify-center select-none transition-all">
+              ${svgIconMarkup}
             </div>
             ${
               hazard.upvotes > 1

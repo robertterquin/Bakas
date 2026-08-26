@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { X, AlertTriangle, MapPin } from 'lucide-react';
 import { HazardCategory, HazardSeverity, HazardPayload, Hazard, Coordinates } from '../../types/hazard';
+import { HazardIcon } from '../ui/HazardIcon';
 
 interface ReportBottomSheetProps {
   isOpen: boolean;
@@ -12,11 +13,11 @@ interface ReportBottomSheetProps {
   onSelectExisting: (hazardId: string) => void;
 }
 
-const CATEGORY_ITEMS: { id: HazardCategory; emoji: string; name: string; tagalog: string }[] = [
-  { id: 'pothole', emoji: '🕳️', name: 'Pothole / Manhole', tagalog: 'Butas / Lubak' },
-  { id: 'clogged_drainage', emoji: '💧', name: 'Flooding / Drainage', tagalog: 'Baha / Kanal' },
-  { id: 'road_obstruction', emoji: '🚧', name: 'Road Obstruction', tagalog: 'Harang sa Daan' },
-  { id: 'dark_street', emoji: '🌑', name: 'Dark Street', tagalog: 'Madilim' },
+const CATEGORY_ITEMS: { id: HazardCategory; name: string; tagalog: string }[] = [
+  { id: 'pothole', name: 'Pothole / Manhole', tagalog: 'Butas / Lubak' },
+  { id: 'clogged_drainage', name: 'Flooding / Drainage', tagalog: 'Baha / Kanal' },
+  { id: 'road_obstruction', name: 'Road Obstruction', tagalog: 'Harang sa Daan' },
+  { id: 'dark_street', name: 'Dark Street', tagalog: 'Madilim' },
 ];
 
 export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
@@ -94,7 +95,7 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
             </h2>
             <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono mt-0.5">
               <MapPin className="w-3.5 h-3.5 text-sky-400" />
-              <span>{isCustomLocation ? 'Clicked Map Pin' : 'GPS Location'}:</span>
+              <span>{isCustomLocation ? 'Pinned Location' : 'GPS Location'}:</span>
               <span className="text-slate-300">
                 {targetCoords.lat.toFixed(5)}, {targetCoords.lng.toFixed(5)}
               </span>
@@ -131,7 +132,7 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Category Picker */}
+          {/* Modern Category Picker */}
           <div>
             <label className="block text-xs font-semibold text-slate-400 mb-2">Category</label>
             <div className="grid grid-cols-2 gap-2">
@@ -143,16 +144,20 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
                     type="button"
                     onClick={() => setCategory(item.id)}
                     aria-pressed={isSelected}
-                    className={`p-3 rounded-xl border text-left transition-all ${
+                    className={`p-3 rounded-xl border text-left transition-all flex items-start gap-2.5 ${
                       isSelected
                         ? 'bg-white text-slate-950 border-white font-bold shadow-md'
                         : 'bg-slate-800/60 border-slate-700/60 text-slate-300 hover:border-slate-500'
                     }`}
                   >
-                    <div className="text-base mb-0.5">{item.emoji}</div>
-                    <div className="text-xs font-semibold leading-tight">{item.name}</div>
-                    <div className={`text-[10px] ${isSelected ? 'text-slate-700' : 'text-slate-400'}`}>
-                      {item.tagalog}
+                    <div className={`p-1.5 rounded-lg shrink-0 mt-0.5 ${isSelected ? 'bg-slate-950 text-white' : 'bg-slate-900 text-sky-400 border border-slate-700'}`}>
+                      <HazardIcon category={item.id} size={16} />
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold leading-tight">{item.name}</div>
+                      <div className={`text-[10px] mt-0.5 ${isSelected ? 'text-slate-700' : 'text-slate-400'}`}>
+                        {item.tagalog}
+                      </div>
                     </div>
                   </button>
                 );

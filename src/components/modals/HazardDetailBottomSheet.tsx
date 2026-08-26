@@ -8,6 +8,7 @@ import {
   formatTtlRemaining,
   hasDeviceVoted,
 } from '../../lib/domain-rules';
+import { HazardIcon } from '../ui/HazardIcon';
 
 interface HazardDetailBottomSheetProps {
   hazard: Hazard | null;
@@ -51,12 +52,6 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
   const hasUpvoted = hasDeviceVoted(hazard.id, 'upvote');
   const hasResolved = hasDeviceVoted(hazard.id, 'resolve');
 
-  let emoji = '⚠️';
-  if (hazard.category === 'clogged_drainage') emoji = '💧';
-  if (hazard.category === 'road_obstruction') emoji = '🚧';
-  if (hazard.category === 'dark_street') emoji = '🌑';
-  if (hazard.category === 'pothole') emoji = '🕳️';
-
   const handleUpvote = async () => {
     setIsUpvoting(true);
     try {
@@ -98,13 +93,15 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
       <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl shadow-2xl p-5 text-slate-100 space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">{emoji}</span>
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-slate-950 border border-slate-800 text-sky-400">
+              <HazardIcon category={hazard.category} size={20} />
+            </div>
             <div>
               <h2 id="hazard-detail-title" className="text-base font-bold text-white leading-tight">
                 {categoryMeta.name}
               </h2>
-              <div className="flex items-center gap-2 text-[11px] text-slate-400 font-mono">
+              <div className="flex items-center gap-2 text-[11px] text-slate-400 font-mono mt-0.5">
                 <span className="text-sky-400 font-semibold">{formatDistance(distanceMeters)}</span>
                 <span>•</span>
                 <span className="capitalize">{hazard.severity} Severity</span>

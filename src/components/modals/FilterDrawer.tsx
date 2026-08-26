@@ -2,6 +2,7 @@ import React, { useEffect, useCallback } from 'react';
 import { X, Check } from 'lucide-react';
 import { RadiusFilter, CategoryFilter } from '../../types/hazard';
 import { HAZARD_CATEGORIES } from '../../lib/domain-rules';
+import { HazardIcon } from '../ui/HazardIcon';
 
 interface FilterDrawerProps {
   isOpen: boolean;
@@ -26,12 +27,9 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
   activeFilter,
   onChangeCategory,
 }) => {
-  // Escape key accessibility
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
+      if (e.key === 'Escape') onClose();
     },
     [onClose]
   );
@@ -55,16 +53,16 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-t-3xl sm:rounded-3xl shadow-2xl p-6 text-slate-100 space-y-5">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-          <h2 id="radar-filters-title" className="text-base font-bold tracking-tight">
+      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl shadow-2xl p-5 text-slate-100 space-y-4">
+        <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+          <h2 id="radar-filters-title" className="text-base font-bold tracking-tight text-white">
             Radar Range & Filter
           </h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close filter options"
-            className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors focus-visible:ring-2 focus-visible:ring-sky-400 min-w-[44px] min-h-[44px] flex items-center justify-center"
+            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -72,10 +70,10 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
 
         {/* Radius presets */}
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2.5">
+          <label className="block text-xs font-semibold text-slate-400 mb-2">
             Spatial Radar Radius
           </label>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {RADIUS_OPTIONS.map((opt) => {
               const isSelected = radiusFilter === opt.value;
               return (
@@ -84,9 +82,9 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
                   type="button"
                   onClick={() => onChangeRadius(opt.value)}
                   aria-pressed={isSelected}
-                  className={`w-full p-3.5 rounded-2xl border flex items-center justify-between transition-all focus-visible:ring-2 focus-visible:ring-sky-400 min-h-[52px] ${
+                  className={`w-full p-3 rounded-xl border flex items-center justify-between transition-all ${
                     isSelected
-                      ? 'bg-slate-800 border-white text-white shadow-[0_0_12px_rgba(255,255,255,0.15)]'
+                      ? 'bg-slate-800 border-white text-white shadow-sm'
                       : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
                   }`}
                 >
@@ -103,7 +101,7 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
 
         {/* Category presets */}
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2.5">
+          <label className="block text-xs font-semibold text-slate-400 mb-2">
             Category Focus
           </label>
           <div className="grid grid-cols-2 gap-2">
@@ -111,35 +109,31 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
               type="button"
               onClick={() => onChangeCategory('all')}
               aria-pressed={activeFilter === 'all'}
-              className={`p-3 rounded-xl border text-xs font-medium text-left transition-all min-h-[48px] focus-visible:ring-2 focus-visible:ring-sky-400 ${
+              className={`p-2.5 rounded-xl border text-xs font-medium flex items-center gap-2 transition-all ${
                 activeFilter === 'all'
                   ? 'bg-white text-slate-950 border-white font-bold'
                   : 'bg-slate-800/80 text-slate-300 border-slate-700 hover:border-slate-500'
               }`}
             >
-              🧭 All Categories
+              <HazardIcon category="all" size={14} />
+              <span>All Categories</span>
             </button>
             {Object.values(HAZARD_CATEGORIES).map((cat) => {
               const isSelected = activeFilter === cat.id;
-              let emoji = '⚠️';
-              if (cat.id === 'clogged_drainage') emoji = '💧';
-              if (cat.id === 'road_obstruction') emoji = '🚧';
-              if (cat.id === 'dark_street') emoji = '🌑';
-              if (cat.id === 'pothole') emoji = '🕳️';
-
               return (
                 <button
                   key={cat.id}
                   type="button"
                   onClick={() => onChangeCategory(cat.id)}
                   aria-pressed={isSelected}
-                  className={`p-3 rounded-xl border text-xs font-medium text-left transition-all min-h-[48px] focus-visible:ring-2 focus-visible:ring-sky-400 ${
+                  className={`p-2.5 rounded-xl border text-xs font-medium flex items-center gap-2 transition-all ${
                     isSelected
                       ? 'bg-white text-slate-950 border-white font-bold'
                       : 'bg-slate-800/80 text-slate-300 border-slate-700 hover:border-slate-500'
                   }`}
                 >
-                  {emoji} {cat.name.split('/')[0]}
+                  <HazardIcon category={cat.id} size={14} />
+                  <span>{cat.name.split(' ')[0]}</span>
                 </button>
               );
             })}
@@ -149,7 +143,7 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
         <button
           type="button"
           onClick={onClose}
-          className="w-full py-3.5 rounded-2xl bg-white text-slate-950 font-bold text-sm hover:bg-slate-100 transition-colors min-h-[48px]"
+          className="w-full h-11 rounded-xl bg-white text-slate-950 font-bold text-xs hover:bg-slate-100 transition-colors mt-2"
         >
           Apply Filters
         </button>
