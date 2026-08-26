@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { X, AlertTriangle, MapPin } from 'lucide-react';
 import { HazardCategory, HazardSeverity, HazardPayload, Hazard, Coordinates } from '../../types/hazard';
 import { HazardIcon } from '../ui/HazardIcon';
+import { LoadingSpinner } from '../ui/LoadingSpinner';
 
 interface ReportBottomSheetProps {
   isOpen: boolean;
@@ -203,13 +204,20 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
             />
           </div>
 
-          {/* Submit */}
+          {/* Submit with Modern Spinner */}
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full h-12 rounded-xl bg-white hover:bg-slate-100 text-slate-950 font-bold text-sm shadow-md transition-all active:scale-98 disabled:opacity-50"
+            className="w-full h-12 rounded-xl bg-white hover:bg-slate-100 text-slate-950 font-bold text-sm shadow-md transition-all active:scale-98 disabled:opacity-75 flex items-center justify-center gap-2"
           >
-            {isSubmitting ? 'Submitting...' : 'Drop Hazard Trace'}
+            {isSubmitting ? (
+              <>
+                <LoadingSpinner variant="ring" size={18} className="text-slate-950" />
+                <span>Broadcasting to Radar...</span>
+              </>
+            ) : (
+              <span>Drop Hazard Trace</span>
+            )}
           </button>
         </form>
       </div>

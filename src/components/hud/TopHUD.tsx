@@ -1,7 +1,8 @@
 import React from 'react';
-import { WifiOff, RefreshCw } from 'lucide-react';
+import { WifiOff } from 'lucide-react';
 import { RadiusFilter, CategoryFilter } from '../../types/hazard';
 import { HazardIcon } from '../ui/HazardIcon';
+import { LoadingSpinner } from '../ui/LoadingSpinner';
 
 interface TopHUDProps {
   hazardCount: number;
@@ -96,7 +97,7 @@ export const TopHUD: React.FC<TopHUDProps> = ({
           )}
 
           {isSyncing && (
-            <RefreshCw className="w-3.5 h-3.5 text-sky-400 animate-spin" />
+            <LoadingSpinner variant="dual-arc" size={14} className="text-sky-400 ml-1" />
           )}
         </div>
       </div>

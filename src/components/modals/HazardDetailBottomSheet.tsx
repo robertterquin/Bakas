@@ -9,6 +9,7 @@ import {
   hasDeviceVoted,
 } from '../../lib/domain-rules';
 import { HazardIcon } from '../ui/HazardIcon';
+import { LoadingSpinner } from '../ui/LoadingSpinner';
 
 interface HazardDetailBottomSheetProps {
   hazard: Hazard | null;
@@ -149,7 +150,7 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
           </button>
         </div>
 
-        {/* Action Buttons */}
+        {/* Action Buttons with Loading Spinners */}
         <div className="grid grid-cols-2 gap-2.5 pt-1">
           <button
             type="button"
@@ -161,7 +162,11 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
                 : 'bg-white hover:bg-slate-100 text-slate-950 border-white shadow-md'
             }`}
           >
-            <ThumbsUp className="w-3.5 h-3.5" />
+            {isUpvoting ? (
+              <LoadingSpinner variant="ring" size={15} className="text-slate-950" />
+            ) : (
+              <ThumbsUp className="w-3.5 h-3.5" />
+            )}
             <span>{hasUpvoted ? `Upvoted (${hazard.upvotes})` : `Still Here (+${hazard.upvotes})`}</span>
           </button>
 
@@ -175,7 +180,11 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
                 : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700 hover:border-slate-500'
             }`}
           >
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+            {isResolving ? (
+              <LoadingSpinner variant="ring" size={15} className="text-emerald-400" />
+            ) : (
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+            )}
             <span>{hasResolved ? 'Flagged Fixed' : 'Mark Cleared'}</span>
           </button>
         </div>

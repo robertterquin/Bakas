@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { X, RefreshCw, CheckCircle, Wifi, WifiOff, Database } from 'lucide-react';
+import { X, CheckCircle, Wifi, WifiOff, Database } from 'lucide-react';
 import { Hazard, ValidationAction } from '../../types/hazard';
 import { getPendingReports, getPendingValidations, clearCachedHazards } from '../../lib/offline-storage';
+import { LoadingSpinner } from '../ui/LoadingSpinner';
 
 interface SyncStatusModalProps {
   isOpen: boolean;
@@ -143,7 +144,10 @@ export const SyncStatusModal: React.FC<SyncStatusModalProps> = ({
 
           <div className="max-h-48 overflow-y-auto space-y-2 rounded-2xl bg-slate-950/60 p-3 border border-slate-800">
             {isLoadingQueue ? (
-              <div className="text-xs text-slate-500 text-center py-4">Checking IndexedDB queue...</div>
+              <div className="flex items-center justify-center gap-2 text-xs text-slate-400 py-4">
+                <LoadingSpinner variant="dots-ring" size={16} />
+                <span>Checking IndexedDB queue...</span>
+              </div>
             ) : totalPending === 0 ? (
               <div className="flex flex-col items-center justify-center py-4 text-center">
                 <CheckCircle className="w-6 h-6 text-emerald-400 mb-1" />
@@ -199,8 +203,14 @@ export const SyncStatusModal: React.FC<SyncStatusModalProps> = ({
             disabled={isSyncing || totalPending === 0 || !isOnline}
             className="w-full h-12 rounded-2xl bg-white hover:bg-slate-100 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-md min-h-[48px] focus-visible:ring-2 focus-visible:ring-sky-400"
           >
-            <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
-            <span>{isSyncing ? 'Synchronizing...' : 'Force Sync Now'}</span>
+            {isSyncing ? (
+              <>
+                <LoadingSpinner variant="dual-arc" size={16} className="text-slate-950" />
+                <span>Synchronizing Traces...</span>
+              </>
+            ) : (
+              <span>Force Sync Now</span>
+            )}
           </button>
 
           <button
