@@ -85,23 +85,23 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
       role="dialog"
       aria-modal="true"
       aria-labelledby="hazard-detail-title"
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm animate-fadeIn"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl shadow-2xl p-5 text-slate-100 space-y-4">
+      <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-t-3xl sm:rounded-3xl shadow-2xl p-5 text-zinc-100 space-y-4">
         {/* Header */}
-        <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+        <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-slate-950 border border-slate-800 text-white">
+            <div className="p-2 rounded-xl bg-black border border-zinc-800 text-white">
               <HazardIcon category={hazard.category} size={20} />
             </div>
             <div>
               <h2 id="hazard-detail-title" className="text-base font-bold text-white leading-tight">
                 {categoryMeta.name}
               </h2>
-              <div className="flex items-center gap-2 text-[11px] text-slate-400 font-mono mt-0.5">
+              <div className="flex items-center gap-2 text-[11px] text-zinc-400 font-mono mt-0.5">
                 <span className="text-white font-semibold">{formatDistance(distanceMeters)}</span>
                 <span>•</span>
                 <span className="capitalize">{hazard.severity} Severity</span>
@@ -115,61 +115,61 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+            className="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-900 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Civic Verification Badge with Lucide ShieldCheck */}
-        <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/50 border border-slate-800/80 text-xs">
+        {/* Civic Verification Badge - Pure Monochrome */}
+        <div className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-900/70 border border-zinc-800 text-xs">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-emerald-400">
+            <div className="p-1.5 rounded-lg bg-black border border-zinc-800 text-white">
               <ShieldCheck className="w-4 h-4" />
             </div>
             <div>
-              <div className="text-[11px] font-semibold text-slate-200">
+              <div className="text-[11px] font-semibold text-zinc-200">
                 Verified Civic Trace
               </div>
-              <div className="text-[10px] text-slate-400 font-mono">
+              <div className="text-[10px] text-zinc-500 font-mono">
                 ID: {hazard.id.substring(0, 8)}... • Community Reported
               </div>
             </div>
           </div>
-          <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-mono">
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-black border border-zinc-800 text-zinc-300 font-mono font-semibold">
             {hazard.upvotes} {hazard.upvotes === 1 ? 'vouch' : 'vouches'}
           </span>
         </div>
 
         {/* Resolved badge if marked */}
         {hazard.isResolved && (
-          <div className="p-2.5 rounded-xl bg-emerald-950/50 border border-emerald-500/40 text-xs text-emerald-300 flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>Marked as Cleared by community</span>
+          <div className="p-2.5 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-zinc-200 flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
+            <span>Marked as Cleared by community consensus</span>
           </div>
         )}
 
         {/* Details Note */}
         {hazard.description && (
-          <p className="text-xs text-slate-300 leading-relaxed bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+          <p className="text-xs text-zinc-300 leading-relaxed bg-zinc-900/60 p-3 rounded-xl border border-zinc-800">
             {hazard.description}
           </p>
         )}
 
         {/* Address / Location Bar */}
-        <div className="flex items-center justify-between text-xs text-slate-400 font-mono bg-slate-950/40 px-3 py-2 rounded-xl border border-slate-800">
+        <div className="flex items-center justify-between text-xs text-zinc-400 font-mono bg-zinc-900/40 px-3 py-2 rounded-xl border border-zinc-800">
           <span className="truncate">{hazard.address || `${hazard.lat.toFixed(5)}, ${hazard.lng.toFixed(5)}`}</span>
           <button
             type="button"
             onClick={handleCopyCoords}
-            className="p-1 text-slate-400 hover:text-white rounded hover:bg-slate-800 ml-2"
+            className="p-1 text-zinc-400 hover:text-white rounded hover:bg-zinc-800 ml-2"
             title="Copy coordinates"
           >
             <Copy className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        {/* Action Buttons with Loading Spinners */}
+        {/* Action Buttons - Pure Monochrome */}
         <div className="grid grid-cols-2 gap-2.5 pt-1">
           <button
             type="button"
@@ -177,12 +177,12 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
             disabled={isUpvoting || hasUpvoted}
             className={`h-11 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
               hasUpvoted
-                ? 'bg-slate-800 border-slate-700 text-slate-400 cursor-not-allowed'
-                : 'bg-white hover:bg-slate-100 text-slate-950 border-white shadow-md'
+                ? 'bg-zinc-900 border-zinc-800 text-zinc-500 cursor-not-allowed'
+                : 'bg-white hover:bg-zinc-200 text-black border-white shadow-md'
             }`}
           >
             {isUpvoting ? (
-              <LoadingSpinner variant="ring" size={15} className="text-slate-950" />
+              <LoadingSpinner variant="ring" size={15} className="text-black" />
             ) : (
               <ThumbsUp className="w-3.5 h-3.5" />
             )}
@@ -195,14 +195,14 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
             disabled={isResolving || hasResolved}
             className={`h-11 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
               hasResolved
-                ? 'bg-slate-800 border-slate-700 text-slate-400 cursor-not-allowed'
-                : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700 hover:border-slate-500'
+                ? 'bg-zinc-900 border-zinc-800 text-zinc-500 cursor-not-allowed'
+                : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border-zinc-800 hover:border-zinc-600 hover:text-white'
             }`}
           >
             {isResolving ? (
-              <LoadingSpinner variant="ring" size={15} className="text-emerald-400" />
+              <LoadingSpinner variant="ring" size={15} className="text-white" />
             ) : (
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-zinc-400" />
             )}
             <span>{hasResolved ? 'Flagged Fixed' : 'Mark Cleared'}</span>
           </button>

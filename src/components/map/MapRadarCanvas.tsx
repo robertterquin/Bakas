@@ -46,17 +46,25 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
       zoomAnimation: true,
     });
 
-    // MapTiler Cloud — Dataviz Dark Base Layer
-    const maptilerApiKey = import.meta.env.VITE_MAPTILER_API_KEY || 'wxBU6hRFpwh0CToee5UJ';
-    const tileUrl = `https://api.maptiler.com/maps/dataviz-dark/256/{z}/{x}/{y}.png?key=${maptilerApiKey}`;
+    // 100% Zero-Key, Zero-Watermark Pure Monochrome Radar Canvas
+    L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+      {
+        attribution: '&copy; Esri &mdash; OpenStreetMap contributors',
+        maxZoom: 16,
+        minZoom: 3,
+      }
+    ).addTo(map);
 
-    L.tileLayer(tileUrl, {
-      attribution:
-        '&copy; <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors',
-      maxZoom: 20,
-      minZoom: 4,
-      tileSize: 256,
-    }).addTo(map);
+    // Clean reference road and locality labels
+    L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
+      {
+        attribution: '',
+        maxZoom: 16,
+        minZoom: 3,
+      }
+    ).addTo(map);
 
     // Zoom controls positioned at top right (safe from thumb HUD)
     L.control.zoom({ position: 'topright' }).addTo(map);
@@ -108,14 +116,14 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
 
     const userLatLng: L.LatLngExpression = [userLocation.lat, userLocation.lng];
 
-    // User GPS pulsing dot icon
+    // User GPS pulsing dot icon - Pure Monochrome Stark White Radar
     const userIcon = L.divIcon({
       className: 'custom-user-dot',
       html: `
         <div class="relative flex items-center justify-center w-8 h-8">
-          <div class="absolute w-8 h-8 rounded-full bg-sky-400/20 animate-ping"></div>
-          <div class="absolute w-6 h-6 rounded-full bg-sky-500/30 border border-sky-400/50 animate-pulse"></div>
-          <div class="relative w-4 h-4 rounded-full bg-sky-400 border-2 border-white shadow-[0_0_12px_#38bdf8]"></div>
+          <div class="absolute w-8 h-8 rounded-full bg-white/20 animate-ping"></div>
+          <div class="absolute w-6 h-6 rounded-full bg-white/30 border border-white/50 animate-pulse"></div>
+          <div class="relative w-4 h-4 rounded-full bg-white border-2 border-black shadow-[0_0_14px_#ffffff]"></div>
         </div>
       `,
       iconSize: [32, 32],
@@ -132,11 +140,11 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
     if (!accuracyCircleRef.current) {
       accuracyCircleRef.current = L.circle(userLatLng, {
         radius: Math.min(userLocation.accuracy, 200),
-        color: '#38bdf8',
+        color: '#ffffff',
         weight: 1,
-        opacity: 0.3,
-        fillColor: '#38bdf8',
-        fillOpacity: 0.05,
+        opacity: 0.2,
+        fillColor: '#ffffff',
+        fillOpacity: 0.03,
       }).addTo(map);
     } else {
       accuracyCircleRef.current.setLatLng(userLatLng);
@@ -147,11 +155,11 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
     if (!radiusBoundaryCircleRef.current) {
       radiusBoundaryCircleRef.current = L.circle(userLatLng, {
         radius: radiusFilter,
-        color: '#64748b',
+        color: '#52525b',
         weight: 1,
         dashArray: '4, 8',
-        opacity: 0.25,
-        fillColor: '#0f172a',
+        opacity: 0.35,
+        fillColor: '#09090b',
         fillOpacity: 0.02,
       }).addTo(map);
     } else {
@@ -171,7 +179,7 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
         html: `
           <div class="relative flex items-center justify-center w-10 h-10 animate-bounce">
             <div class="absolute -inset-2 rounded-full border-2 border-white/80 animate-ping opacity-75"></div>
-            <div class="w-8 h-8 rounded-full bg-white text-slate-950 border-2 border-sky-400 flex items-center justify-center font-bold text-sm shadow-[0_0_20px_#ffffff]">
+            <div class="w-8 h-8 rounded-full bg-white text-black border-2 border-zinc-900 flex items-center justify-center font-bold text-sm shadow-[0_0_20px_#ffffff]">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
                 <circle cx="12" cy="10" r="3"></circle>
@@ -197,7 +205,7 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
     }
   }, [tempPinLocation]);
 
-  // Update Hazard Markers on map with accurate Category Vector Icons (matching TopHUD)
+  // Update Hazard Markers on map with pure monochrome vector icons
   useEffect(() => {
     const markersLayer = markersLayerRef.current;
     if (!markersLayer) return;
@@ -211,28 +219,28 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
       const isPending = hazard.syncStatus === 'pending_sync';
       const isResolved = hazard.isResolved;
 
-      // Pin styling based on tactical visual rules
+      // Pure monochrome tactical marker styling
       let outerRing = '';
-      let markerColor = 'bg-slate-950 border-slate-600 text-slate-300';
-      let iconColor = '#cbd5e1';
+      let markerColor = 'bg-black border-zinc-700 text-zinc-400';
+      let iconColor = '#a1a1aa';
 
       if (isHigh) {
-        markerColor = 'bg-slate-950 border-white text-white shadow-[0_0_18px_rgba(255,255,255,0.95)]';
+        markerColor = 'bg-black border-white text-white shadow-[0_0_18px_rgba(255,255,255,0.95)]';
         iconColor = '#ffffff';
         outerRing = '<div class="absolute -inset-1.5 rounded-full border border-white/60 animate-ping opacity-75 pointer-events-none"></div>';
       } else if (isMedium) {
-        markerColor = 'bg-slate-950 border-slate-400 text-slate-100 shadow-[0_0_10px_rgba(203,213,225,0.5)]';
-        iconColor = '#f8fafc';
+        markerColor = 'bg-black border-zinc-400 text-zinc-100 shadow-[0_0_10px_rgba(255,255,255,0.35)]';
+        iconColor = '#f4f4f5';
       }
 
       if (isPending) {
-        markerColor += ' border-dashed border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.7)]';
-        iconColor = '#fbbf24';
+        markerColor += ' border-dashed border-zinc-300 shadow-[0_0_12px_rgba(255,255,255,0.5)]';
+        iconColor = '#ffffff';
       }
 
       if (isResolved) {
-        markerColor = 'bg-slate-950/60 border-slate-800 text-slate-600 opacity-40';
-        iconColor = '#475569';
+        markerColor = 'bg-black/60 border-zinc-800 text-zinc-600 opacity-40';
+        iconColor = '#52525b';
         outerRing = '';
       }
 
@@ -240,7 +248,7 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
       const svgIconMarkup = getCategorySvgMarkup(hazard.category, iconColor);
 
       const selectedClass = isSelected
-        ? 'ring-4 ring-sky-400 ring-offset-2 ring-offset-slate-950 scale-125 z-50'
+        ? 'ring-2 ring-white ring-offset-2 ring-offset-black scale-125 z-50'
         : 'hover:scale-110 transition-transform';
 
       const customDiv = L.divIcon({
@@ -253,7 +261,7 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
             </div>
             ${
               hazard.upvotes > 1
-                ? `<div class="absolute -bottom-1 -right-1 bg-slate-950 border border-slate-700 text-[10px] font-mono text-slate-200 px-1 rounded-full leading-tight font-bold">
+                ? `<div class="absolute -bottom-1 -right-1 bg-black border border-zinc-700 text-[10px] font-mono text-white px-1 rounded-full leading-tight font-bold">
                     +${hazard.upvotes}
                   </div>`
                 : ''

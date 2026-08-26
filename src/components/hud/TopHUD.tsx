@@ -1,5 +1,5 @@
 import React from 'react';
-import { WifiOff } from 'lucide-react';
+import { WifiOff, Radio } from 'lucide-react';
 import { RadiusFilter, CategoryFilter } from '../../types/hazard';
 import { HazardIcon } from '../ui/HazardIcon';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
@@ -39,22 +39,32 @@ export const TopHUD: React.FC<TopHUDProps> = ({
   onOpenAbout,
 }) => {
   return (
-    <header className="absolute top-3 left-0 right-0 z-30 pointer-events-none px-3">
-      <div className="max-w-xl mx-auto flex items-center justify-between gap-2 p-1.5 rounded-full bg-slate-950/90 border border-slate-800/80 shadow-2xl backdrop-blur-xl pointer-events-auto">
-        {/* Brand Mark with Official Bakas Logo */}
+    <header className="absolute top-3.5 left-0 right-0 z-30 pointer-events-none px-3 sm:px-4">
+      <div className="max-w-xl mx-auto flex items-center justify-between gap-1.5 sm:gap-2 p-1.5 rounded-full bg-black/75 border border-white/10 shadow-[0_16px_40px_rgba(0,0,0,0.85),inset_0_1px_0_rgba(255,255,255,0.15)] backdrop-blur-2xl pointer-events-auto transition-all">
+        {/* Brand Mark with Live Telemetry Radar Beacon */}
         <button
           type="button"
           onClick={onOpenAbout}
-          className="flex items-center gap-1.5 pl-1.5 pr-2 py-1 rounded-full hover:bg-slate-800/60 transition-colors"
-          title="About Bakás"
+          className="flex items-center gap-2 pl-2 pr-2.5 py-1 rounded-full hover:bg-white/10 active:scale-95 transition-all group"
+          title="About Bakás Radar"
         >
-          <BakasLogo size={20} className="shrink-0" />
-          <span className="font-bold text-xs tracking-tight text-white">Bakás</span>
-          <span className="text-[11px] font-mono text-slate-400 pl-0.5">({hazardCount})</span>
+          <BakasLogo size={22} withGlow={true} className="shrink-0 group-hover:scale-105 transition-transform" />
+          <div className="flex items-center gap-1.5">
+            <span className="font-bold text-xs tracking-tight text-white font-sans">Bakás</span>
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/[0.08] border border-white/10">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
+              </span>
+              <span className="text-[10px] font-mono font-semibold text-zinc-300 leading-none">
+                {hazardCount}
+              </span>
+            </div>
+          </div>
         </button>
 
-        {/* Pure Lucide Category Filter Tabs */}
-        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+        {/* Dynamic Segmented Category Tabs with Liquid Glass Sheen */}
+        <nav className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
           {CATEGORIES.map((cat) => {
             const isSelected = activeFilter === cat.id;
             return (
@@ -62,43 +72,50 @@ export const TopHUD: React.FC<TopHUDProps> = ({
                 key={cat.id}
                 type="button"
                 onClick={() => onSelectFilter(cat.id)}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all duration-200 active:scale-95 ${
                   isSelected
-                    ? 'bg-white text-slate-950 font-bold shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                    ? 'bg-white text-black font-bold shadow-[0_2px_14px_rgba(255,255,255,0.3),inset_0_1px_0_rgba(255,255,255,0.8)] scale-[1.02]'
+                    : 'text-zinc-400 hover:text-white hover:bg-white/[0.08]'
                 }`}
               >
-                <HazardIcon category={cat.id} size={13} className={isSelected ? 'text-slate-950' : 'text-slate-400'} />
-                <span className="hidden sm:inline">{cat.label}</span>
+                <HazardIcon
+                  category={cat.id}
+                  size={13}
+                  className={`transition-colors ${isSelected ? 'text-black' : 'text-zinc-400'}`}
+                />
+                <span className="hidden sm:inline font-sans">{cat.label}</span>
               </button>
             );
           })}
-        </div>
+        </nav>
 
-        {/* Radius & Status */}
-        <div className="flex items-center gap-1 pr-1">
+        {/* Precision Radar Range & Connectivity Telemetry */}
+        <div className="flex items-center gap-1.5 pr-1">
           <button
             type="button"
             onClick={onOpenFilter}
-            className="px-2 py-1 rounded-full bg-slate-900 border border-slate-800 text-[10px] font-mono text-slate-300 hover:border-slate-700"
-            title="Change range"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/[0.06] border border-white/10 text-[10px] font-mono font-semibold text-zinc-200 hover:bg-white/[0.12] hover:border-white/25 active:scale-95 transition-all shadow-sm"
+            title="Adjust spatial radar radius"
           >
-            {(radiusFilter / 1000).toFixed(0)}km
+            <Radio className="w-3 h-3 text-zinc-400" />
+            <span>{(radiusFilter / 1000).toFixed(0)}km</span>
           </button>
 
           {(!isOnline || pendingCount > 0) && (
             <button
               type="button"
               onClick={onOpenSync}
-              className="p-1 text-amber-400"
-              title={!isOnline ? 'Offline' : `${pendingCount} pending reports`}
+              className="p-1.5 rounded-full bg-white/[0.08] hover:bg-white/20 border border-white/10 text-white active:scale-95 transition-all"
+              title={!isOnline ? 'Offline mode active' : `${pendingCount} pending traces`}
             >
               <WifiOff className="w-3.5 h-3.5" />
             </button>
           )}
 
           {isSyncing && (
-            <LoadingSpinner variant="dual-arc" size={14} className="text-white ml-1" />
+            <div className="p-1">
+              <LoadingSpinner variant="dual-arc" size={14} className="text-white" />
+            </div>
           )}
         </div>
       </div>

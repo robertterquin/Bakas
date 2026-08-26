@@ -48,13 +48,13 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="radar-filters-title"
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm animate-fadeIn"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl shadow-2xl p-5 text-slate-100 space-y-4">
-        <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+      <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-t-3xl sm:rounded-3xl shadow-2xl p-5 text-zinc-100 space-y-4">
+        <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
           <h2 id="radar-filters-title" className="text-base font-bold tracking-tight text-white">
             Radar Range & Filter
           </h2>
@@ -62,7 +62,7 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
             type="button"
             onClick={onClose}
             aria-label="Close filter options"
-            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+            className="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-900 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -70,7 +70,7 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
 
         {/* Radius presets */}
         <div>
-          <label className="block text-xs font-semibold text-slate-400 mb-2">
+          <label className="block text-xs font-semibold text-zinc-400 mb-2">
             Spatial Radar Radius
           </label>
           <div className="space-y-1.5">
@@ -84,13 +84,13 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
                   aria-pressed={isSelected}
                   className={`w-full p-3 rounded-xl border flex items-center justify-between transition-all ${
                     isSelected
-                      ? 'bg-slate-800 border-white text-white shadow-sm'
-                      : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                      ? 'bg-zinc-900 border-white text-white shadow-sm'
+                      : 'bg-black/60 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
                   }`}
                 >
                   <div className="text-left">
                     <div className="font-bold text-sm font-mono">{opt.label}</div>
-                    <div className="text-xs text-slate-400">{opt.sub}</div>
+                    <div className="text-xs text-zinc-500">{opt.sub}</div>
                   </div>
                   {isSelected && <Check className="w-4 h-4 text-white" />}
                 </button>
@@ -101,7 +101,7 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
 
         {/* Category presets */}
         <div>
-          <label className="block text-xs font-semibold text-slate-400 mb-2">
+          <label className="block text-xs font-semibold text-zinc-400 mb-2">
             Category Focus
           </label>
           <div className="grid grid-cols-2 gap-2">
@@ -111,11 +111,11 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
               aria-pressed={activeFilter === 'all'}
               className={`p-2.5 rounded-xl border text-xs font-medium flex items-center gap-2 transition-all ${
                 activeFilter === 'all'
-                  ? 'bg-white text-slate-950 border-white font-bold'
-                  : 'bg-slate-800/80 text-slate-300 border-slate-700 hover:border-slate-500'
+                  ? 'bg-white text-black border-white font-bold'
+                  : 'bg-zinc-900/80 text-zinc-300 border-zinc-800 hover:border-zinc-600'
               }`}
             >
-              <HazardIcon category="all" size={14} />
+              <HazardIcon category="all" size={14} className={activeFilter === 'all' ? 'text-black' : 'text-zinc-400'} />
               <span>All Categories</span>
             </button>
             {Object.values(HAZARD_CATEGORIES).map((cat) => {
@@ -128,11 +128,11 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
                   aria-pressed={isSelected}
                   className={`p-2.5 rounded-xl border text-xs font-medium flex items-center gap-2 transition-all ${
                     isSelected
-                      ? 'bg-white text-slate-950 border-white font-bold'
-                      : 'bg-slate-800/80 text-slate-300 border-slate-700 hover:border-slate-500'
+                      ? 'bg-white text-black border-white font-bold'
+                      : 'bg-zinc-900/80 text-zinc-300 border-zinc-800 hover:border-zinc-600'
                   }`}
                 >
-                  <HazardIcon category={cat.id} size={14} />
+                  <HazardIcon category={cat.id} size={14} className={isSelected ? 'text-black' : 'text-zinc-400'} />
                   <span>{cat.name.split(' ')[0]}</span>
                 </button>
               );
@@ -143,7 +143,7 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
         <button
           type="button"
           onClick={onClose}
-          className="w-full h-11 rounded-xl bg-white text-slate-950 font-bold text-xs hover:bg-slate-100 transition-colors mt-2"
+          className="w-full h-11 rounded-xl bg-white text-black font-bold text-xs hover:bg-zinc-200 transition-colors mt-2"
         >
           Apply Filters
         </button>

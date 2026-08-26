@@ -82,22 +82,22 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="report-hazard-title"
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm animate-fadeIn"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl shadow-2xl p-5 text-slate-100 space-y-4">
+      <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-t-3xl sm:rounded-3xl shadow-2xl p-5 text-zinc-100 space-y-4">
         {/* Header */}
-        <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+        <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
           <div>
             <h2 id="report-hazard-title" className="text-base font-bold text-white">
               Report Road Hazard
             </h2>
-            <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono mt-0.5">
-              <MapPin className="w-3.5 h-3.5 text-slate-300" />
+            <div className="flex items-center gap-1.5 text-[11px] text-zinc-400 font-mono mt-0.5">
+              <MapPin className="w-3.5 h-3.5 text-zinc-300" />
               <span>{isCustomLocation ? 'Pinned Location' : 'GPS Location'}:</span>
-              <span className="text-slate-300">
+              <span className="text-white">
                 {targetCoords.lat.toFixed(5)}, {targetCoords.lng.toFixed(5)}
               </span>
             </div>
@@ -106,17 +106,17 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+            className="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-900 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* 15m Duplicate Alert */}
+        {/* 15m Duplicate Alert - Monochrome */}
         {duplicateWarning && (
-          <div className="p-3 rounded-xl bg-amber-950/60 border border-amber-500/50 text-xs text-amber-200 flex items-center justify-between gap-2">
+          <div className="p-3 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-zinc-200 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+              <AlertTriangle className="w-4 h-4 text-white shrink-0" />
               <span>Similar hazard nearby within 15m</span>
             </div>
             <button
@@ -125,7 +125,7 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
                 onSelectExisting(duplicateWarning.id);
                 onClose();
               }}
-              className="font-bold underline text-white hover:text-amber-300 shrink-0"
+              className="font-bold underline text-white hover:text-zinc-300 shrink-0"
             >
               View Pin
             </button>
@@ -133,9 +133,9 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Accurate Lucide Category Picker */}
+          {/* Pure Lucide Category Picker */}
           <div>
-            <label className="block text-xs font-semibold text-slate-400 mb-2">Category</label>
+            <label className="block text-xs font-semibold text-zinc-400 mb-2">Category</label>
             <div className="grid grid-cols-2 gap-2">
               {CATEGORY_ITEMS.map((item) => {
                 const isSelected = category === item.id;
@@ -147,16 +147,16 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
                     aria-pressed={isSelected}
                     className={`p-3 rounded-xl border text-left transition-all flex items-start gap-2.5 ${
                       isSelected
-                        ? 'bg-white text-slate-950 border-white font-bold shadow-md'
-                        : 'bg-slate-800/60 border-slate-700/60 text-slate-300 hover:border-slate-500'
+                        ? 'bg-white text-black border-white font-bold shadow-md'
+                        : 'bg-zinc-900/60 border-zinc-800 text-zinc-300 hover:border-zinc-600'
                     }`}
                   >
-                    <div className={`p-1.5 rounded-lg shrink-0 mt-0.5 ${isSelected ? 'bg-slate-950 text-white' : 'bg-slate-900 border border-slate-700 text-slate-400'}`}>
-                      <HazardIcon category={item.id} size={16} />
+                    <div className={`p-1.5 rounded-lg shrink-0 mt-0.5 ${isSelected ? 'bg-black text-white' : 'bg-black border border-zinc-800 text-zinc-400'}`}>
+                      <HazardIcon category={item.id} size={16} className={isSelected ? 'text-white' : 'text-zinc-400'} />
                     </div>
                     <div>
                       <div className="text-xs font-semibold leading-tight">{item.name}</div>
-                      <div className={`text-[10px] mt-0.5 ${isSelected ? 'text-slate-700' : 'text-slate-400'}`}>
+                      <div className={`text-[10px] mt-0.5 ${isSelected ? 'text-zinc-700' : 'text-zinc-500'}`}>
                         {item.tagalog}
                       </div>
                     </div>
@@ -168,7 +168,7 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
 
           {/* Severity Picker */}
           <div>
-            <label className="block text-xs font-semibold text-slate-400 mb-2">Severity</label>
+            <label className="block text-xs font-semibold text-zinc-400 mb-2">Severity</label>
             <div className="grid grid-cols-3 gap-2">
               {(['low', 'medium', 'high'] as HazardSeverity[]).map((sev) => {
                 const isSelected = severity === sev;
@@ -179,10 +179,10 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
                     type="button"
                     onClick={() => setSeverity(sev)}
                     aria-pressed={isSelected}
-                    className={`py-2 rounded-xl border text-center text-xs font-semibold transition-all ${
+                    className={`py-2.5 rounded-xl border text-center text-xs font-semibold transition-all ${
                       isSelected
-                        ? 'bg-white text-slate-950 border-white shadow-md'
-                        : 'bg-slate-800/60 border-slate-700/60 text-slate-300 hover:border-slate-500'
+                        ? 'bg-white text-black border-white font-bold shadow-md'
+                        : 'bg-zinc-900/60 border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-white'
                     }`}
                   >
                     {label}
@@ -200,7 +200,7 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Optional short note (e.g. inner lane)"
               maxLength={100}
-              className="w-full px-3 py-2 rounded-xl bg-slate-800/80 border border-slate-700/80 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-white"
+              className="w-full px-3 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white transition-colors"
             />
           </div>
 
@@ -208,11 +208,11 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full h-12 rounded-xl bg-white hover:bg-slate-100 text-slate-950 font-bold text-sm shadow-md transition-all active:scale-98 disabled:opacity-75 flex items-center justify-center gap-2"
+            className="w-full h-12 rounded-xl bg-white hover:bg-zinc-200 text-black font-bold text-sm shadow-xl transition-all active:scale-98 disabled:opacity-75 flex items-center justify-center gap-2"
           >
             {isSubmitting ? (
               <>
-                <LoadingSpinner variant="ring" size={18} className="text-slate-950" />
+                <LoadingSpinner variant="ring" size={18} className="text-black" />
                 <span>Broadcasting to Radar...</span>
               </>
             ) : (

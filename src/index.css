@@ -2,18 +2,16 @@
 @import "leaflet/dist/leaflet.css";
 
 :root {
-  --bg-canvas: #020617;
-  --bg-surface: #0f172a;
-  --bg-surface-elevated: #1e293b;
-  --border-subtle: #334155;
-  --border-focus: #64748b;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
+  --bg-canvas: #000000;
+  --bg-surface: #09090b;
+  --bg-surface-elevated: #18181b;
+  --border-subtle: #27272a;
+  --border-focus: #52525b;
+  --text-primary: #ffffff;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
   --accent-radar: #ffffff;
-  --accent-gps: #38bdf8;
-  --accent-sync-warn: #f59e0b;
-  --accent-success: #10b981;
+  --accent-gps: #ffffff;
 
   color-scheme: dark;
   background-color: var(--bg-canvas);
@@ -30,7 +28,7 @@ html, body, #root {
   padding: 0;
   overflow: hidden;
   overscroll-behavior: none;
-  background-color: #020617;
+  background-color: #000000;
   touch-action: pan-x pan-y;
   user-select: none;
 }
@@ -46,11 +44,16 @@ html, body, #root {
 
 /* Leaflet Canvas Dark Integration */
 .leaflet-container {
-  background-color: #020617 !important;
+  background-color: #000000 !important;
   font-family: inherit !important;
   width: 100%;
   height: 100%;
   z-index: 1;
+}
+
+/* 100% Pure Monochrome Map Tile Engine (Pitch Black Canvas with Crisp White/Silver Roads) */
+.leaflet-tile-pane {
+  filter: grayscale(100%) contrast(165%) brightness(65%);
 }
 
 /* Clean Leaflet Control Overrides */
@@ -60,34 +63,36 @@ html, body, #root {
 }
 
 .leaflet-control-zoom {
-  border: 1px solid #334155 !important;
+  border: 1px solid #27272a !important;
   border-radius: 12px !important;
   overflow: hidden !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.8) !important;
 }
 
 .leaflet-control-zoom a {
-  background-color: #0f172a !important;
-  color: #f8fafc !important;
-  border-bottom: 1px solid #334155 !important;
+  background-color: #09090b !important;
+  color: #ffffff !important;
+  border-bottom: 1px solid #27272a !important;
+  transition: all 0.15s ease;
 }
 
 .leaflet-control-zoom a:hover {
-  background-color: #1e293b !important;
-  color: #38bdf8 !important;
+  background-color: #18181b !important;
+  color: #ffffff !important;
 }
 
 .leaflet-control-attribution {
-  background-color: rgba(2, 6, 23, 0.75) !important;
-  color: #64748b !important;
+  background-color: rgba(0, 0, 0, 0.85) !important;
+  color: #71717a !important;
   font-size: 10px !important;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(8px);
   border-top-left-radius: 6px;
-  padding: 2px 6px !important;
+  border: 1px solid #18181b;
+  padding: 2px 8px !important;
 }
 
 .leaflet-control-attribution a {
-  color: #94a3b8 !important;
+  color: #a1a1aa !important;
   text-decoration: none !important;
 }
 
@@ -95,7 +100,7 @@ html, body, #root {
 @keyframes radar-pulse {
   0% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.8);
   }
   70% {
     transform: scale(1);
@@ -110,15 +115,15 @@ html, body, #root {
 @keyframes gps-pulse {
   0% {
     transform: scale(0.9);
-    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7);
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.8);
   }
   70% {
     transform: scale(1.05);
-    box-shadow: 0 0 0 16px rgba(56, 189, 248, 0);
+    box-shadow: 0 0 0 16px rgba(255, 255, 255, 0);
   }
   100% {
     transform: scale(0.9);
-    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0);
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
   }
 }
 
@@ -145,26 +150,32 @@ html, body, #root {
 
 /* Custom Marker Styles */
 .hazard-pin-low {
-  background-color: #64748b;
-  box-shadow: 0 0 8px rgba(100, 116, 139, 0.5);
-  opacity: 0.80;
+  background-color: #27272a;
+  border-color: #52525b;
+  color: #a1a1aa;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
+  opacity: 0.85;
 }
 
 .hazard-pin-medium {
-  background-color: #cbd5e1;
-  box-shadow: 0 0 12px rgba(203, 213, 225, 0.7);
+  background-color: #09090b;
+  border-color: #a1a1aa;
+  color: #f4f4f5;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.35);
   opacity: 0.95;
 }
 
 .hazard-pin-high {
-  background-color: #ffffff;
-  box-shadow: 0 0 16px rgba(255, 255, 255, 0.95);
+  background-color: #000000;
+  border-color: #ffffff;
+  color: #ffffff;
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.95);
   animation: radar-pulse 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 .user-gps-dot {
-  background-color: #38bdf8;
-  box-shadow: 0 0 14px rgba(56, 189, 248, 0.9);
+  background-color: #ffffff;
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.95);
   animation: gps-pulse 2.4s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
 }
 
