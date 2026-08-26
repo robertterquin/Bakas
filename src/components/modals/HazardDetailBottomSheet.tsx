@@ -3,11 +3,10 @@ import { X, ThumbsUp, CheckCircle2, Copy, ShieldCheck } from 'lucide-react';
 import { Hazard, UserLocation } from '../../types/hazard';
 import {
   HAZARD_CATEGORIES,
-  calculateDistanceInMeters,
-  formatDistance,
   formatTtlRemaining,
   hasDeviceVoted,
-} from '../../lib/domain-rules';
+} from '../../utils/domain-rules';
+import { calculateDistanceInMeters, formatDistance } from '../../services/geo.service';
 import { HazardIcon } from '../ui/HazardIcon';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 

@@ -1,20 +1,8 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Hazard, HazardPayload } from '../types/hazard';
-import { calculateDistanceInMeters, calculateInitialExpiry, calculateExtendedExpiry } from './domain-rules';
+import { supabase, isSupabaseConfigured } from '../config/supabase';
+import { calculateInitialExpiry, calculateExtendedExpiry } from '../utils/domain-rules';
+import { calculateDistanceInMeters } from './geo.service';
 import { GOLDEN_HAZARDS } from '../data/golden-fixtures';
-
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-
-export const isSupabaseConfigured = Boolean(
-  SUPABASE_URL &&
-  SUPABASE_ANON_KEY &&
-  !SUPABASE_URL.includes('your-project')
-);
-
-export const supabase: SupabaseClient | null = isSupabaseConfigured
-  ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-  : null;
 
 // In-memory runtime store for live session when backend is not configured or in offline demo mode
 let liveLocalHazards: Hazard[] = [...GOLDEN_HAZARDS];

@@ -1,7 +1,7 @@
 import React, { useEffect, useCallback } from 'react';
 import { X, Shield, EyeOff, Zap, Lock, AlertTriangle } from 'lucide-react';
 import { BakasLogo } from '../ui/BakasLogo';
-import { getOrCreateDeviceFingerprint } from '../../lib/domain-rules';
+import { getOrCreateDeviceFingerprint } from '../../utils/domain-rules';
 
 interface AboutModalProps {
   isOpen: boolean;

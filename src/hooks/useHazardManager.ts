@@ -1,14 +1,20 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Hazard, HazardCategory, HazardPayload, CategoryFilter, RadiusFilter, UserLocation, ValidationAction } from '../types/hazard';
 import {
-  calculateDistanceInMeters,
   getOrCreateDeviceFingerprint,
   hasDeviceVoted,
   recordDeviceVote,
   calculateExtendedExpiry,
-} from '../lib/domain-rules';
-import { fetchHazardsInRadius, submitHazardToBackend, submitUpvoteToBackend, submitResolveToBackend, createNewHazardObject } from '../lib/supabase';
-import { savePendingReport, cacheHazards, savePendingValidation } from '../lib/offline-storage';
+} from '../utils/domain-rules';
+import { calculateDistanceInMeters } from '../services/geo.service';
+import {
+  fetchHazardsInRadius,
+  submitHazardToBackend,
+  submitUpvoteToBackend,
+  submitResolveToBackend,
+  createNewHazardObject,
+} from '../services/hazard.service';
+import { savePendingReport, cacheHazards, savePendingValidation } from '../services/offline.service';
 
 export function useHazardManager(userLocation: UserLocation, isOnline: boolean, onQueueChanged?: () => void) {
   const [hazards, setHazards] = useState<Hazard[]>([]);

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { getPendingReports, removePendingReport, getPendingValidations, removePendingValidation } from '../lib/offline-storage';
-import { submitHazardToBackend, submitUpvoteToBackend, submitResolveToBackend } from '../lib/supabase';
+import { getPendingReports, removePendingReport, getPendingValidations, removePendingValidation } from '../services/offline.service';
+import { submitHazardToBackend, submitUpvoteToBackend, submitResolveToBackend } from '../services/hazard.service';
 
 export interface SyncState {
   isOnline: boolean;

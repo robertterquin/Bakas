@@ -1,5 +1,5 @@
 import { Hazard } from '../types/hazard';
-import { calculateInitialExpiry } from '../lib/domain-rules';
+import { calculateInitialExpiry } from '../utils/domain-rules';
 
 const NOW = new Date();
 

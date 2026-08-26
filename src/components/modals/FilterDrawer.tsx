@@ -1,7 +1,7 @@
 import React, { useEffect, useCallback } from 'react';
 import { X, Check } from 'lucide-react';
 import { RadiusFilter, CategoryFilter } from '../../types/hazard';
-import { HAZARD_CATEGORIES } from '../../lib/domain-rules';
+import { HAZARD_CATEGORIES } from '../../utils/domain-rules';
 import { HazardIcon } from '../ui/HazardIcon';
 
 interface FilterDrawerProps {
