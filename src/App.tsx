@@ -2,12 +2,9 @@ import { useState, useCallback } from 'react';
 import { useGeolocation } from './hooks/useGeolocation';
 import { useSyncManager } from './hooks/useSyncManager';
 import { useHazardManager } from './hooks/useHazardManager';
-import { usePWAInstall } from './hooks/usePWAInstall';
 import { MapRadarCanvas } from './components/map/MapRadarCanvas';
 import { TopHUD } from './components/hud/TopHUD';
-import { CategoryFilterBar } from './components/hud/CategoryFilterBar';
 import { ActionHUD } from './components/hud/ActionHUD';
-import { PWAInstallBanner } from './components/hud/PWAInstallBanner';
 import { ReportBottomSheet } from './components/modals/ReportBottomSheet';
 import { HazardDetailBottomSheet } from './components/modals/HazardDetailBottomSheet';
 import { FilterDrawer } from './components/modals/FilterDrawer';
@@ -15,7 +12,7 @@ import { SyncStatusModal } from './components/modals/SyncStatusModal';
 import { AboutModal } from './components/modals/AboutModal';
 import { ToastNotification } from './components/ui/ToastNotification';
 import { ScreenReaderAnnouncer } from './components/ui/ScreenReaderAnnouncer';
-import { HazardPayload } from './types/hazard';
+import { HazardPayload, Coordinates } from './types/hazard';
 
 export default function App() {
   // 1. Geolocation Tracking
@@ -37,7 +34,7 @@ export default function App() {
 
   // 3. Offline Sync Engine
   const handleSyncComplete = useCallback((count: number) => {
-    notifyUser(`Synced ${count} offline ${count === 1 ? 'trace' : 'traces'} to radar.`);
+    notifyUser(`Synced ${count} offline ${count === 1 ? 'trace' : 'traces'}.`);
   }, [notifyUser]);
 
   const {
@@ -64,27 +61,47 @@ export default function App() {
     resolveHazard,
   } = useHazardManager(userLocation, isOnline, refreshPendingCount);
 
-  // 5. PWA Installation
-  const {
-    isInstallable,
-    triggerInstall,
-    dismissPrompt,
-  } = usePWAInstall();
-
-  // 6. Modal & Sheet UI States
+  // 5. Custom Click-to-Pin & Modal States
+  const [customReportCoords, setCustomReportCoords] = useState<Coordinates | null>(null);
   const [isReportOpen, setIsReportOpen] = useState<boolean>(false);
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
   const [isSyncModalOpen, setIsSyncModalOpen] = useState<boolean>(false);
   const [isAboutModalOpen, setIsAboutModalOpen] = useState<boolean>(false);
 
+  // Handle clicking anywhere on the map to drop a pin
+  const handleMapClick = useCallback((lat: number, lng: number) => {
+    setSelectedHazardId(null);
+    setCustomReportCoords({ lat, lng });
+    setIsReportOpen(true);
+    notifyUser('Pinned location on map.');
+  }, [setSelectedHazardId, notifyUser]);
+
+  // Handle opening report via bottom FAB button
+  const handleOpenReportFAB = useCallback(() => {
+    setCustomReportCoords(null);
+    setIsReportOpen(true);
+  }, []);
+
+  // Handle closing report sheet
+  const handleCloseReport = useCallback(() => {
+    setIsReportOpen(false);
+    setCustomReportCoords(null);
+  }, []);
+
   // Handle Hazard Submission
   const handleReportSubmit = async (payload: HazardPayload) => {
     const result = await reportHazard(payload);
+    setCustomReportCoords(null);
     if (result.isOffline) {
-      notifyUser('Hazard saved offline in IndexedDB! Will sync when online.');
+      notifyUser('Saved offline in IndexedDB.');
     } else {
-      notifyUser('Hazard trace live on 5km radar!');
+      notifyUser('Hazard trace live on radar!');
     }
+  };
+
+  const activeTargetCoords: Coordinates = customReportCoords || {
+    lat: userLocation.lat,
+    lng: userLocation.lng,
   };
 
   return (
@@ -92,7 +109,7 @@ export default function App() {
       {/* Screen Reader ARIA Live Region */}
       <ScreenReaderAnnouncer announcement={ariaAnnouncement} />
 
-      {/* 1. Fullscreen Map Radar Canvas (Leaflet + CartoDB Dark Matter) */}
+      {/* 1. Fullscreen Map Radar Canvas with Click-to-Pin */}
       <MapRadarCanvas
         userLocation={userLocation}
         hazards={filteredHazards}
@@ -101,58 +118,47 @@ export default function App() {
         recenterCount={recenterCount}
         radiusFilter={radiusFilter}
         activeFilter={activeFilter}
+        tempPinLocation={customReportCoords}
+        onMapClick={handleMapClick}
       />
 
-      {/* 2. Top HUD Header */}
+      {/* 2. Single Unified Minimal Header Bar */}
       <TopHUD
         hazardCount={filteredHazards.length}
         radiusFilter={radiusFilter}
+        activeFilter={activeFilter}
+        onSelectFilter={(cat) => setActiveFilter(cat)}
         isOnline={isOnline}
         pendingCount={pendingCount}
         isSyncing={isSyncing}
-        onOpenAbout={() => setIsAboutModalOpen(true)}
         onOpenFilter={() => setIsFilterOpen(true)}
         onOpenSync={() => setIsSyncModalOpen(true)}
-        onManualSync={syncPendingItems}
+        onOpenAbout={() => setIsAboutModalOpen(true)}
       />
 
-      {/* 3. Horizontal Category Filter Chips */}
-      <CategoryFilterBar
-        activeFilter={activeFilter}
-        onSelectFilter={(cat) => {
-          setActiveFilter(cat);
-          setAriaAnnouncement(`Category filter set to ${cat}`);
-        }}
-      />
-
-      {/* 4. PWA Install Prompt Banner (Only shows when installable) */}
-      <PWAInstallBanner
-        isInstallable={isInstallable}
-        onInstall={triggerInstall}
-        onDismiss={dismissPrompt}
-      />
-
-      {/* 5. Bottom Action HUD Controls */}
+      {/* 3. Sleek Bottom Action Controls */}
       <ActionHUD
-        onOpenReport={() => setIsReportOpen(true)}
+        onOpenReport={handleOpenReportFAB}
         onRecenter={() => {
           recenter();
-          setAriaAnnouncement('Recentering radar to current device location.');
+          notifyUser('Recentering radar.');
         }}
         isTracking={isTracking}
       />
 
-      {/* 6. Modals & Bottom Sheets */}
+      {/* 4. Modals & Bottom Sheets */}
       {/* Report Modal */}
       <ReportBottomSheet
         isOpen={isReportOpen}
-        onClose={() => setIsReportOpen(false)}
-        userLocation={userLocation}
+        onClose={handleCloseReport}
+        targetCoords={activeTargetCoords}
+        isCustomLocation={customReportCoords !== null}
         onSubmit={handleReportSubmit}
         checkNearbyDuplicate={checkNearbyDuplicate}
         onSelectExisting={(id) => {
           setSelectedHazardId(id);
           setIsReportOpen(false);
+          setCustomReportCoords(null);
         }}
       />
 
@@ -171,15 +177,9 @@ export default function App() {
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
         radiusFilter={radiusFilter}
-        onChangeRadius={(r) => {
-          setRadiusFilter(r);
-          setAriaAnnouncement(`Radius set to ${(r / 1000).toFixed(0)} kilometers.`);
-        }}
+        onChangeRadius={(r) => setRadiusFilter(r)}
         activeFilter={activeFilter}
-        onChangeCategory={(c) => {
-          setActiveFilter(c);
-          setAriaAnnouncement(`Category set to ${c}`);
-        }}
+        onChangeCategory={(c) => setActiveFilter(c)}
       />
 
       {/* Offline Sync Status Modal */}
@@ -192,13 +192,13 @@ export default function App() {
         onShowToast={notifyUser}
       />
 
-      {/* About & Safety Guidance Modal */}
+      {/* About Modal */}
       <AboutModal
         isOpen={isAboutModalOpen}
         onClose={() => setIsAboutModalOpen(false)}
       />
 
-      {/* Toast Notification Alert */}
+      {/* Toast Alert */}
       <ToastNotification
         message={toastMessage}
         onDismiss={() => setToastMessage(null)}

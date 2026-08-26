@@ -1,21 +1,29 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { X, AlertCircle, Droplets, ShieldAlert, Moon, Check, MapPin, AlertTriangle, ArrowRight } from 'lucide-react';
-import { HazardCategory, HazardSeverity, HazardPayload, UserLocation, Hazard } from '../../types/hazard';
-import { HAZARD_CATEGORIES, HAZARD_SEVERITIES } from '../../lib/domain-rules';
+import { X, AlertTriangle, MapPin } from 'lucide-react';
+import { HazardCategory, HazardSeverity, HazardPayload, Hazard, Coordinates } from '../../types/hazard';
 
 interface ReportBottomSheetProps {
   isOpen: boolean;
   onClose: () => void;
-  userLocation: UserLocation;
+  targetCoords: Coordinates;
+  isCustomLocation?: boolean;
   onSubmit: (payload: HazardPayload) => Promise<void>;
   checkNearbyDuplicate: (lat: number, lng: number, category: HazardCategory) => Hazard | null;
   onSelectExisting: (hazardId: string) => void;
 }
 
+const CATEGORY_ITEMS: { id: HazardCategory; emoji: string; name: string; tagalog: string }[] = [
+  { id: 'pothole', emoji: '🕳️', name: 'Pothole / Manhole', tagalog: 'Butas / Lubak' },
+  { id: 'clogged_drainage', emoji: '💧', name: 'Flooding / Drainage', tagalog: 'Baha / Kanal' },
+  { id: 'road_obstruction', emoji: '🚧', name: 'Road Obstruction', tagalog: 'Harang sa Daan' },
+  { id: 'dark_street', emoji: '🌑', name: 'Dark Street', tagalog: 'Madilim' },
+];
+
 export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
   isOpen,
   onClose,
-  userLocation,
+  targetCoords,
+  isCustomLocation,
   onSubmit,
   checkNearbyDuplicate,
   onSelectExisting,
@@ -26,20 +34,16 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [duplicateWarning, setDuplicateWarning] = useState<Hazard | null>(null);
 
-  // Check 15m anti-spam duplicate whenever category or location changes
   useEffect(() => {
     if (isOpen) {
-      const dup = checkNearbyDuplicate(userLocation.lat, userLocation.lng, category);
+      const dup = checkNearbyDuplicate(targetCoords.lat, targetCoords.lng, category);
       setDuplicateWarning(dup);
     }
-  }, [isOpen, category, userLocation, checkNearbyDuplicate]);
+  }, [isOpen, category, targetCoords, checkNearbyDuplicate]);
 
-  // Keyboard accessibility: Escape key listener
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
+      if (e.key === 'Escape') onClose();
     },
     [onClose]
   );
@@ -60,8 +64,8 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
       await onSubmit({
         category,
         severity,
-        lat: userLocation.lat,
-        lng: userLocation.lng,
+        lat: targetCoords.lat,
+        lng: targetCoords.lng,
         description: description.trim() || undefined,
       });
       setDescription('');
@@ -81,116 +85,74 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-lg max-h-[90vh] bg-slate-900 border border-slate-700 rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden text-slate-100">
-        {/* Header Handle */}
-        <div className="pt-3 pb-2 px-6 flex items-center justify-between border-b border-slate-800">
-          <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded-full bg-white animate-pulse" />
-            <h2 id="report-hazard-title" className="text-lg font-bold tracking-tight">
+      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl shadow-2xl p-5 text-slate-100 space-y-4">
+        {/* Header */}
+        <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+          <div>
+            <h2 id="report-hazard-title" className="text-base font-bold text-white">
               Report Road Hazard
             </h2>
+            <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono mt-0.5">
+              <MapPin className="w-3.5 h-3.5 text-sky-400" />
+              <span>{isCustomLocation ? 'Clicked Map Pin' : 'GPS Location'}:</span>
+              <span className="text-slate-300">
+                {targetCoords.lat.toFixed(5)}, {targetCoords.lng.toFixed(5)}
+              </span>
+            </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close report dialog"
-            className="p-2 -mr-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors focus-visible:ring-2 focus-visible:ring-sky-400 min-w-[48px] min-h-[48px] flex items-center justify-center"
+            aria-label="Close"
+            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 overflow-y-auto space-y-5">
-          {/* 15m Duplicate Warning */}
-          {duplicateWarning && (
-            <div className="p-3.5 rounded-2xl bg-amber-950/70 border border-amber-500/60 flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-              <div className="text-xs space-y-1">
-                <p className="font-semibold text-amber-200">
-                  Similar hazard already reported within 15 meters!
-                </p>
-                <p className="text-amber-300/80">
-                  You can upvote the existing report to strengthen its visibility instead of creating a duplicate.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    onSelectExisting(duplicateWarning.id);
-                    onClose();
-                  }}
-                  className="inline-flex items-center gap-1.5 font-bold text-amber-300 hover:text-white underline pt-1 focus-visible:ring-2 focus-visible:ring-sky-400"
-                >
-                  <span>View existing hazard trace</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
+        {/* 15m Duplicate Alert */}
+        {duplicateWarning && (
+          <div className="p-3 rounded-xl bg-amber-950/60 border border-amber-500/50 text-xs text-amber-200 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>Similar hazard nearby within 15m</span>
             </div>
-          )}
-
-          {/* 1. Category 2x2 Grid */}
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2.5">
-              1. Hazard Category
-            </label>
-            <div className="grid grid-cols-2 gap-2.5">
-              {Object.values(HAZARD_CATEGORIES).map((cat) => {
-                const isSelected = category === cat.id;
-                let Icon = AlertCircle;
-                if (cat.id === 'clogged_drainage') Icon = Droplets;
-                if (cat.id === 'road_obstruction') Icon = ShieldAlert;
-                if (cat.id === 'dark_street') Icon = Moon;
-
-                return (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => setCategory(cat.id)}
-                    aria-pressed={isSelected}
-                    className={`p-3 rounded-2xl border text-left flex flex-col justify-between transition-all duration-150 focus-visible:ring-2 focus-visible:ring-sky-400 min-h-[80px] ${
-                      isSelected
-                        ? 'bg-slate-800 border-white text-white shadow-[0_0_12px_rgba(255,255,255,0.2)]'
-                        : 'bg-slate-900/80 border-slate-700/80 text-slate-300 hover:border-slate-500'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className={`p-2 rounded-xl ${isSelected ? 'bg-white text-slate-950' : 'bg-slate-800 text-slate-300'}`}>
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      {isSelected && <Check className="w-4 h-4 text-white" />}
-                    </div>
-                    <div>
-                      <div className="font-bold text-sm leading-snug">{cat.name}</div>
-                      <div className="text-[11px] text-slate-400 line-clamp-1">{cat.tagalogName}</div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+            <button
+              type="button"
+              onClick={() => {
+                onSelectExisting(duplicateWarning.id);
+                onClose();
+              }}
+              className="font-bold underline text-white hover:text-amber-300 shrink-0"
+            >
+              View Pin
+            </button>
           </div>
+        )}
 
-          {/* 2. Severity Control */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Category Picker */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2.5">
-              2. Severity Level
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              {Object.values(HAZARD_SEVERITIES).map((sev) => {
-                const isSelected = severity === sev.id;
+            <label className="block text-xs font-semibold text-slate-400 mb-2">Category</label>
+            <div className="grid grid-cols-2 gap-2">
+              {CATEGORY_ITEMS.map((item) => {
+                const isSelected = category === item.id;
                 return (
                   <button
-                    key={sev.id}
+                    key={item.id}
                     type="button"
-                    onClick={() => setSeverity(sev.id)}
+                    onClick={() => setCategory(item.id)}
                     aria-pressed={isSelected}
-                    className={`py-3 px-3 rounded-2xl border text-center transition-all focus-visible:ring-2 focus-visible:ring-sky-400 min-h-[52px] ${
+                    className={`p-3 rounded-xl border text-left transition-all ${
                       isSelected
-                        ? 'bg-white text-slate-950 border-white font-bold shadow-[0_0_12px_rgba(255,255,255,0.3)]'
-                        : 'bg-slate-800/80 border-slate-700/80 text-slate-300 hover:border-slate-500'
+                        ? 'bg-white text-slate-950 border-white font-bold shadow-md'
+                        : 'bg-slate-800/60 border-slate-700/60 text-slate-300 hover:border-slate-500'
                     }`}
                   >
-                    <div className="text-xs font-bold">{sev.label}</div>
+                    <div className="text-base mb-0.5">{item.emoji}</div>
+                    <div className="text-xs font-semibold leading-tight">{item.name}</div>
                     <div className={`text-[10px] ${isSelected ? 'text-slate-700' : 'text-slate-400'}`}>
-                      {sev.id === 'low' ? 'Caution' : sev.id === 'medium' ? 'Warning' : 'Danger'}
+                      {item.tagalog}
                     </div>
                   </button>
                 );
@@ -198,46 +160,51 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
             </div>
           </div>
 
-          {/* Location Pin Confirmation Preview */}
-          <div className="p-3 rounded-2xl bg-slate-950/80 border border-slate-800 flex items-center justify-between text-xs">
-            <div className="flex items-center gap-2 text-slate-300">
-              <MapPin className="w-4 h-4 text-sky-400 shrink-0" />
-              <div>
-                <span className="font-semibold text-slate-200">Current Device GPS</span>
-                <div className="text-[11px] font-mono text-slate-400">
-                  {userLocation.lat.toFixed(5)}, {userLocation.lng.toFixed(5)} (±{Math.round(userLocation.accuracy)}m)
-                </div>
-              </div>
+          {/* Severity Picker */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 mb-2">Severity</label>
+            <div className="grid grid-cols-3 gap-2">
+              {(['low', 'medium', 'high'] as HazardSeverity[]).map((sev) => {
+                const isSelected = severity === sev;
+                const label = sev === 'low' ? 'Low' : sev === 'medium' ? 'Medium' : 'High';
+                return (
+                  <button
+                    key={sev}
+                    type="button"
+                    onClick={() => setSeverity(sev)}
+                    aria-pressed={isSelected}
+                    className={`py-2 rounded-xl border text-center text-xs font-semibold transition-all ${
+                      isSelected
+                        ? 'bg-white text-slate-950 border-white shadow-md'
+                        : 'bg-slate-800/60 border-slate-700/60 text-slate-300 hover:border-slate-500'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
             </div>
-            <span className="text-[10px] px-2 py-1 bg-slate-800 text-sky-300 rounded-lg border border-slate-700 font-mono">
-              AUTO-PINNED
-            </span>
           </div>
 
-          {/* Optional Short Description */}
+          {/* Optional Short Note */}
           <div>
-            <label htmlFor="hazard-notes" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
-              Optional Note (Keep it short)
-            </label>
             <input
-              id="hazard-notes"
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="e.g. Near pedestrian crossing, deep rim crater..."
-              maxLength={120}
-              className="w-full px-3.5 py-3 rounded-2xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-white transition-colors"
+              placeholder="Optional short note (e.g. inner lane)"
+              maxLength={100}
+              className="w-full px-3 py-2 rounded-xl bg-slate-800/80 border border-slate-700/80 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-white"
             />
           </div>
 
-          {/* Submit Button */}
+          {/* Submit */}
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full h-14 rounded-2xl bg-white hover:bg-slate-100 text-slate-950 font-bold text-base shadow-[0_0_20px_rgba(255,255,255,0.3)] flex items-center justify-center gap-2 transition-all active:scale-98 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-sky-400 min-h-[56px]"
+            className="w-full h-12 rounded-xl bg-white hover:bg-slate-100 text-slate-950 font-bold text-sm shadow-md transition-all active:scale-98 disabled:opacity-50"
           >
-            <Check className="w-5 h-5 stroke-[2.5]" />
-            <span>{isSubmitting ? 'Recording Trace...' : 'Drop Hazard Trace (< 5s)'}</span>
+            {isSubmitting ? 'Submitting...' : 'Drop Hazard Trace'}
           </button>
         </form>
       </div>

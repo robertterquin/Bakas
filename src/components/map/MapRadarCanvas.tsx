@@ -10,6 +10,7 @@ interface MapRadarCanvasProps {
   recenterCount: number;
   radiusFilter: RadiusFilter;
   activeFilter: CategoryFilter;
+  tempPinLocation?: { lat: number; lng: number } | null;
   onMapClick?: (lat: number, lng: number) => void;
 }
 
@@ -20,12 +21,14 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
   onSelectHazard,
   recenterCount,
   radiusFilter,
+  tempPinLocation,
   onMapClick,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
   const userMarkerRef = useRef<L.Marker | null>(null);
+  const tempMarkerRef = useRef<L.Marker | null>(null);
   const accuracyCircleRef = useRef<L.Circle | null>(null);
   const radiusBoundaryCircleRef = useRef<L.Circle | null>(null);
 
@@ -43,12 +46,12 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
     });
 
     // Add CartoDB Dark Matter tile layer
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
       subdomains: 'abcd',
       maxZoom: 19,
-      minZoom: 10,
+      minZoom: 4,
     }).addTo(map);
 
     // Zoom controls positioned at top right (safe from thumb HUD)
@@ -59,14 +62,26 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
 
     mapInstanceRef.current = map;
 
-    // Handle map clicks for custom pin drop preview
+    // Handle map clicks to drop pin anywhere
     map.on('click', (e: L.LeafletMouseEvent) => {
       if (onMapClick) {
         onMapClick(e.latlng.lat, e.latlng.lng);
       }
     });
 
+    // Trigger invalidateSize to ensure full viewport tile loading
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+    }, 150);
+
+    const handleResize = () => {
+      map.invalidateSize();
+    };
+    window.addEventListener('resize', handleResize);
+
     return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', handleResize);
       map.remove();
       mapInstanceRef.current = null;
     };
@@ -141,6 +156,40 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
     }
   }, [userLocation, radiusFilter]);
 
+  // Render Temporary Clicked Pin Target
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (tempPinLocation) {
+      const targetIcon = L.divIcon({
+        className: 'custom-temp-target',
+        html: `
+          <div class="relative flex items-center justify-center w-10 h-10 animate-bounce">
+            <div class="absolute -inset-2 rounded-full border-2 border-white/80 animate-ping opacity-75"></div>
+            <div class="w-8 h-8 rounded-full bg-white text-slate-950 border-2 border-sky-400 flex items-center justify-center font-bold text-sm shadow-[0_0_20px_#ffffff]">
+              📍
+            </div>
+          </div>
+        `,
+        iconSize: [40, 40],
+        iconAnchor: [20, 36],
+      });
+
+      if (!tempMarkerRef.current) {
+        tempMarkerRef.current = L.marker([tempPinLocation.lat, tempPinLocation.lng], {
+          icon: targetIcon,
+          zIndexOffset: 1200,
+        }).addTo(map);
+      } else {
+        tempMarkerRef.current.setLatLng([tempPinLocation.lat, tempPinLocation.lng]);
+      }
+    } else if (tempMarkerRef.current) {
+      map.removeLayer(tempMarkerRef.current);
+      tempMarkerRef.current = null;
+    }
+  }, [tempPinLocation]);
+
   // Update Hazard Markers on map
   useEffect(() => {
     const markersLayer = markersLayerRef.current;
@@ -208,7 +257,8 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
       });
 
       const marker = L.marker([hazard.lat, hazard.lng], { icon: customDiv });
-      marker.on('click', () => {
+      marker.on('click', (e) => {
+        L.DomEvent.stopPropagation(e);
         onSelectHazard(hazard.id);
         if (mapInstanceRef.current) {
           mapInstanceRef.current.panTo([hazard.lat, hazard.lng], { animate: true, duration: 0.4 });
