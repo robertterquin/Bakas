@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   X,
   ThumbsUp,
@@ -40,6 +40,23 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
 }) => {
   const [isUpvoting, setIsUpvoting] = useState(false);
   const [isResolving, setIsResolving] = useState(false);
+
+  // Escape key accessibility
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    },
+    [onClose]
+  );
+
+  useEffect(() => {
+    if (hazard) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [hazard, handleKeyDown]);
 
   if (!hazard) return null;
 
@@ -98,6 +115,9 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
       aria-modal="true"
       aria-labelledby="hazard-detail-title"
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div className="w-full max-w-md max-h-[85vh] bg-slate-900 border border-slate-700 rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden text-slate-100">
         {/* Header */}
@@ -118,7 +138,7 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
             type="button"
             onClick={onClose}
             aria-label="Close details"
-            className="p-2 -mr-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors focus-visible:ring-2 focus-visible:ring-sky-400"
+            className="p-2 -mr-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors focus-visible:ring-2 focus-visible:ring-sky-400 min-w-[48px] min-h-[48px] flex items-center justify-center"
           >
             <X className="w-5 h-5" />
           </button>
@@ -179,7 +199,7 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
               onClick={handleCopyCoords}
               aria-label="Copy coordinates"
               title="Copy Coordinates"
-              className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-200 transition-colors"
+              className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-200 transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-sky-400"
             >
               <Copy className="w-3.5 h-3.5" />
             </button>
@@ -197,10 +217,11 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
                 type="button"
                 onClick={handleUpvote}
                 disabled={isUpvoting || hasUpvoted}
-                className={`h-12 rounded-2xl border font-bold text-xs flex items-center justify-center gap-2 transition-all focus-visible:ring-2 focus-visible:ring-sky-400 ${
+                aria-label={`Upvote hazard, currently has ${hazard.upvotes} upvotes`}
+                className={`h-12 rounded-2xl border font-bold text-xs flex items-center justify-center gap-2 transition-all focus-visible:ring-2 focus-visible:ring-sky-400 min-h-[48px] ${
                   hasUpvoted
                     ? 'bg-slate-800 border-slate-700 text-slate-400 cursor-not-allowed'
-                    : 'bg-white hover:bg-slate-100 text-slate-950 border-white shadow-[0_0_12px_rgba(255,255,255,0.2)]'
+                    : 'bg-white hover:bg-slate-100 text-slate-950 border-white shadow-[0_0_12px_rgba(255,255,255,0.2)] active:scale-95'
                 }`}
               >
                 <ThumbsUp className="w-4 h-4" />
@@ -212,10 +233,11 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
                 type="button"
                 onClick={handleResolve}
                 disabled={isResolving || hasResolved}
-                className={`h-12 rounded-2xl border font-semibold text-xs flex items-center justify-center gap-2 transition-all focus-visible:ring-2 focus-visible:ring-sky-400 ${
+                aria-label="Mark hazard as cleared or repaired"
+                className={`h-12 rounded-2xl border font-semibold text-xs flex items-center justify-center gap-2 transition-all focus-visible:ring-2 focus-visible:ring-sky-400 min-h-[48px] ${
                   hasResolved
                     ? 'bg-slate-800 border-slate-700 text-slate-400 cursor-not-allowed'
-                    : 'bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border-slate-700 hover:border-slate-500'
+                    : 'bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border-slate-700 hover:border-slate-500 active:scale-95'
                 }`}
               >
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
@@ -227,7 +249,7 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
             <button
               type="button"
               onClick={handleShare}
-              className="w-full py-2.5 rounded-xl bg-slate-950/80 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-slate-200 text-xs font-medium flex items-center justify-center gap-2 transition-colors"
+              className="w-full py-3 rounded-xl bg-slate-950/80 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-slate-200 text-xs font-medium flex items-center justify-center gap-2 transition-colors min-h-[44px] focus-visible:ring-2 focus-visible:ring-sky-400"
             >
               <Share2 className="w-3.5 h-3.5" />
               <span>Share Trace Link</span>

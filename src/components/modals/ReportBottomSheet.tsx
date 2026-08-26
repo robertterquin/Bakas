@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { X, AlertCircle, Droplets, ShieldAlert, Moon, Check, MapPin, AlertTriangle, ArrowRight } from 'lucide-react';
 import { HazardCategory, HazardSeverity, HazardPayload, UserLocation, Hazard } from '../../types/hazard';
 import { HAZARD_CATEGORIES, HAZARD_SEVERITIES } from '../../lib/domain-rules';
@@ -34,6 +34,23 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
     }
   }, [isOpen, category, userLocation, checkNearbyDuplicate]);
 
+  // Keyboard accessibility: Escape key listener
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    },
+    [onClose]
+  );
+
+  useEffect(() => {
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen, handleKeyDown]);
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -60,6 +77,9 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
       aria-modal="true"
       aria-labelledby="report-hazard-title"
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div className="w-full max-w-lg max-h-[90vh] bg-slate-900 border border-slate-700 rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden text-slate-100">
         {/* Header Handle */}
@@ -74,7 +94,7 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
             type="button"
             onClick={onClose}
             aria-label="Close report dialog"
-            className="p-2 -mr-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors focus-visible:ring-2 focus-visible:ring-sky-400"
+            className="p-2 -mr-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors focus-visible:ring-2 focus-visible:ring-sky-400 min-w-[48px] min-h-[48px] flex items-center justify-center"
           >
             <X className="w-5 h-5" />
           </button>
@@ -98,7 +118,7 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
                     onSelectExisting(duplicateWarning.id);
                     onClose();
                   }}
-                  className="inline-flex items-center gap-1.5 font-bold text-amber-300 hover:text-white underline pt-1"
+                  className="inline-flex items-center gap-1.5 font-bold text-amber-300 hover:text-white underline pt-1 focus-visible:ring-2 focus-visible:ring-sky-400"
                 >
                   <span>View existing hazard trace</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -125,7 +145,8 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
                     key={cat.id}
                     type="button"
                     onClick={() => setCategory(cat.id)}
-                    className={`p-3 rounded-2xl border text-left flex flex-col justify-between transition-all duration-150 focus-visible:ring-2 focus-visible:ring-sky-400 ${
+                    aria-pressed={isSelected}
+                    className={`p-3 rounded-2xl border text-left flex flex-col justify-between transition-all duration-150 focus-visible:ring-2 focus-visible:ring-sky-400 min-h-[80px] ${
                       isSelected
                         ? 'bg-slate-800 border-white text-white shadow-[0_0_12px_rgba(255,255,255,0.2)]'
                         : 'bg-slate-900/80 border-slate-700/80 text-slate-300 hover:border-slate-500'
@@ -160,7 +181,8 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
                     key={sev.id}
                     type="button"
                     onClick={() => setSeverity(sev.id)}
-                    className={`py-2.5 px-3 rounded-2xl border text-center transition-all focus-visible:ring-2 focus-visible:ring-sky-400 ${
+                    aria-pressed={isSelected}
+                    className={`py-3 px-3 rounded-2xl border text-center transition-all focus-visible:ring-2 focus-visible:ring-sky-400 min-h-[52px] ${
                       isSelected
                         ? 'bg-white text-slate-950 border-white font-bold shadow-[0_0_12px_rgba(255,255,255,0.3)]'
                         : 'bg-slate-800/80 border-slate-700/80 text-slate-300 hover:border-slate-500'
@@ -204,7 +226,7 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="e.g. Near pedestrian crossing, deep rim crater..."
               maxLength={120}
-              className="w-full px-3.5 py-2.5 rounded-2xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-white transition-colors"
+              className="w-full px-3.5 py-3 rounded-2xl bg-slate-800/80 border border-slate-700 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-white transition-colors"
             />
           </div>
 
@@ -212,7 +234,7 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full h-14 rounded-2xl bg-white hover:bg-slate-100 text-slate-950 font-bold text-base shadow-[0_0_20px_rgba(255,255,255,0.3)] flex items-center justify-center gap-2 transition-all active:scale-98 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-sky-400"
+            className="w-full h-14 rounded-2xl bg-white hover:bg-slate-100 text-slate-950 font-bold text-base shadow-[0_0_20px_rgba(255,255,255,0.3)] flex items-center justify-center gap-2 transition-all active:scale-98 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-sky-400 min-h-[56px]"
           >
             <Check className="w-5 h-5 stroke-[2.5]" />
             <span>{isSubmitting ? 'Recording Trace...' : 'Drop Hazard Trace (< 5s)'}</span>

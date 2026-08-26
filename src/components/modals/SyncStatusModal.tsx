@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { X, RefreshCw, CheckCircle, Wifi, WifiOff, Database } from 'lucide-react';
 import { Hazard, ValidationAction } from '../../types/hazard';
 import { getPendingReports, getPendingValidations, clearCachedHazards } from '../../lib/offline-storage';
@@ -23,6 +23,23 @@ export const SyncStatusModal: React.FC<SyncStatusModalProps> = ({
   const [pendingReports, setPendingReports] = useState<Hazard[]>([]);
   const [pendingValidations, setPendingValidations] = useState<ValidationAction[]>([]);
   const [isLoadingQueue, setIsLoadingQueue] = useState<boolean>(true);
+
+  // Escape key accessibility
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    },
+    [onClose]
+  );
+
+  useEffect(() => {
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen, handleKeyDown]);
 
   const loadQueue = async () => {
     setIsLoadingQueue(true);
@@ -67,6 +84,9 @@ export const SyncStatusModal: React.FC<SyncStatusModalProps> = ({
       aria-modal="true"
       aria-labelledby="sync-manager-title"
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-t-3xl sm:rounded-3xl shadow-2xl p-6 text-slate-100 space-y-4">
         {/* Header */}
@@ -81,7 +101,7 @@ export const SyncStatusModal: React.FC<SyncStatusModalProps> = ({
             type="button"
             onClick={onClose}
             aria-label="Close sync manager"
-            className="p-1.5 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors focus-visible:ring-2 focus-visible:ring-sky-400"
+            className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors focus-visible:ring-2 focus-visible:ring-sky-400 min-w-[44px] min-h-[44px] flex items-center justify-center"
           >
             <X className="w-5 h-5" />
           </button>
@@ -177,7 +197,7 @@ export const SyncStatusModal: React.FC<SyncStatusModalProps> = ({
             type="button"
             onClick={handleManualSync}
             disabled={isSyncing || totalPending === 0 || !isOnline}
-            className="w-full h-12 rounded-2xl bg-white hover:bg-slate-100 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-md"
+            className="w-full h-12 rounded-2xl bg-white hover:bg-slate-100 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-md min-h-[48px] focus-visible:ring-2 focus-visible:ring-sky-400"
           >
             <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
             <span>{isSyncing ? 'Synchronizing...' : 'Force Sync Now'}</span>
@@ -186,7 +206,7 @@ export const SyncStatusModal: React.FC<SyncStatusModalProps> = ({
           <button
             type="button"
             onClick={handleClearCache}
-            className="w-full py-2 rounded-xl text-slate-400 hover:text-slate-200 text-xs text-center transition-colors"
+            className="w-full py-3 rounded-xl text-slate-400 hover:text-slate-200 text-xs text-center transition-colors min-h-[40px] focus-visible:ring-2 focus-visible:ring-sky-400"
           >
             Clear Cached Tile Data
           </button>
