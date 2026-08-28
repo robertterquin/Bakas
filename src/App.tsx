@@ -99,7 +99,7 @@ export default function App() {
   };
 
   return (
-    <main className="relative w-screen h-screen overflow-hidden bg-slate-950 text-slate-100 font-sans select-none">
+    <main className="relative w-screen h-screen overflow-hidden bg-black text-white font-sans select-none">
       {/* Screen Reader ARIA Live Region */}
       <ScreenReaderAnnouncer announcement={ariaAnnouncement} />
 
