@@ -1,7 +1,9 @@
 import React from 'react';
 import { motion } from 'motion/react';
+import NumberFlow from '@number-flow/react';
 import { WifiOff, Radio } from 'lucide-react';
 import { RadiusFilter, CategoryFilter } from '../../types/hazard';
+import { formatScopeDistance } from '../../services/geo.service';
 import { HazardIcon } from '../ui/HazardIcon';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { BakasLogo } from '../ui/BakasLogo';
@@ -9,6 +11,7 @@ import { BakasLogo } from '../ui/BakasLogo';
 interface TopHUDProps {
   hazardCount: number;
   radiusFilter: RadiusFilter;
+  visibleScopeMeters?: number;
   activeFilter: CategoryFilter;
   onSelectFilter: (category: CategoryFilter) => void;
   isOnline: boolean;
@@ -30,6 +33,7 @@ const CATEGORIES: { id: CategoryFilter; label: string }[] = [
 export const TopHUD: React.FC<TopHUDProps> = ({
   hazardCount,
   radiusFilter,
+  visibleScopeMeters = 5000,
   activeFilter,
   onSelectFilter,
   isOnline,
@@ -39,6 +43,8 @@ export const TopHUD: React.FC<TopHUDProps> = ({
   onOpenSync,
   onOpenAbout,
 }) => {
+  const scopeInfo = formatScopeDistance(radiusFilter > 0 ? radiusFilter : visibleScopeMeters);
+
   return (
     <header className="absolute top-3 left-0 right-0 z-30 pointer-events-none px-2.5 sm:px-4">
       <motion.div
@@ -64,7 +70,7 @@ export const TopHUD: React.FC<TopHUDProps> = ({
                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
               </span>
               <span className="text-[10px] font-mono font-semibold text-zinc-300 leading-none">
-                {hazardCount}
+                <NumberFlow value={hazardCount} />
               </span>
             </div>
           </div>
@@ -106,17 +112,20 @@ export const TopHUD: React.FC<TopHUDProps> = ({
           })}
         </nav>
 
-        {/* Precision Radar Range & Connectivity Telemetry */}
+        {/* Dynamic Zoom-Adaptive Telemetry Radar Range Pill */}
         <div className="flex items-center gap-1 shrink-0 pr-0.5">
           <motion.button
             type="button"
             onClick={onOpenFilter}
             whileTap={{ scale: 0.93 }}
             className="h-7.5 flex items-center gap-1 px-2.5 rounded-full bg-white/[0.08] border border-white/10 text-[10px] font-mono font-semibold text-zinc-200 hover:bg-white/[0.15] hover:border-white/25 transition-all shadow-sm"
-            title="Adjust spatial radar radius"
+            title={radiusFilter === 0 ? 'Dynamic Zoom Scope (Auto)' : `Fixed Scope (${scopeInfo.display})`}
           >
-            <Radio className="w-3 h-3 text-zinc-400" />
-            <span>{(radiusFilter / 1000).toFixed(0)}km</span>
+            <Radio className="w-3 h-3 text-zinc-400 shrink-0" />
+            <span className="flex items-center">
+              <NumberFlow value={scopeInfo.value} />
+              <span>{scopeInfo.unit}</span>
+            </span>
           </motion.button>
 
           {(!isOnline || pendingCount > 0) && (

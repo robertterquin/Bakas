@@ -19,15 +19,16 @@ import { savePendingReport, cacheHazards, savePendingValidation } from '../servi
 export function useHazardManager(userLocation: UserLocation, isOnline: boolean, onQueueChanged?: () => void) {
   const [hazards, setHazards] = useState<Hazard[]>([]);
   const [activeFilter, setActiveFilter] = useState<CategoryFilter>('all');
-  const [radiusFilter, setRadiusFilter] = useState<RadiusFilter>(5000);
+  const [radiusFilter, setRadiusFilter] = useState<RadiusFilter>(0); // 0 = Auto-Scope / Dynamic Viewport Scope
   const [selectedHazardId, setSelectedHazardId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Fetch hazards in radius
+  // Fetch hazards in radius (or large region when in auto-scope mode)
   const loadHazards = useCallback(async () => {
     setIsLoading(true);
     try {
-      const items = await fetchHazardsInRadius(userLocation.lat, userLocation.lng, radiusFilter);
+      const queryRadius = radiusFilter === 0 ? 50000 : radiusFilter;
+      const items = await fetchHazardsInRadius(userLocation.lat, userLocation.lng, queryRadius);
       setHazards(items);
       cacheHazards(items).catch(() => {});
     } catch (err) {
@@ -49,6 +50,10 @@ export function useHazardManager(userLocation: UserLocation, isOnline: boolean, 
       if (activeFilter !== 'all' && h.category !== activeFilter) {
         return false;
       }
+      // If radiusFilter is 0 (Auto-Scope / Dynamic), display all loaded hazards
+      if (radiusFilter === 0) {
+        return true;
+      }
       // Radius filter
       const dist = calculateDistanceInMeters(userLocation.lat, userLocation.lng, h.lat, h.lng);
       return dist <= radiusFilter;
@@ -60,156 +65,157 @@ export function useHazardManager(userLocation: UserLocation, isOnline: boolean, 
     return hazards.find((h) => h.id === selectedHazardId) || null;
   }, [hazards, selectedHazardId]);
 
-  /**
-   * 15-meter anti-spam duplicate detection
-   */
-  const checkNearbyDuplicate = useCallback(
-    (lat: number, lng: number, category: HazardCategory): Hazard | null => {
-      return (
-        hazards.find((h) => {
-          if (h.category !== category) return false;
-          const dist = calculateDistanceInMeters(lat, lng, h.lat, h.lng);
-          return dist <= 15;
-        }) || null
-      );
-    },
-    [hazards]
-  );
+  // Duplicate Check within 15 meters
+  const checkNearbyDuplicate = useCallback((lat: number, lng: number, category: HazardCategory): Hazard | null => {
+    for (const h of hazards) {
+      if (h.category === category) {
+        const dist = calculateDistanceInMeters(lat, lng, h.lat, h.lng);
+        if (dist <= 15) {
+          return h;
+        }
+      }
+    }
+    return null;
+  }, [hazards]);
 
-  /**
-   * Report a new hazard (Optimistic UI + IndexedDB / Backend sync)
-   */
-  const reportHazard = useCallback(
-    async (payload: HazardPayload): Promise<{ success: boolean; hazard: Hazard; isOffline: boolean }> => {
-      const newHazard = createNewHazardObject(payload);
+  // 1. Report Hazard
+  const reportHazard = async (payload: HazardPayload): Promise<{ isOffline: boolean; hazard: Hazard }> => {
+    const newHazard = createNewHazardObject(payload);
 
-      // 1. Optimistically add to state
+    if (!isOnline) {
+      newHazard.syncStatus = 'pending_sync';
+      await savePendingReport(newHazard);
       setHazards((prev) => [newHazard, ...prev]);
+      if (onQueueChanged) onQueueChanged();
+      return { isOffline: true, hazard: newHazard };
+    }
 
-      // 2. If offline, save in IndexedDB
-      if (!isOnline) {
-        await savePendingReport(newHazard);
-        if (onQueueChanged) onQueueChanged();
-        return { success: true, hazard: newHazard, isOffline: true };
+    try {
+      const saved = await submitHazardToBackend(newHazard);
+      setHazards((prev) => [saved, ...prev]);
+      return { isOffline: false, hazard: saved };
+    } catch (err) {
+      console.warn('Network submit failed, queuing offline:', err);
+      newHazard.syncStatus = 'pending_sync';
+      await savePendingReport(newHazard);
+      setHazards((prev) => [newHazard, ...prev]);
+      if (onQueueChanged) onQueueChanged();
+      return { isOffline: true, hazard: newHazard };
+    }
+  };
+
+  // 2. Upvote Hazard
+  const upvoteHazard = async (hazardId: string): Promise<{ success: boolean; message: string }> => {
+    if (hasDeviceVoted(hazardId, 'upvote')) {
+      return { success: false, message: 'You already vouched for this hazard.' };
+    }
+
+    const deviceHash = getOrCreateDeviceFingerprint();
+
+    // Optimistic Update
+    setHazards((prev) =>
+      prev.map((h) => {
+        if (h.id === hazardId) {
+          return {
+            ...h,
+            upvotes: h.upvotes + 1,
+            expiresAt: calculateExtendedExpiry(h.category, h.createdAt, h.expiresAt),
+          };
+        }
+        return h;
+      })
+    );
+    recordDeviceVote(hazardId, 'upvote');
+
+    if (!isOnline) {
+      const valAction: ValidationAction = {
+        id: crypto.randomUUID(),
+        hazardId,
+        actionType: 'upvote',
+        deviceHash,
+        createdAt: new Date().toISOString(),
+      };
+      await savePendingValidation(valAction);
+      if (onQueueChanged) onQueueChanged();
+      return { success: true, message: 'Upvote stored offline in IndexedDB.' };
+    }
+
+    try {
+      await submitUpvoteToBackend(hazardId, deviceHash);
+      return { success: true, message: 'Vouch confirmed on radar!' };
+    } catch (err) {
+      console.warn('Backend upvote failed, queuing offline:', err);
+      const valAction: ValidationAction = {
+        id: crypto.randomUUID(),
+        hazardId,
+        actionType: 'upvote',
+        deviceHash,
+        createdAt: new Date().toISOString(),
+      };
+      await savePendingValidation(valAction);
+      if (onQueueChanged) onQueueChanged();
+      return { success: true, message: 'Upvote queued offline.' };
+    }
+  };
+
+  // 3. Resolve Hazard
+  const resolveHazard = async (hazardId: string): Promise<{ success: boolean; message: string }> => {
+    if (hasDeviceVoted(hazardId, 'resolve')) {
+      return { success: false, message: 'You already voted to resolve this hazard.' };
+    }
+
+    const deviceHash = getOrCreateDeviceFingerprint();
+
+    // Optimistic Update
+    setHazards((prev) =>
+      prev.map((h) => {
+        if (h.id === hazardId) {
+          const newCount = h.resolvedCount + 1;
+          const isResolved = newCount >= 3;
+          return {
+            ...h,
+            resolvedCount: newCount,
+            isResolved: isResolved || h.isResolved,
+          };
+        }
+        return h;
+      })
+    );
+    recordDeviceVote(hazardId, 'resolve');
+
+    if (!isOnline) {
+      const valAction: ValidationAction = {
+        id: crypto.randomUUID(),
+        hazardId,
+        actionType: 'resolve',
+        deviceHash,
+        createdAt: new Date().toISOString(),
+      };
+      await savePendingValidation(valAction);
+      if (onQueueChanged) onQueueChanged();
+      return { success: true, message: 'Resolve vote stored offline in IndexedDB.' };
+    }
+
+    try {
+      const result = await submitResolveToBackend(hazardId, deviceHash);
+      if (result?.isResolved) {
+        return { success: true, message: 'Community consensus reached! Hazard marked as cleared.' };
       }
-
-      // 3. If online, send to backend
-      try {
-        const synced = await submitHazardToBackend(newHazard);
-        setHazards((prev) => prev.map((h) => (h.id === newHazard.id ? synced : h)));
-        return { success: true, hazard: synced, isOffline: false };
-      } catch (err) {
-        console.warn('Backend sync failed, storing offline:', err);
-        await savePendingReport(newHazard);
-        if (onQueueChanged) onQueueChanged();
-        return { success: true, hazard: newHazard, isOffline: true };
-      }
-    },
-    [isOnline, onQueueChanged]
-  );
-
-  /**
-   * Upvote a hazard with client fingerprinting
-   */
-  const upvoteHazard = useCallback(
-    async (hazardId: string): Promise<{ success: boolean; message: string }> => {
-      if (hasDeviceVoted(hazardId, 'upvote')) {
-        return { success: false, message: 'You have already upvoted this hazard on this device.' };
-      }
-
-      const deviceHash = getOrCreateDeviceFingerprint();
-
-      // Optimistic state update
-      setHazards((prev) =>
-        prev.map((h) => {
-          if (h.id === hazardId) {
-            return {
-              ...h,
-              upvotes: h.upvotes + 1,
-              expiresAt: calculateExtendedExpiry(h.category, h.expiresAt, h.createdAt),
-            };
-          }
-          return h;
-        })
-      );
-
-      recordDeviceVote(hazardId, 'upvote');
-
-      if (!isOnline) {
-        const valAction: ValidationAction = {
-          id: 'val_' + Math.random().toString(36).substring(2, 9),
-          hazardId,
-          actionType: 'upvote',
-          deviceHash,
-          createdAt: new Date().toISOString(),
-        };
-        await savePendingValidation(valAction);
-        if (onQueueChanged) onQueueChanged();
-        return { success: true, message: 'Upvote saved offline. It will sync when connected.' };
-      }
-
-      try {
-        await submitUpvoteToBackend(hazardId, deviceHash);
-        return { success: true, message: 'Report verified! Pin TTL extended.' };
-      } catch {
-        return { success: true, message: 'Upvote registered.' };
-      }
-    },
-    [isOnline, onQueueChanged]
-  );
-
-  /**
-   * Mark a hazard as resolved (3 votes = soft resolved)
-   */
-  const resolveHazard = useCallback(
-    async (hazardId: string): Promise<{ success: boolean; message: string }> => {
-      if (hasDeviceVoted(hazardId, 'resolve')) {
-        return { success: false, message: 'You have already marked this hazard as resolved.' };
-      }
-
-      const deviceHash = getOrCreateDeviceFingerprint();
-
-      // Optimistic state update
-      setHazards((prev) =>
-        prev.map((h) => {
-          if (h.id === hazardId) {
-            const nextCount = (h.resolvedCount || 0) + 1;
-            const isResolved = nextCount >= 3;
-            return {
-              ...h,
-              resolvedCount: nextCount,
-              isResolved,
-              expiresAt: isResolved ? new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString() : h.expiresAt,
-            };
-          }
-          return h;
-        })
-      );
-
-      recordDeviceVote(hazardId, 'resolve');
-
-      if (!isOnline) {
-        const valAction: ValidationAction = {
-          id: 'val_' + Math.random().toString(36).substring(2, 9),
-          hazardId,
-          actionType: 'resolve',
-          deviceHash,
-          createdAt: new Date().toISOString(),
-        };
-        await savePendingValidation(valAction);
-        if (onQueueChanged) onQueueChanged();
-        return { success: true, message: 'Resolution vote saved offline.' };
-      }
-
-      try {
-        await submitResolveToBackend(hazardId, deviceHash);
-        return { success: true, message: 'Resolution vote recorded.' };
-      } catch {
-        return { success: true, message: 'Resolution registered.' };
-      }
-    },
-    [isOnline, onQueueChanged]
-  );
+      return { success: true, message: 'Resolve vote recorded (+1).' };
+    } catch (err) {
+      console.warn('Backend resolve failed, queuing offline:', err);
+      const valAction: ValidationAction = {
+        id: crypto.randomUUID(),
+        hazardId,
+        actionType: 'resolve',
+        deviceHash,
+        createdAt: new Date().toISOString(),
+      };
+      await savePendingValidation(valAction);
+      if (onQueueChanged) onQueueChanged();
+      return { success: true, message: 'Resolve vote queued offline.' };
+    }
+  };
 
   return {
     hazards,
@@ -222,10 +228,10 @@ export function useHazardManager(userLocation: UserLocation, isOnline: boolean, 
     setSelectedHazardId,
     selectedHazard,
     isLoading,
-    refreshHazards: loadHazards,
     checkNearbyDuplicate,
     reportHazard,
     upvoteHazard,
     resolveHazard,
+    refreshHazards: loadHazards,
   };
 }

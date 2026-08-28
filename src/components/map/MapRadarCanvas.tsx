@@ -13,6 +13,7 @@ interface MapRadarCanvasProps {
   activeFilter: CategoryFilter;
   tempPinLocation?: { lat: number; lng: number } | null;
   onMapClick?: (lat: number, lng: number) => void;
+  onViewportScopeChange?: (visibleRadiusMeters: number) => void;
 }
 
 export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
@@ -24,6 +25,7 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
   radiusFilter,
   tempPinLocation,
   onMapClick,
+  onViewportScopeChange,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -74,6 +76,18 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
 
     mapInstanceRef.current = map;
 
+    // Real-time Viewport Ground Scope Calculation as user zooms & moves
+    const computeViewportScope = () => {
+      if (!onViewportScopeChange) return;
+      const bounds = map.getBounds();
+      const center = map.getCenter();
+      const eastEdge = L.latLng(center.lat, bounds.getEast());
+      const radiusMeters = center.distanceTo(eastEdge);
+      onViewportScopeChange(Math.round(radiusMeters));
+    };
+
+    map.on('zoom move zoomend moveend', computeViewportScope);
+
     // Handle map clicks to drop pin anywhere
     map.on('click', (e: L.LeafletMouseEvent) => {
       if (onMapClick) {
@@ -84,10 +98,12 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
     // Trigger invalidateSize to ensure full viewport tile loading
     const timer = setTimeout(() => {
       map.invalidateSize();
+      computeViewportScope();
     }, 150);
 
     const handleResize = () => {
       map.invalidateSize();
+      computeViewportScope();
     };
     window.addEventListener('resize', handleResize);
 
@@ -151,20 +167,25 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
       accuracyCircleRef.current.setRadius(Math.min(userLocation.accuracy, 200));
     }
 
-    // Radius Boundary (5km / 3km / 1km radar range)
-    if (!radiusBoundaryCircleRef.current) {
-      radiusBoundaryCircleRef.current = L.circle(userLatLng, {
-        radius: radiusFilter,
-        color: '#52525b',
-        weight: 1,
-        dashArray: '4, 8',
-        opacity: 0.35,
-        fillColor: '#09090b',
-        fillOpacity: 0.02,
-      }).addTo(map);
-    } else {
-      radiusBoundaryCircleRef.current.setLatLng(userLatLng);
-      radiusBoundaryCircleRef.current.setRadius(radiusFilter);
+    // Radius Boundary (Only rendered if specific locked radius filter is set > 0)
+    if (radiusFilter > 0) {
+      if (!radiusBoundaryCircleRef.current) {
+        radiusBoundaryCircleRef.current = L.circle(userLatLng, {
+          radius: radiusFilter,
+          color: '#52525b',
+          weight: 1,
+          dashArray: '4, 8',
+          opacity: 0.35,
+          fillColor: '#09090b',
+          fillOpacity: 0.02,
+        }).addTo(map);
+      } else {
+        radiusBoundaryCircleRef.current.setLatLng(userLatLng);
+        radiusBoundaryCircleRef.current.setRadius(radiusFilter);
+      }
+    } else if (radiusBoundaryCircleRef.current) {
+      map.removeLayer(radiusBoundaryCircleRef.current);
+      radiusBoundaryCircleRef.current = null;
     }
   }, [userLocation, radiusFilter]);
 

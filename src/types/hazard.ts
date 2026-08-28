@@ -52,4 +52,4 @@ export interface ValidationAction {
 }
 
 export type CategoryFilter = 'all' | HazardCategory;
-export type RadiusFilter = 1000 | 3000 | 5000; // in meters (1km, 3km, 5km)
+export type RadiusFilter = number; // in meters, 0 = Auto-Scope / Dynamic Zoom Scope, or 1000, 3000, 5000, 15000, 50000, etc.

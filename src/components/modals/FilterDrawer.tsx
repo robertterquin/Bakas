@@ -14,9 +14,11 @@ interface FilterDrawerProps {
 }
 
 const RADIUS_OPTIONS: { value: RadiusFilter; label: string; sub: string }[] = [
+  { value: 0, label: 'Auto Scope', sub: 'Adapts in real-time as you zoom' },
   { value: 1000, label: '1.0 km', sub: 'Walking / Hyperlocal' },
-  { value: 3000, label: '3.0 km', sub: 'Bicycle / Micro-mobility' },
-  { value: 5000, label: '5.0 km', sub: 'Motorcycle & Vehicle' },
+  { value: 5000, label: '5.0 km', sub: 'City Commute (Motorcycle & Car)' },
+  { value: 15000, label: '15.0 km', sub: 'Metro Corridor (EDSA, C5, SLEX)' },
+  { value: 50000, label: '50.0 km', sub: 'Regional Highway & Province' },
 ];
 
 export const FilterDrawer: React.FC<FilterDrawerProps> = ({
@@ -55,8 +57,8 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
     >
       <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-t-3xl sm:rounded-3xl shadow-2xl p-5 text-zinc-100 space-y-4">
         <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
-          <h2 id="radar-filters-title" className="text-base font-bold tracking-tight text-white">
-            Radar Range & Filter
+          <h2 id="radar-filters-title" className="text-base font-bold tracking-tight text-white font-sans">
+            Radar Scope & Filter
           </h2>
           <button
             type="button"
@@ -70,29 +72,37 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
 
         {/* Radius presets */}
         <div>
-          <label className="block text-xs font-semibold text-zinc-400 mb-2">
-            Spatial Radar Radius
+          <label className="block text-xs font-semibold text-zinc-400 mb-2 font-sans">
+            Telemetry Radar Scope
           </label>
-          <div className="space-y-1.5">
+          <div className="grid grid-cols-1 gap-2">
             {RADIUS_OPTIONS.map((opt) => {
               const isSelected = radiusFilter === opt.value;
               return (
                 <button
                   key={opt.value}
                   type="button"
-                  onClick={() => onChangeRadius(opt.value)}
-                  aria-pressed={isSelected}
-                  className={`w-full p-3 rounded-xl border flex items-center justify-between transition-all ${
+                  onClick={() => {
+                    onChangeRadius(opt.value);
+                    onClose();
+                  }}
+                  className={`flex items-center justify-between p-3 rounded-2xl border text-left transition-all ${
                     isSelected
-                      ? 'bg-zinc-900 border-white text-white shadow-sm'
-                      : 'bg-black/60 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
+                      ? 'bg-white text-black border-white shadow-md'
+                      : 'bg-zinc-900/60 border-zinc-800 hover:border-zinc-700 text-zinc-200 hover:bg-zinc-900'
                   }`}
                 >
-                  <div className="text-left">
-                    <div className="font-bold text-sm font-mono">{opt.label}</div>
-                    <div className="text-xs text-zinc-500">{opt.sub}</div>
+                  <div>
+                    <div className="text-xs font-bold font-mono">{opt.label}</div>
+                    <div
+                      className={`text-[11px] ${
+                        isSelected ? 'text-zinc-700' : 'text-zinc-400'
+                      }`}
+                    >
+                      {opt.sub}
+                    </div>
                   </div>
-                  {isSelected && <Check className="w-4 h-4 text-white" />}
+                  {isSelected && <Check className="w-4 h-4 text-black shrink-0" />}
                 </button>
               );
             })}
@@ -100,53 +110,53 @@ export const FilterDrawer: React.FC<FilterDrawerProps> = ({
         </div>
 
         {/* Category presets */}
-        <div>
-          <label className="block text-xs font-semibold text-zinc-400 mb-2">
-            Category Focus
+        <div className="pt-2 border-t border-zinc-800">
+          <label className="block text-xs font-semibold text-zinc-400 mb-2 font-sans">
+            Category Filter
           </label>
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
-              onClick={() => onChangeCategory('all')}
-              aria-pressed={activeFilter === 'all'}
-              className={`p-2.5 rounded-xl border text-xs font-medium flex items-center gap-2 transition-all ${
+              onClick={() => {
+                onChangeCategory('all');
+                onClose();
+              }}
+              className={`p-2.5 rounded-xl border text-xs font-medium text-center transition-all ${
                 activeFilter === 'all'
-                  ? 'bg-white text-black border-white font-bold'
-                  : 'bg-zinc-900/80 text-zinc-300 border-zinc-800 hover:border-zinc-600'
+                  ? 'bg-white text-black border-white font-bold shadow-sm'
+                  : 'bg-zinc-900/60 border-zinc-800 text-zinc-300 hover:bg-zinc-900'
               }`}
             >
-              <HazardIcon category="all" size={14} className={activeFilter === 'all' ? 'text-black' : 'text-zinc-400'} />
-              <span>All Categories</span>
+              All Categories
             </button>
-            {Object.values(HAZARD_CATEGORIES).map((cat) => {
-              const isSelected = activeFilter === cat.id;
+
+            {Object.entries(HAZARD_CATEGORIES).map(([catKey, meta]) => {
+              const isSelected = activeFilter === catKey;
               return (
                 <button
-                  key={cat.id}
+                  key={catKey}
                   type="button"
-                  onClick={() => onChangeCategory(cat.id)}
-                  aria-pressed={isSelected}
-                  className={`p-2.5 rounded-xl border text-xs font-medium flex items-center gap-2 transition-all ${
+                  onClick={() => {
+                    onChangeCategory(catKey as CategoryFilter);
+                    onClose();
+                  }}
+                  className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-medium transition-all ${
                     isSelected
-                      ? 'bg-white text-black border-white font-bold'
-                      : 'bg-zinc-900/80 text-zinc-300 border-zinc-800 hover:border-zinc-600'
+                      ? 'bg-white text-black border-white font-bold shadow-sm'
+                      : 'bg-zinc-900/60 border-zinc-800 text-zinc-300 hover:bg-zinc-900'
                   }`}
                 >
-                  <HazardIcon category={cat.id} size={14} className={isSelected ? 'text-black' : 'text-zinc-400'} />
-                  <span>{cat.name.split(' ')[0]}</span>
+                  <HazardIcon
+                    category={catKey as CategoryFilter}
+                    size={14}
+                    className={isSelected ? 'text-black' : 'text-zinc-400'}
+                  />
+                  <span className="truncate">{meta.name}</span>
                 </button>
               );
             })}
           </div>
         </div>
-
-        <button
-          type="button"
-          onClick={onClose}
-          className="w-full h-11 rounded-xl bg-white text-black font-bold text-xs hover:bg-zinc-200 transition-colors mt-2"
-        >
-          Apply Filters
-        </button>
       </div>
     </div>
   );

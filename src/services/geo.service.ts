@@ -33,3 +33,19 @@ export function formatDistance(meters: number): string {
   }
   return `${(meters / 1000).toFixed(1)} km away`;
 }
+
+/**
+ * Formats visible map scope distance for dynamic radar pill (e.g. { value: 5, unit: 'km' })
+ */
+export function formatScopeDistance(meters: number): { value: number; unit: string; display: string } {
+  if (meters < 1000) {
+    const rounded = Math.max(100, Math.round(meters / 50) * 50);
+    return { value: rounded, unit: 'm', display: `${rounded}m` };
+  }
+  if (meters < 10000) {
+    const km = Number((meters / 1000).toFixed(1));
+    return { value: km, unit: 'km', display: `${km}km` };
+  }
+  const km = Math.round(meters / 1000);
+  return { value: km, unit: 'km', display: `${km}km` };
+}

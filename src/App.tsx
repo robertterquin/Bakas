@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { Toaster, toast } from 'sonner';
 import { useGeolocation } from './hooks/useGeolocation';
 import { useSyncManager } from './hooks/useSyncManager';
 import { useHazardManager } from './hooks/useHazardManager';
@@ -10,7 +11,6 @@ import { HazardDetailBottomSheet } from './components/modals/HazardDetailBottomS
 import { FilterDrawer } from './components/modals/FilterDrawer';
 import { SyncStatusModal } from './components/modals/SyncStatusModal';
 import { AboutModal } from './components/modals/AboutModal';
-import { ToastNotification } from './components/ui/ToastNotification';
 import { ScreenReaderAnnouncer } from './components/ui/ScreenReaderAnnouncer';
 import { HazardPayload, Coordinates } from './types/hazard';
 
@@ -23,18 +23,23 @@ export default function App() {
     recenter,
   } = useGeolocation();
 
-  // 2. Announcements & Toast
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  // 2. Announcements & Sonner Toast Bridge
   const [ariaAnnouncement, setAriaAnnouncement] = useState<string | null>(null);
 
-  const notifyUser = useCallback((msg: string) => {
-    setToastMessage(msg);
+  const notifyUser = useCallback((msg: string, type: 'default' | 'success' | 'info' | 'warning' = 'default') => {
     setAriaAnnouncement(msg);
+    if (type === 'success') {
+      toast.success(msg);
+    } else if (type === 'warning') {
+      toast.warning(msg);
+    } else {
+      toast(msg);
+    }
   }, []);
 
   // 3. Offline Sync Engine
   const handleSyncComplete = useCallback((count: number) => {
-    notifyUser(`Synced ${count} offline ${count === 1 ? 'trace' : 'traces'}.`);
+    notifyUser(`Synced ${count} offline ${count === 1 ? 'trace' : 'traces'}.`, 'success');
   }, [notifyUser]);
 
   const {
@@ -61,7 +66,10 @@ export default function App() {
     resolveHazard,
   } = useHazardManager(userLocation, isOnline, refreshPendingCount);
 
-  // 5. Custom Click-to-Pin & Modal States
+  // 5. Dynamic Real-time Zoom Scope Tracking
+  const [visibleScopeMeters, setVisibleScopeMeters] = useState<number>(5000);
+
+  // 6. Custom Click-to-Pin & Modal States
   const [customReportCoords, setCustomReportCoords] = useState<Coordinates | null>(null);
   const [isReportOpen, setIsReportOpen] = useState<boolean>(false);
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
@@ -73,7 +81,7 @@ export default function App() {
     setSelectedHazardId(null);
     setCustomReportCoords({ lat, lng });
     setIsReportOpen(true);
-    notifyUser('Pinned location on map.');
+    notifyUser('Pinned location on radar.');
   }, [setSelectedHazardId, notifyUser]);
 
   // Handle closing report sheet
@@ -87,9 +95,9 @@ export default function App() {
     const result = await reportHazard(payload);
     setCustomReportCoords(null);
     if (result.isOffline) {
-      notifyUser('Saved offline in IndexedDB.');
+      notifyUser('Saved offline in IndexedDB.', 'info');
     } else {
-      notifyUser('Hazard trace live on radar!');
+      notifyUser('Hazard trace live on radar!', 'success');
     }
   };
 
@@ -103,7 +111,7 @@ export default function App() {
       {/* Screen Reader ARIA Live Region */}
       <ScreenReaderAnnouncer announcement={ariaAnnouncement} />
 
-      {/* 1. Fullscreen Map Radar Canvas with Click-to-Pin */}
+      {/* 1. Fullscreen Map Radar Canvas with Dynamic Zoom-Scope Tracking */}
       <MapRadarCanvas
         userLocation={userLocation}
         hazards={filteredHazards}
@@ -114,12 +122,14 @@ export default function App() {
         activeFilter={activeFilter}
         tempPinLocation={customReportCoords}
         onMapClick={handleMapClick}
+        onViewportScopeChange={setVisibleScopeMeters}
       />
 
-      {/* 2. Single Unified Minimal Header Bar */}
+      {/* 2. Dynamic Island TopHUD with Rolling Odometer Zoom Scope */}
       <TopHUD
         hazardCount={filteredHazards.length}
         radiusFilter={radiusFilter}
+        visibleScopeMeters={visibleScopeMeters}
         activeFilter={activeFilter}
         onSelectFilter={(cat) => setActiveFilter(cat)}
         isOnline={isOnline}
@@ -191,10 +201,16 @@ export default function App() {
         onClose={() => setIsAboutModalOpen(false)}
       />
 
-      {/* Toast Alert */}
-      <ToastNotification
-        message={toastMessage}
-        onDismiss={() => setToastMessage(null)}
+      {/* 5. Sonner 3D Stacking Glass Toast Engine */}
+      <Toaster
+        position="top-center"
+        theme="dark"
+        toastOptions={{
+          className:
+            '!bg-black/90 !text-white !border !border-white/15 !shadow-[0_16px_36px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.15)] !backdrop-blur-2xl !rounded-2xl !font-sans !text-xs !py-3 !px-4',
+        }}
+        offset={70}
+        duration={3500}
       />
     </main>
   );

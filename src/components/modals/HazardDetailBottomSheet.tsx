@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import NumberFlow from '@number-flow/react';
 import { X, ThumbsUp, CheckCircle2, Copy, ShieldCheck } from 'lucide-react';
 import { Hazard, UserLocation } from '../../types/hazard';
 import {
@@ -121,7 +122,7 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
           </button>
         </div>
 
-        {/* Civic Verification Badge - Pure Monochrome */}
+        {/* Civic Verification Badge with NumberFlow Vouch Counter */}
         <div className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-900/70 border border-zinc-800 text-xs">
           <div className="flex items-center gap-2">
             <div className="p-1.5 rounded-lg bg-black border border-zinc-800 text-white">
@@ -136,8 +137,8 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
               </div>
             </div>
           </div>
-          <span className="text-[10px] px-2 py-0.5 rounded-full bg-black border border-zinc-800 text-zinc-300 font-mono font-semibold">
-            {hazard.upvotes} {hazard.upvotes === 1 ? 'vouch' : 'vouches'}
+          <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-black border border-zinc-800 text-zinc-300 font-mono font-semibold flex items-center gap-1">
+            <NumberFlow value={hazard.upvotes} /> {hazard.upvotes === 1 ? 'vouch' : 'vouches'}
           </span>
         </div>
 
@@ -169,7 +170,7 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
           </button>
         </div>
 
-        {/* Action Buttons - Pure Monochrome */}
+        {/* Action Buttons with Dynamic NumberFlow Rolling Digits */}
         <div className="grid grid-cols-2 gap-2.5 pt-1">
           <button
             type="button"
@@ -186,7 +187,9 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
             ) : (
               <ThumbsUp className="w-3.5 h-3.5" />
             )}
-            <span>{hasUpvoted ? `Upvoted (${hazard.upvotes})` : `Still Here (+${hazard.upvotes})`}</span>
+            <span className="flex items-center gap-0.5">
+              <span>{hasUpvoted ? 'Upvoted (' : 'Still Here (+'}<NumberFlow value={hazard.upvotes} />{')'}</span>
+            </span>
           </button>
 
           <button
