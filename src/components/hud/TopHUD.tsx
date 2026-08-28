@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import NumberFlow from '@number-flow/react';
-import { WifiOff, Radio } from 'lucide-react';
+import { WifiOff, Radio, Search } from 'lucide-react';
 import { RadiusFilter, CategoryFilter } from '../../types/hazard';
 import { formatScopeDistance } from '../../services/geo.service';
 import { HazardIcon } from '../ui/HazardIcon';
@@ -20,6 +20,7 @@ interface TopHUDProps {
   onOpenFilter: () => void;
   onOpenSync: () => void;
   onOpenAbout: () => void;
+  onOpenSearch: () => void;
 }
 
 const CATEGORIES: { id: CategoryFilter; label: string }[] = [
@@ -42,6 +43,7 @@ export const TopHUD: React.FC<TopHUDProps> = ({
   onOpenFilter,
   onOpenSync,
   onOpenAbout,
+  onOpenSearch,
 }) => {
   const scopeInfo = formatScopeDistance(radiusFilter > 0 ? radiusFilter : visibleScopeMeters);
 
@@ -58,7 +60,7 @@ export const TopHUD: React.FC<TopHUDProps> = ({
           type="button"
           onClick={onOpenAbout}
           whileTap={{ scale: 0.95 }}
-          className="h-8 flex items-center gap-1.5 pl-2 pr-2.5 rounded-full hover:bg-white/10 transition-colors group shrink-0"
+          className="h-8 flex items-center gap-1.5 pl-2 pr-2 rounded-full hover:bg-white/10 transition-colors group shrink-0"
           title="About Bakás Radar"
         >
           <BakasLogo size={20} withGlow={true} className="shrink-0 group-hover:scale-105 transition-transform" />
@@ -112,8 +114,21 @@ export const TopHUD: React.FC<TopHUDProps> = ({
           })}
         </nav>
 
-        {/* Dynamic Zoom-Adaptive Telemetry Radar Range Pill */}
+        {/* Search & Precision Radar Range Controls */}
         <div className="flex items-center gap-1 shrink-0 pr-0.5">
+          {/* Street & Landmark Search Trigger (Ctrl+K) */}
+          <motion.button
+            type="button"
+            onClick={onOpenSearch}
+            whileTap={{ scale: 0.92 }}
+            className="h-7.5 px-2 rounded-full bg-white/[0.08] border border-white/10 hover:bg-white/[0.15] hover:border-white/25 text-zinc-300 hover:text-white flex items-center gap-1 transition-all shadow-sm"
+            title="Search Philippine streets & landmarks (Ctrl+K)"
+          >
+            <Search className="w-3.5 h-3.5" />
+            <span className="hidden md:inline text-[9px] font-mono text-zinc-400 pr-0.5">⌘K</span>
+          </motion.button>
+
+          {/* Dynamic Zoom-Adaptive Telemetry Radar Range Pill */}
           <motion.button
             type="button"
             onClick={onOpenFilter}

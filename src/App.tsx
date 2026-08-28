@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Toaster, toast } from 'sonner';
 import { useGeolocation } from './hooks/useGeolocation';
 import { useSyncManager } from './hooks/useSyncManager';
@@ -6,6 +6,7 @@ import { useHazardManager } from './hooks/useHazardManager';
 import { MapRadarCanvas } from './components/map/MapRadarCanvas';
 import { TopHUD } from './components/hud/TopHUD';
 import { ActionHUD } from './components/hud/ActionHUD';
+import { SearchModal } from './components/modals/SearchModal';
 import { ReportBottomSheet } from './components/modals/ReportBottomSheet';
 import { HazardDetailBottomSheet } from './components/modals/HazardDetailBottomSheet';
 import { FilterDrawer } from './components/modals/FilterDrawer';
@@ -13,6 +14,7 @@ import { SyncStatusModal } from './components/modals/SyncStatusModal';
 import { AboutModal } from './components/modals/AboutModal';
 import { ScreenReaderAnnouncer } from './components/ui/ScreenReaderAnnouncer';
 import { HazardPayload, Coordinates } from './types/hazard';
+import { GeocodedLocation } from './services/geocoding.service';
 
 export default function App() {
   // 1. Geolocation Tracking
@@ -69,12 +71,28 @@ export default function App() {
   // 5. Dynamic Real-time Zoom Scope Tracking
   const [visibleScopeMeters, setVisibleScopeMeters] = useState<number>(5000);
 
-  // 6. Custom Click-to-Pin & Modal States
+  // 6. Search Target Fly-to State
+  const [searchTarget, setSearchTarget] = useState<{ lat: number; lng: number; count: number } | null>(null);
+
+  // 7. Custom Click-to-Pin & Modal States
   const [customReportCoords, setCustomReportCoords] = useState<Coordinates | null>(null);
+  const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [isReportOpen, setIsReportOpen] = useState<boolean>(false);
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
   const [isSyncModalOpen, setIsSyncModalOpen] = useState<boolean>(false);
   const [isAboutModalOpen, setIsAboutModalOpen] = useState<boolean>(false);
+
+  // Global Keyboard Shortcut: Ctrl+K or Cmd+K to open Search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsSearchOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Handle clicking anywhere on the map to drop a pin
   const handleMapClick = useCallback((lat: number, lng: number) => {
@@ -82,6 +100,18 @@ export default function App() {
     setCustomReportCoords({ lat, lng });
     setIsReportOpen(true);
     notifyUser('Pinned location on radar.');
+  }, [setSelectedHazardId, notifyUser]);
+
+  // Handle selecting a searched Philippine location
+  const handleSelectLocation = useCallback((loc: GeocodedLocation) => {
+    setCustomReportCoords(null);
+    setSelectedHazardId(null);
+    setSearchTarget((prev) => ({
+      lat: loc.lat,
+      lng: loc.lng,
+      count: (prev?.count || 0) + 1,
+    }));
+    notifyUser(`Radar focused on ${loc.name}`, 'success');
   }, [setSelectedHazardId, notifyUser]);
 
   // Handle closing report sheet
@@ -121,11 +151,12 @@ export default function App() {
         radiusFilter={radiusFilter}
         activeFilter={activeFilter}
         tempPinLocation={customReportCoords}
+        searchTarget={searchTarget}
         onMapClick={handleMapClick}
         onViewportScopeChange={setVisibleScopeMeters}
       />
 
-      {/* 2. Dynamic Island TopHUD with Rolling Odometer Zoom Scope */}
+      {/* 2. Dynamic Island TopHUD with Rolling Odometer Zoom Scope & Search */}
       <TopHUD
         hazardCount={filteredHazards.length}
         radiusFilter={radiusFilter}
@@ -138,6 +169,7 @@ export default function App() {
         onOpenFilter={() => setIsFilterOpen(true)}
         onOpenSync={() => setIsSyncModalOpen(true)}
         onOpenAbout={() => setIsAboutModalOpen(true)}
+        onOpenSearch={() => setIsSearchOpen(true)}
       />
 
       {/* 3. Minimal Corner Recenter Control */}
@@ -149,7 +181,15 @@ export default function App() {
         isTracking={isTracking}
       />
 
-      {/* 4. Modals & Bottom Sheets */}
+      {/* 4. Modals, Drawers & Command Palettes */}
+      {/* Street & Landmark Search Modal */}
+      <SearchModal
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        userLocation={userLocation}
+        onSelectLocation={handleSelectLocation}
+      />
+
       {/* Report Modal */}
       <ReportBottomSheet
         isOpen={isReportOpen}

@@ -12,6 +12,7 @@ interface MapRadarCanvasProps {
   radiusFilter: RadiusFilter;
   activeFilter: CategoryFilter;
   tempPinLocation?: { lat: number; lng: number } | null;
+  searchTarget?: { lat: number; lng: number; count: number } | null;
   onMapClick?: (lat: number, lng: number) => void;
   onViewportScopeChange?: (visibleRadiusMeters: number) => void;
 }
@@ -24,6 +25,7 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
   recenterCount,
   radiusFilter,
   tempPinLocation,
+  searchTarget,
   onMapClick,
   onViewportScopeChange,
 }) => {
@@ -115,7 +117,7 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Recenter when triggered
+  // Recenter on GPS when triggered
   useEffect(() => {
     if (mapInstanceRef.current) {
       mapInstanceRef.current.flyTo([userLocation.lat, userLocation.lng], 15, {
@@ -124,6 +126,16 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
       });
     }
   }, [recenterCount, userLocation.lat, userLocation.lng]);
+
+  // Fly to searched location when chosen from SearchModal
+  useEffect(() => {
+    if (searchTarget && mapInstanceRef.current) {
+      mapInstanceRef.current.flyTo([searchTarget.lat, searchTarget.lng], 16, {
+        animate: true,
+        duration: 1.2,
+      });
+    }
+  }, [searchTarget]);
 
   // Update user GPS location marker & accuracy circle
   useEffect(() => {
