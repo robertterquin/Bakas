@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import { Hazard, UserLocation, CategoryFilter, RadiusFilter } from '../../types/hazard';
+import { calculateDistanceInMeters } from '../../services/geo.service';
 import { getCategorySvgMarkup } from '../ui/HazardIcon';
 
 interface MapRadarCanvasProps {
@@ -34,10 +35,11 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
   const userMarkerRef = useRef<L.Marker | null>(null);
   const tempMarkerRef = useRef<L.Marker | null>(null);
+  const searchPulseMarkerRef = useRef<L.Marker | null>(null);
   const accuracyCircleRef = useRef<L.Circle | null>(null);
   const radiusBoundaryCircleRef = useRef<L.Circle | null>(null);
 
-  // Initialize Map
+  // Initialize Map with High-Performance Tile Caching
   useEffect(() => {
     if (!mapContainerRef.current || mapInstanceRef.current) return;
 
@@ -48,15 +50,19 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
       attributionControl: true,
       fadeAnimation: true,
       zoomAnimation: true,
+      preferCanvas: true,
     });
 
-    // 100% Zero-Key, Zero-Watermark Pure Monochrome Radar Canvas
+    // 100% Zero-Key, Zero-Watermark Pure Monochrome Radar Canvas (High-Speed Caching)
     L.tileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
       {
         attribution: '&copy; Esri &mdash; OpenStreetMap contributors',
         maxZoom: 16,
         minZoom: 3,
+        keepBuffer: 6,
+        updateWhenIdle: true,
+        updateWhenZooming: false,
       }
     ).addTo(map);
 
@@ -67,6 +73,9 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
         attribution: '',
         maxZoom: 16,
         minZoom: 3,
+        keepBuffer: 6,
+        updateWhenIdle: true,
+        updateWhenZooming: false,
       }
     ).addTo(map);
 
@@ -122,19 +131,61 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
     if (mapInstanceRef.current) {
       mapInstanceRef.current.flyTo([userLocation.lat, userLocation.lng], 15, {
         animate: true,
-        duration: 0.8,
+        duration: 0.6,
       });
     }
   }, [recenterCount, userLocation.lat, userLocation.lng]);
 
-  // Fly to searched location when chosen from SearchModal
+  // Instant Teleport / Adaptive Camera Move on Location Search (Zero Tile Churn)
   useEffect(() => {
-    if (searchTarget && mapInstanceRef.current) {
-      mapInstanceRef.current.flyTo([searchTarget.lat, searchTarget.lng], 16, {
-        animate: true,
-        duration: 1.2,
-      });
+    if (!searchTarget || !mapInstanceRef.current) return;
+    const map = mapInstanceRef.current;
+    const currentCenter = map.getCenter();
+    const distMeters = calculateDistanceInMeters(
+      currentCenter.lat,
+      currentCenter.lng,
+      searchTarget.lat,
+      searchTarget.lng
+    );
+
+    // For distant searches (> 2.5km), jump directly to avoid downloading dozens of flight tiles
+    if (distMeters > 2500) {
+      map.setView([searchTarget.lat, searchTarget.lng], 16, { animate: false });
+    } else {
+      map.flyTo([searchTarget.lat, searchTarget.lng], 16, { animate: true, duration: 0.5 });
     }
+
+    // Add a temporary 2.5s visual radar beacon on the searched target
+    const pulseIcon = L.divIcon({
+      className: 'custom-search-pulse',
+      html: `
+        <div class="relative flex items-center justify-center w-12 h-12">
+          <div class="absolute w-12 h-12 rounded-full border-2 border-white animate-ping opacity-90"></div>
+          <div class="absolute w-8 h-8 rounded-full bg-white/20 border border-white animate-pulse"></div>
+          <div class="w-3 h-3 rounded-full bg-white shadow-[0_0_16px_#ffffff]"></div>
+        </div>
+      `,
+      iconSize: [48, 48],
+      iconAnchor: [24, 24],
+    });
+
+    if (searchPulseMarkerRef.current) {
+      map.removeLayer(searchPulseMarkerRef.current);
+    }
+    const pulseMarker = L.marker([searchTarget.lat, searchTarget.lng], {
+      icon: pulseIcon,
+      zIndexOffset: 1500,
+    }).addTo(map);
+    searchPulseMarkerRef.current = pulseMarker;
+
+    const removeTimer = setTimeout(() => {
+      if (searchPulseMarkerRef.current) {
+        map.removeLayer(searchPulseMarkerRef.current);
+        searchPulseMarkerRef.current = null;
+      }
+    }, 2800);
+
+    return () => clearTimeout(removeTimer);
   }, [searchTarget]);
 
   // Update user GPS location marker & accuracy circle

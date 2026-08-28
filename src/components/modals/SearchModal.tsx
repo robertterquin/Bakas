@@ -224,16 +224,6 @@ export const SearchModal: React.FC<SearchModalProps> = ({
               );
             })}
           </div>
-
-          {/* Footer Shortcuts Hint */}
-          <div className="px-4 py-2.5 bg-zinc-900/30 border-t border-zinc-800/80 flex items-center justify-between text-[11px] text-zinc-500 font-mono">
-            <div className="flex items-center gap-2">
-              <span>↑↓ Navigate</span>
-              <span>•</span>
-              <span>↵ Jump to Location</span>
-            </div>
-            <span>OpenStreetMap Philippines</span>
-          </div>
         </motion.div>
       </div>
     </AnimatePresence>
