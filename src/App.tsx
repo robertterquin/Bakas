@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Toaster, toast } from 'sonner';
 import { useGeolocation } from './hooks/useGeolocation';
 import { useSyncManager } from './hooks/useSyncManager';
@@ -40,9 +40,15 @@ export default function App() {
   }, []);
 
   // 3. Offline Sync Engine
-  const handleSyncComplete = useCallback((count: number) => {
-    notifyUser(`Synced ${count} offline ${count === 1 ? 'trace' : 'traces'}.`, 'success');
-  }, [notifyUser]);
+  const refreshHazardsRef = useRef<() => void>(() => {});
+
+  const handleSyncComplete = useCallback(
+    (count: number) => {
+      notifyUser(`Uploaded ${count} offline ${count === 1 ? 'trace' : 'traces'} to cloud!`, 'success');
+      refreshHazardsRef.current();
+    },
+    [notifyUser]
+  );
 
   const {
     isOnline,
@@ -66,7 +72,12 @@ export default function App() {
     reportHazard,
     upvoteHazard,
     resolveHazard,
+    refreshHazards,
   } = useHazardManager(userLocation, isOnline, refreshPendingCount);
+
+  useEffect(() => {
+    refreshHazardsRef.current = refreshHazards;
+  }, [refreshHazards]);
 
   // 5. Dynamic Real-time Zoom Scope Tracking
   const [visibleScopeMeters, setVisibleScopeMeters] = useState<number>(5000);

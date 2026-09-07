@@ -1,6 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { getPendingReports, removePendingReport, getPendingValidations, removePendingValidation } from '../services/offline.service';
-import { submitHazardToBackend, submitUpvoteToBackend, submitResolveToBackend } from '../services/hazard.service';
+import {
+  getPendingReports,
+  removePendingReport,
+  getPendingValidations,
+  removePendingValidation,
+} from '../services/offline.service';
+import {
+  submitHazardToBackend,
+  submitUpvoteToBackend,
+  submitResolveToBackend,
+} from '../services/hazard.service';
 
 export interface SyncState {
   isOnline: boolean;
@@ -21,29 +30,32 @@ export function useSyncManager(onSyncCompleted?: (count: number) => void) {
 
   const onSyncCompletedRef = useRef(onSyncCompleted);
   onSyncCompletedRef.current = onSyncCompleted;
+  const isSyncingRef = useRef(false);
 
   const refreshPendingCount = useCallback(async () => {
     try {
       const reports = await getPendingReports();
       const validations = await getPendingValidations();
+      const count = reports.length + validations.length;
       setState((prev) => ({
         ...prev,
-        pendingCount: reports.length + validations.length,
+        pendingCount: count,
       }));
-      return reports.length + validations.length;
+      return count;
     } catch {
       return 0;
     }
   }, []);
 
   const syncPendingItems = useCallback(async () => {
-    if (!navigator.onLine) return;
+    if (!navigator.onLine || isSyncingRef.current) return;
 
+    isSyncingRef.current = true;
     setState((prev) => ({ ...prev, isSyncing: true }));
     let syncedCount = 0;
 
     try {
-      // 1. Sync pending reports
+      // 1. Sync pending reports and remove pushed items immediately
       const pendingReports = await getPendingReports();
       for (const report of pendingReports) {
         try {
@@ -52,10 +64,16 @@ export function useSyncManager(onSyncCompleted?: (count: number) => void) {
           syncedCount++;
         } catch (err) {
           console.warn('Failed to sync hazard item:', report.id, err);
+          const msg = err instanceof Error ? err.message : String(err);
+          // If already inserted or duplicate key error, remove so queue does not stick
+          if (msg.includes('duplicate') || msg.includes('already exists')) {
+            await removePendingReport(report.id);
+            syncedCount++;
+          }
         }
       }
 
-      // 2. Sync pending validations
+      // 2. Sync pending validations and remove pushed items immediately
       const pendingValidations = await getPendingValidations();
       for (const val of pendingValidations) {
         try {
@@ -68,12 +86,9 @@ export function useSyncManager(onSyncCompleted?: (count: number) => void) {
           syncedCount++;
         } catch (err: unknown) {
           console.warn('Failed to sync validation item:', val.id, err);
-          const msg = err instanceof Error ? err.message : String(err);
-          // If the target hazard was expired, deleted, or already processed, clean up from queue
-          if (msg.includes('not found') || msg.includes('already')) {
-            await removePendingValidation(val.id);
-            syncedCount++;
-          }
+          // If already processed or invalid pin, remove from queue immediately
+          await removePendingValidation(val.id);
+          syncedCount++;
         }
       }
 
@@ -83,7 +98,10 @@ export function useSyncManager(onSyncCompleted?: (count: number) => void) {
         ...prev,
         isSyncing: false,
         lastSyncTime: new Date(),
-        syncSuccessMessage: syncedCount > 0 ? `Synced ${syncedCount} offline ${syncedCount === 1 ? 'trace' : 'traces'}` : null,
+        syncSuccessMessage:
+          syncedCount > 0
+            ? `Uploaded ${syncedCount} offline ${syncedCount === 1 ? 'trace' : 'traces'} to cloud`
+            : null,
       }));
 
       if (syncedCount > 0 && onSyncCompletedRef.current) {
@@ -92,12 +110,15 @@ export function useSyncManager(onSyncCompleted?: (count: number) => void) {
     } catch (error) {
       console.error('Offline sync error:', error);
       setState((prev) => ({ ...prev, isSyncing: false }));
+    } finally {
+      isSyncingRef.current = false;
     }
   }, [refreshPendingCount]);
 
   useEffect(() => {
     refreshPendingCount();
 
+    // 1. Auto-upload when internet / mobile data is restored
     const handleOnline = () => {
       setState((prev) => ({ ...prev, isOnline: true }));
       syncPendingItems();
@@ -107,12 +128,35 @@ export function useSyncManager(onSyncCompleted?: (count: number) => void) {
       setState((prev) => ({ ...prev, isOnline: false }));
     };
 
+    // 2. Auto-upload when user unlocks screen or switches back to tab with internet
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && navigator.onLine) {
+        syncPendingItems();
+      }
+    };
+
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // 3. Periodic 15s heartbeat to auto-upload queued items whenever online
+    const interval = setInterval(() => {
+      if (navigator.onLine && !isSyncingRef.current) {
+        getPendingReports().then((r) => {
+          getPendingValidations().then((v) => {
+            if (r.length + v.length > 0) {
+              syncPendingItems();
+            }
+          });
+        });
+      }
+    }, 15000);
 
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      clearInterval(interval);
     };
   }, [refreshPendingCount, syncPendingItems]);
 

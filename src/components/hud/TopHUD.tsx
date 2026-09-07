@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import NumberFlow from '@number-flow/react';
-import { WifiOff, Radio, Search } from 'lucide-react';
+import { Wifi, WifiOff, Radio, Search } from 'lucide-react';
 import { RadiusFilter, CategoryFilter } from '../../types/hazard';
 import { formatScopeDistance } from '../../services/geo.service';
 import { HazardIcon } from '../ui/HazardIcon';
@@ -143,22 +143,49 @@ export const TopHUD: React.FC<TopHUDProps> = ({
             </span>
           </motion.button>
 
-          {(!isOnline || pendingCount > 0) && (
+          {/* Offline & Cloud Sync Status Button (Only appears when offline, syncing, or pending items exist) */}
+          {(!isOnline || pendingCount > 0 || isSyncing) && (
             <motion.button
               type="button"
               onClick={onOpenSync}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
               whileTap={{ scale: 0.9 }}
-              className="w-7.5 h-7.5 flex items-center justify-center rounded-full bg-white/[0.08] hover:bg-white/20 border border-white/10 text-white transition-all"
-              title={!isOnline ? 'Offline mode active' : `${pendingCount} pending traces`}
+              className={`h-7.5 px-2 rounded-full border transition-all flex items-center gap-1 shadow-sm ${
+                !isOnline
+                  ? 'bg-zinc-900 border-zinc-700 text-zinc-300'
+                  : pendingCount > 0
+                  ? 'bg-zinc-800 border-zinc-600 text-white shadow-[0_0_12px_rgba(255,255,255,0.2)]'
+                  : 'bg-white/[0.08] border-white/10 text-white'
+              }`}
+              title={
+                !isOnline
+                  ? 'Offline mode (IndexedDB active)'
+                  : pendingCount > 0
+                  ? `${pendingCount} offline actions pending sync`
+                  : 'Syncing to Supabase...'
+              }
             >
-              <WifiOff className="w-3.5 h-3.5" />
+              {!isOnline ? (
+                <WifiOff className="w-3.5 h-3.5 text-zinc-400" />
+              ) : isSyncing ? (
+                <LoadingSpinner variant="dual-arc" size={13} className="text-white" />
+              ) : (
+                <div className="relative flex items-center justify-center">
+                  <Wifi className="w-3.5 h-3.5" />
+                  <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                  </span>
+                </div>
+              )}
+              {pendingCount > 0 && (
+                <span className="text-[10px] font-mono font-bold text-white leading-none">
+                  <NumberFlow value={pendingCount} />
+                </span>
+              )}
             </motion.button>
-          )}
-
-          {isSyncing && (
-            <div className="px-1 flex items-center">
-              <LoadingSpinner variant="dual-arc" size={14} className="text-white" />
-            </div>
           )}
         </div>
       </motion.div>

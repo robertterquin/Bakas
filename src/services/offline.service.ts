@@ -121,6 +121,15 @@ export async function removePendingValidation(id: string): Promise<void> {
 }
 
 /**
+ * Clear all pending offline queue items
+ */
+export async function clearPendingQueue(): Promise<void> {
+  const db = await getDB();
+  await db.clear('pending_reports');
+  await db.clear('pending_validations');
+}
+
+/**
  * Clear cache if needed
  */
 export async function clearCachedHazards(): Promise<void> {

@@ -1,7 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { X, CheckCircle, Wifi, WifiOff, Database } from 'lucide-react';
+import { X, CheckCircle, Wifi, WifiOff, Database, Trash2 } from 'lucide-react';
 import { Hazard, ValidationAction } from '../../types/hazard';
-import { getPendingReports, getPendingValidations, clearCachedHazards } from '../../services/offline.service';
+import {
+  getPendingReports,
+  getPendingValidations,
+  removePendingReport,
+  removePendingValidation,
+  clearCachedHazards,
+  clearPendingQueue,
+} from '../../services/offline.service';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 
 interface SyncStatusModalProps {
@@ -44,12 +51,10 @@ export const SyncStatusModal: React.FC<SyncStatusModalProps> = ({
     }
   }, [isOpen, loadQueue]);
 
-  // Escape key accessibility
+  // Accessibility: Handle escape key to close dialog
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
+      if (e.key === 'Escape') onClose();
     },
     [onClose]
   );
@@ -72,7 +77,26 @@ export const SyncStatusModal: React.FC<SyncStatusModalProps> = ({
     }
     await onTriggerSync();
     await loadQueue();
-    onShowToast('Sync complete! Offline queue updated.');
+    onShowToast('Sync complete! All pushed items removed from queue.');
+  };
+
+  const handleRemoveReport = async (id: string) => {
+    await removePendingReport(id);
+    setPendingReports((prev) => prev.filter((r) => r.id !== id));
+    onShowToast('Report removed from offline queue.');
+  };
+
+  const handleRemoveValidation = async (id: string) => {
+    await removePendingValidation(id);
+    setPendingValidations((prev) => prev.filter((v) => v.id !== id));
+    onShowToast('Action removed from offline queue.');
+  };
+
+  const handleFlushQueue = async () => {
+    await clearPendingQueue();
+    setPendingReports([]);
+    setPendingValidations([]);
+    onShowToast('Offline queue flushed cleanly.');
   };
 
   const handleClearCache = async () => {
@@ -94,7 +118,13 @@ export const SyncStatusModal: React.FC<SyncStatusModalProps> = ({
         {/* Header */}
         <div className="p-4 px-6 flex items-center justify-between border-b border-zinc-800">
           <div className="flex items-center gap-2.5">
-            <div className={`p-2 rounded-xl ${isOnline ? 'bg-black text-white border border-zinc-800' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'}`}>
+            <div
+              className={`p-2 rounded-xl ${
+                isOnline
+                  ? 'bg-black text-white border border-zinc-800'
+                  : 'bg-zinc-900 text-zinc-400 border border-zinc-800'
+              }`}
+            >
               {isOnline ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
             </div>
             <div>
@@ -110,26 +140,34 @@ export const SyncStatusModal: React.FC<SyncStatusModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close sync modal"
+            aria-label="Close sync engine status"
             className="p-2 -mr-2 text-zinc-400 hover:text-white rounded-xl hover:bg-zinc-900 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-6 overflow-y-auto space-y-4 text-xs">
-          {/* Status summary */}
-          <div className="p-3.5 rounded-2xl bg-black border border-zinc-800 flex items-center justify-between">
+        {/* Body content */}
+        <div className="p-6 overflow-y-auto space-y-4">
+          {/* Status banner */}
+          <div
+            className={`p-4 rounded-2xl border flex items-center justify-between transition-colors ${
+              totalPending === 0
+                ? 'bg-black border-zinc-800 text-white'
+                : 'bg-black border-zinc-700 text-zinc-200'
+            }`}
+          >
             <div className="flex items-center gap-3">
               <Database className="w-5 h-5 text-white shrink-0" />
               <div>
                 <div className="font-bold text-white text-sm">
-                  {totalPending === 0 ? 'All Traces Synchronized' : `${totalPending} Pending Offline Action${totalPending > 1 ? 's' : ''}`}
+                  {totalPending === 0
+                    ? 'All Traces Synchronized'
+                    : `${totalPending} Pending Offline Action${totalPending > 1 ? 's' : ''}`}
                 </div>
                 <div className="text-zinc-400 text-[11px]">
                   {totalPending === 0
-                    ? 'Your local IndexedDB is up to date.'
+                    ? 'Your local IndexedDB is completely up to date.'
                     : 'Changes stored safely in local database.'}
                 </div>
               </div>
@@ -156,17 +194,27 @@ export const SyncStatusModal: React.FC<SyncStatusModalProps> = ({
                   key={report.id}
                   className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-800 flex items-center justify-between"
                 >
-                  <div>
-                    <div className="font-semibold text-white capitalize">
+                  <div className="min-w-0 pr-2">
+                    <div className="font-semibold text-white capitalize truncate">
                       {report.category.replace('_', ' ')} (New Pin)
                     </div>
-                    <div className="text-[11px] text-zinc-400 font-mono">
+                    <div className="text-[11px] text-zinc-400 font-mono truncate">
                       {report.lat.toFixed(4)}, {report.lng.toFixed(4)}
                     </div>
                   </div>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-black text-white border border-zinc-700 font-mono font-semibold">
-                    Queued
-                  </span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-black text-white border border-zinc-700 font-mono font-semibold">
+                      Queued
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveReport(report.id)}
+                      title="Remove from queue"
+                      className="p-1 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               ))}
 
@@ -176,17 +224,27 @@ export const SyncStatusModal: React.FC<SyncStatusModalProps> = ({
                   key={val.id}
                   className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-800 flex items-center justify-between"
                 >
-                  <div>
-                    <div className="font-semibold text-white capitalize">
+                  <div className="min-w-0 pr-2">
+                    <div className="font-semibold text-white capitalize truncate">
                       {val.actionType === 'upvote' ? 'Upvote / Confirmation' : 'Resolve Vote'}
                     </div>
-                    <div className="text-[11px] text-zinc-400 font-mono">
+                    <div className="text-[11px] text-zinc-400 font-mono truncate">
                       Target Pin: {val.hazardId.substring(0, 8)}...
                     </div>
                   </div>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-black text-white border border-zinc-700 font-mono font-semibold">
-                    Queued
-                  </span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-black text-white border border-zinc-700 font-mono font-semibold">
+                      Queued
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveValidation(val.id)}
+                      title="Remove from queue"
+                      className="p-1 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -218,13 +276,23 @@ export const SyncStatusModal: React.FC<SyncStatusModalProps> = ({
               )}
             </button>
 
-            <button
-              type="button"
-              onClick={handleClearCache}
-              className="w-full py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors text-[11px]"
-            >
-              Clear Local Map Cache
-            </button>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={handleFlushQueue}
+                disabled={totalPending === 0}
+                className="py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors text-[11px] disabled:opacity-40"
+              >
+                Flush Queue
+              </button>
+              <button
+                type="button"
+                onClick={handleClearCache}
+                className="py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors text-[11px]"
+              >
+                Clear Map Cache
+              </button>
+            </div>
           </div>
         </div>
       </div>
