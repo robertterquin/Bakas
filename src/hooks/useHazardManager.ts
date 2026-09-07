@@ -171,11 +171,10 @@ export function useHazardManager(userLocation: UserLocation, isOnline: boolean, 
       prev.map((h) => {
         if (h.id === hazardId) {
           const newCount = h.resolvedCount + 1;
-          const isResolved = newCount >= 3;
           return {
             ...h,
             resolvedCount: newCount,
-            isResolved: isResolved || h.isResolved,
+            isResolved: true,
           };
         }
         return h;

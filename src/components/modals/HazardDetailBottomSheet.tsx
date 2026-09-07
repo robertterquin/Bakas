@@ -144,9 +144,19 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
 
         {/* Resolved badge if marked */}
         {hazard.isResolved && (
-          <div className="p-2.5 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-zinc-200 flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
-            <span>Marked as Cleared by community consensus</span>
+          <div className="p-3 rounded-2xl bg-zinc-900/90 border border-white/20 text-xs text-white flex items-center justify-between shadow-[0_0_20px_rgba(255,255,255,0.06)]">
+            <div className="flex items-center gap-2.5">
+              <div className="w-5 h-5 rounded-full bg-white text-black flex items-center justify-center shadow-sm shrink-0">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+              </div>
+              <div>
+                <span className="font-bold text-white block">Marked as Cleared</span>
+                <span className="text-[10px] text-zinc-400">Confirmed by 3+ commuters • Auto-decaying in ~2h</span>
+              </div>
+            </div>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-black border border-zinc-700 text-zinc-300 font-mono font-bold">
+              Resolved
+            </span>
           </div>
         )}
 
@@ -175,9 +185,9 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
           <button
             type="button"
             onClick={handleUpvote}
-            disabled={isUpvoting || hasUpvoted}
+            disabled={isUpvoting || hasUpvoted || hazard.isResolved}
             className={`h-11 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
-              hasUpvoted
+              hazard.isResolved || hasUpvoted
                 ? 'bg-zinc-900 border-zinc-800 text-zinc-500 cursor-not-allowed'
                 : 'bg-white hover:bg-zinc-200 text-black border-white shadow-md'
             }`}
@@ -195,9 +205,11 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
           <button
             type="button"
             onClick={handleResolve}
-            disabled={isResolving || hasResolved}
+            disabled={isResolving || hasResolved || hazard.isResolved}
             className={`h-11 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
-              hasResolved
+              hazard.isResolved
+                ? 'bg-zinc-950 border-zinc-800 text-zinc-500 cursor-not-allowed'
+                : hasResolved
                 ? 'bg-zinc-900 border-zinc-800 text-zinc-500 cursor-not-allowed'
                 : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border-zinc-800 hover:border-zinc-600 hover:text-white'
             }`}
@@ -205,9 +217,9 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
             {isResolving ? (
               <LoadingSpinner variant="ring" size={15} className="text-white" />
             ) : (
-              <CheckCircle2 className="w-3.5 h-3.5 text-zinc-400" />
+              <CheckCircle2 className={`w-3.5 h-3.5 ${hazard.isResolved ? 'text-zinc-600' : 'text-zinc-400'}`} />
             )}
-            <span>{hasResolved ? 'Flagged Fixed' : 'Mark Cleared'}</span>
+            <span>{hazard.isResolved ? 'Cleared ✓' : hasResolved ? 'Flagged Fixed' : 'Mark Cleared'}</span>
           </button>
         </div>
       </div>

@@ -3,6 +3,7 @@ import L from 'leaflet';
 import { Hazard, UserLocation, CategoryFilter, RadiusFilter } from '../../types/hazard';
 import { calculateDistanceInMeters } from '../../services/geo.service';
 import { getCategorySvgMarkup } from '../ui/HazardIcon';
+import { hasDeviceVoted } from '../../utils/domain-rules';
 
 interface MapRadarCanvasProps {
   userLocation: UserLocation;
@@ -301,14 +302,30 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
       const isHigh = hazard.severity === 'high';
       const isMedium = hazard.severity === 'medium';
       const isPending = hazard.syncStatus === 'pending_sync';
-      const isResolved = hazard.isResolved;
+      const isResolved = Boolean(
+        hazard.isResolved ||
+        (hazard.resolvedCount && hazard.resolvedCount > 0) ||
+        hasDeviceVoted(hazard.id, 'resolve')
+      );
 
       // Pure monochrome tactical marker styling
       let outerRing = '';
+      let resolvedBadge = '';
       let markerColor = 'bg-black border-zinc-700 text-zinc-400';
       let iconColor = '#a1a1aa';
 
-      if (isHigh) {
+      if (isResolved) {
+        markerColor = 'bg-zinc-950/80 border-dashed border-zinc-700 text-zinc-500 opacity-45';
+        iconColor = '#71717a';
+        outerRing = '';
+        resolvedBadge = `
+          <div class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-white text-black flex items-center justify-center shadow-[0_0_10px_#ffffff] border border-black z-20">
+            <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+        `;
+      } else if (isHigh) {
         markerColor = 'bg-black border-white text-white shadow-[0_0_18px_rgba(255,255,255,0.95)]';
         iconColor = '#ffffff';
         outerRing = '<div class="absolute -inset-1.5 rounded-full border border-white/60 animate-ping opacity-75 pointer-events-none"></div>';
@@ -317,15 +334,9 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
         iconColor = '#f4f4f5';
       }
 
-      if (isPending) {
+      if (isPending && !isResolved) {
         markerColor += ' border-dashed border-zinc-300 shadow-[0_0_12px_rgba(255,255,255,0.5)]';
         iconColor = '#ffffff';
-      }
-
-      if (isResolved) {
-        markerColor = 'bg-black/60 border-zinc-800 text-zinc-600 opacity-40';
-        iconColor = '#52525b';
-        outerRing = '';
       }
 
       // Accurate vector SVG icon matching top navigation
@@ -340,11 +351,12 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
         html: `
           <div class="relative flex items-center justify-center cursor-pointer ${selectedClass}">
             ${outerRing}
+            ${resolvedBadge}
             <div class="w-9 h-9 rounded-full ${markerColor} border-2 flex items-center justify-center select-none transition-all">
               ${svgIconMarkup}
             </div>
             ${
-              hazard.upvotes > 1
+              hazard.upvotes > 1 && !isResolved
                 ? `<div class="absolute -bottom-1 -right-1 bg-black border border-zinc-700 text-[10px] font-mono text-white px-1 rounded-full leading-tight font-bold">
                     +${hazard.upvotes}
                   </div>`
