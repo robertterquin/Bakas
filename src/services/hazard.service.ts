@@ -184,9 +184,26 @@ export async function submitUpvoteToBackend(
           expires_at: String(data.expires_at || (localHazard?.expiresAt ?? '')),
         };
       } else if (error) {
+        // If hazard does not exist in remote DB or already upvoted, handle cleanly
+        if (error.message.includes('not found') || error.message.includes('already')) {
+          console.info('Hazard upvote target resolved or already counted:', hazardId);
+          return {
+            success: true,
+            upvotes: localHazard ? localHazard.upvotes : 1,
+            expires_at: localHazard ? localHazard.expiresAt : new Date().toISOString(),
+          };
+        }
         throw new Error(error.message);
       }
-    } catch (err) {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes('not found') || msg.includes('already')) {
+        return {
+          success: true,
+          upvotes: localHazard ? localHazard.upvotes : 1,
+          expires_at: localHazard ? localHazard.expiresAt : new Date().toISOString(),
+        };
+      }
       console.warn('Supabase upvote RPC failed, queuing offline:', err);
       throw err;
     }
@@ -229,9 +246,26 @@ export async function submitResolveToBackend(
           isResolved: Boolean(data.is_resolved),
         };
       } else if (error) {
+        // If hazard does not exist in remote DB or already resolved, handle cleanly
+        if (error.message.includes('not found') || error.message.includes('already')) {
+          console.info('Hazard resolve target resolved or already counted:', hazardId);
+          return {
+            success: true,
+            resolvedCount: localHazard ? localHazard.resolvedCount : 1,
+            isResolved: localHazard ? Boolean(localHazard.isResolved) : false,
+          };
+        }
         throw new Error(error.message);
       }
-    } catch (err) {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes('not found') || msg.includes('already')) {
+        return {
+          success: true,
+          resolvedCount: localHazard ? localHazard.resolvedCount : 1,
+          isResolved: localHazard ? Boolean(localHazard.isResolved) : false,
+        };
+      }
       console.warn('Supabase resolve RPC failed, queuing offline:', err);
       throw err;
     }

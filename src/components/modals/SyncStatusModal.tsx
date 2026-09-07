@@ -72,6 +72,7 @@ export const SyncStatusModal: React.FC<SyncStatusModalProps> = ({
     }
     await onTriggerSync();
     await loadQueue();
+    onShowToast('Sync complete! Offline queue updated.');
   };
 
   const handleClearCache = async () => {

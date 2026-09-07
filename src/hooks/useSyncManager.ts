@@ -66,8 +66,14 @@ export function useSyncManager(onSyncCompleted?: (count: number) => void) {
           }
           await removePendingValidation(val.id);
           syncedCount++;
-        } catch (err) {
+        } catch (err: unknown) {
           console.warn('Failed to sync validation item:', val.id, err);
+          const msg = err instanceof Error ? err.message : String(err);
+          // If the target hazard was expired, deleted, or already processed, clean up from queue
+          if (msg.includes('not found') || msg.includes('already')) {
+            await removePendingValidation(val.id);
+            syncedCount++;
+          }
         }
       }
 
@@ -110,14 +116,9 @@ export function useSyncManager(onSyncCompleted?: (count: number) => void) {
     };
   }, [refreshPendingCount, syncPendingItems]);
 
-  const clearSuccessMessage = useCallback(() => {
-    setState((prev) => ({ ...prev, syncSuccessMessage: null }));
-  }, []);
-
   return {
     ...state,
     refreshPendingCount,
     syncPendingItems,
-    clearSuccessMessage,
   };
 }
