@@ -47,7 +47,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
             <BakasLogo size={32} withGlow={true} className="shrink-0" />
             <div>
               <h2 id="about-bakas-title" className="text-base font-bold text-white">
-                Bakás Radar
+                Bakas Radar
               </h2>
               <span className="text-xs text-zinc-400">Tagalog for "traces" or "tracks"</span>
             </div>
@@ -86,7 +86,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
               Leaving digital traces to navigate urban road hazards.
             </p>
             <p className="text-xs text-zinc-400">
-              Bakás is a lightweight, civic road safety radar engineered to protect commuters, motorcyclists, cyclists,
+              Bakas is a lightweight, civic road safety radar engineered to protect commuters, motorcyclists, cyclists,
               and pedestrians from dangerous potholes, open manholes, flash floods, and unlit streets.
             </p>
           </div>
@@ -140,7 +140,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
             <div className="text-[11px] leading-tight space-y-1">
               <span className="font-bold text-white block">Passenger & Stationary Safety Rule:</span>
               <p className="text-zinc-400">
-                Never interact with Bakás while driving. Use handlebar mounts in glanceable radar mode or report while
+                Never interact with Bakas while driving. Use handlebar mounts in glanceable radar mode or report while
                 safely stopped or as a passenger.
               </p>
             </div>

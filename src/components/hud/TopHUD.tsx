@@ -61,11 +61,11 @@ export const TopHUD: React.FC<TopHUDProps> = ({
           onClick={onOpenAbout}
           whileTap={{ scale: 0.95 }}
           className="h-8 flex items-center gap-1.5 pl-2 pr-2 rounded-full hover:bg-white/10 transition-colors group shrink-0"
-          title="About Bakás Radar"
+          title="About Bakas Radar"
         >
           <BakasLogo size={20} withGlow={true} className="shrink-0 group-hover:scale-105 transition-transform" />
           <div className="flex items-center gap-1.5">
-            <span className="font-bold text-xs tracking-tight text-white font-sans">Bakás</span>
+            <span className="font-bold text-xs tracking-tight text-white font-sans">Bakas</span>
             <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/[0.08] border border-white/10">
               <span className="relative flex h-1.5 w-1.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>

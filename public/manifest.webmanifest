@@ -1,6 +1,6 @@
 {
-  "name": "Bakás — Urban Road Hazard Radar",
-  "short_name": "Bakás",
+  "name": "Bakas — Urban Road Hazard Radar",
+  "short_name": "Bakas",
   "description": "Leaving digital traces to navigate urban road hazards. Lightweight, zero-login, offline-first road safety radar.",
   "start_url": "/",
   "display": "standalone",

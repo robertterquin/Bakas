@@ -15,7 +15,7 @@ if ('serviceWorker' in navigator) {
       .register('/sw.js')
       .then((reg) => {
         reg.update();
-        console.log('Bakás PWA Service Worker active:', reg.scope);
+        console.log('Bakas PWA Service Worker active:', reg.scope);
       })
       .catch((err) => {
         console.warn('Service Worker registration failed:', err);
