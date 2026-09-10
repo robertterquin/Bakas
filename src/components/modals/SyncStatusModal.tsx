@@ -141,7 +141,7 @@ export const SyncStatusModal: React.FC<SyncStatusModalProps> = ({
             type="button"
             onClick={onClose}
             aria-label="Close sync engine status"
-            className="p-2 -mr-2 text-zinc-400 hover:text-white rounded-xl hover:bg-zinc-900 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+            className="p-2 -mr-2 text-zinc-400 hover:text-white rounded-xl hover:bg-zinc-900 transition-colors min-w-11 min-h-11 flex items-center justify-center"
           >
             <X className="w-5 h-5" />
           </button>
@@ -264,7 +264,7 @@ export const SyncStatusModal: React.FC<SyncStatusModalProps> = ({
               type="button"
               onClick={handleManualSync}
               disabled={isSyncing || !isOnline || totalPending === 0}
-              className="w-full py-3.5 rounded-2xl bg-white text-black font-bold hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-h-[48px]"
+              className="w-full py-3.5 rounded-2xl bg-white text-black font-bold hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-h-12"
             >
               {isSyncing ? (
                 <>

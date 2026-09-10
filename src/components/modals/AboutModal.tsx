@@ -57,7 +57,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
             type="button"
             onClick={onClose}
             aria-label="Close about dialog"
-            className="p-2 -mr-2 text-zinc-400 hover:text-white rounded-xl hover:bg-zinc-900 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+            className="p-2 -mr-2 text-zinc-400 hover:text-white rounded-xl hover:bg-zinc-900 transition-colors min-w-11 min-h-11 flex items-center justify-center"
           >
             <X className="w-5 h-5" />
           </button>
@@ -151,7 +151,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
           <button
             type="button"
             onClick={onClose}
-            className="w-full py-3.5 rounded-2xl bg-white text-black font-bold text-xs hover:bg-zinc-200 transition-colors min-h-[48px]"
+            className="w-full py-3.5 rounded-2xl bg-white text-black font-bold text-xs hover:bg-zinc-200 transition-colors min-h-12"
           >
             Back to Radar Canvas
           </button>
