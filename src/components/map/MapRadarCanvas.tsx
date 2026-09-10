@@ -1,5 +1,6 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
+import { motion, AnimatePresence } from 'motion/react';
 import { Hazard, UserLocation, CategoryFilter, RadiusFilter } from '../../types/hazard';
 import { calculateDistanceInMeters } from '../../services/geo.service';
 import { getCategorySvgMarkup } from '../ui/HazardIcon';
@@ -39,6 +40,7 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
   const searchPulseMarkerRef = useRef<L.Marker | null>(null);
   const accuracyCircleRef = useRef<L.Circle | null>(null);
   const radiusBoundaryCircleRef = useRef<L.Circle | null>(null);
+  const [isTileLoading, setIsTileLoading] = useState<boolean>(false);
 
   // Initialize Map with High-Performance Tile Caching
   useEffect(() => {
@@ -54,31 +56,24 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
       preferCanvas: true,
     });
 
-    // 100% Zero-Key, Zero-Watermark Pure Monochrome Radar Canvas (High-Speed Caching)
-    L.tileLayer(
-      'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+    // 100% Zero-Key, Zero-Watermark CartoDB Dark Matter Radar Canvas (4-Subdomain Sharded CDN)
+    const tileLayer = L.tileLayer(
+      'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
       {
-        attribution: '&copy; Esri &mdash; OpenStreetMap contributors',
-        maxZoom: 16,
+        subdomains: 'abcd',
+        attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap contributors',
+        maxZoom: 19,
         minZoom: 3,
-        keepBuffer: 6,
-        updateWhenIdle: true,
+        keepBuffer: 3,
+        updateWhenIdle: false,
         updateWhenZooming: false,
+        crossOrigin: 'anonymous',
       }
     ).addTo(map);
 
-    // Clean reference road and locality labels
-    L.tileLayer(
-      'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
-      {
-        attribution: '',
-        maxZoom: 16,
-        minZoom: 3,
-        keepBuffer: 6,
-        updateWhenIdle: true,
-        updateWhenZooming: false,
-      }
-    ).addTo(map);
+    tileLayer.on('loading', () => setIsTileLoading(true));
+    tileLayer.on('load', () => setIsTileLoading(false));
+    tileLayer.on('tileerror', () => setIsTileLoading(false));
 
     // Zoom controls positioned at top right (safe from thumb HUD)
     L.control.zoom({ position: 'topright' }).addTo(map);
@@ -149,11 +144,12 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
       searchTarget.lng
     );
 
-    // For distant searches (> 2.5km), jump directly to avoid downloading dozens of flight tiles
+    // For distant searches (> 2.5km), jump directly at zoom 15 for instant edge-cached tile rendering
     if (distMeters > 2500) {
-      map.setView([searchTarget.lat, searchTarget.lng], 16, { animate: false });
+      map.setView([searchTarget.lat, searchTarget.lng], 15, { animate: false });
+      map.invalidateSize();
     } else {
-      map.flyTo([searchTarget.lat, searchTarget.lng], 16, { animate: true, duration: 0.5 });
+      map.flyTo([searchTarget.lat, searchTarget.lng], 15, { animate: true, duration: 0.4 });
     }
 
     // Add a temporary 2.5s visual radar beacon on the searched target
@@ -384,6 +380,22 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
   return (
     <div className="relative w-full h-full">
       <div ref={mapContainerRef} className="w-full h-full" />
+
+      {/* High-speed Radar Acquisition Status Pill */}
+      <AnimatePresence>
+        {isTileLoading && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.2 }}
+            className="absolute top-4 left-1/2 -translate-x-1/2 z-[400] flex items-center gap-2 bg-black/85 backdrop-blur-md border border-zinc-800 text-zinc-300 text-xs px-3.5 py-1.5 rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.8)] pointer-events-none select-none"
+          >
+            <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_#22d3ee]" />
+            <span className="font-mono text-[11px] tracking-wider uppercase">Streaming Radar Data...</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

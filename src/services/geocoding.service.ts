@@ -52,6 +52,48 @@ export const POPULAR_PHILIPPINE_LOCATIONS: GeocodedLocation[] = [
     lat: 14.5583,
     lng: 120.9856,
   },
+  {
+    id: 'preset-baguio',
+    name: 'Session Road, Baguio City',
+    subtitle: 'Benguet, Cordillera',
+    lat: 16.4124,
+    lng: 120.5977,
+  },
+  {
+    id: 'preset-tagaytay',
+    name: 'Tagaytay-Nasugbu Highway',
+    subtitle: 'Tagaytay, Cavite',
+    lat: 14.1153,
+    lng: 120.9621,
+  },
+  {
+    id: 'preset-cebu',
+    name: 'Osmeña Boulevard, Cebu City',
+    subtitle: 'Metro Cebu, Central Visayas',
+    lat: 10.3157,
+    lng: 123.8854,
+  },
+  {
+    id: 'preset-davao',
+    name: 'Roxas Avenue, Davao City',
+    subtitle: 'Davao Region, Mindanao',
+    lat: 7.0731,
+    lng: 125.6128,
+  },
+  {
+    id: 'preset-clark',
+    name: 'Clark Freeport / Angeles City',
+    subtitle: 'Pampanga, Central Luzon',
+    lat: 15.1452,
+    lng: 120.5887,
+  },
+  {
+    id: 'preset-iloilo',
+    name: 'Calle Real / Iloilo City Center',
+    subtitle: 'Iloilo, Western Visayas',
+    lat: 10.6969,
+    lng: 122.5644,
+  },
 ];
 
 export async function searchPhilippineLocations(query: string): Promise<GeocodedLocation[]> {
@@ -60,7 +102,7 @@ export async function searchPhilippineLocations(query: string): Promise<Geocoded
     return [];
   }
 
-  // Check direct coordinate input (e.g. "14.5995, 120.9842")
+  // 1. Direct coordinate input (e.g. "14.5995, 120.9842")
   const coordMatch = trimmed.match(/^(-?\d+(\.\d+)?),\s*(-?\d+(\.\d+)?)$/);
   if (coordMatch) {
     const lat = parseFloat(coordMatch[1]);
@@ -83,6 +125,11 @@ export async function searchPhilippineLocations(query: string): Promise<Geocoded
     return searchCache.get(cacheKey)!;
   }
 
+  // 2. Check instant local presets match
+  const localMatches = POPULAR_PHILIPPINE_LOCATIONS.filter((loc) =>
+    loc.name.toLowerCase().includes(cacheKey) || loc.subtitle.toLowerCase().includes(cacheKey)
+  );
+
   try {
     const endpoint = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
       trimmed
@@ -96,11 +143,12 @@ export async function searchPhilippineLocations(query: string): Promise<Geocoded
     });
 
     if (!res.ok) {
+      if (localMatches.length > 0) return localMatches;
       throw new Error(`Geocoding HTTP error ${res.status}`);
     }
 
     const data = await res.json();
-    if (!Array.isArray(data)) return [];
+    if (!Array.isArray(data)) return localMatches;
 
     const results: GeocodedLocation[] = data.map((item: Record<string, unknown>, idx: number) => {
       const displayName = String(item.display_name || '');
@@ -118,10 +166,21 @@ export async function searchPhilippineLocations(query: string): Promise<Geocoded
       };
     });
 
-    searchCache.set(cacheKey, results);
-    return results;
+    // Merge preset matches with remote results
+    const combined = [...localMatches];
+    const seen = new Set(combined.map((c) => `${c.lat.toFixed(3)},${c.lng.toFixed(3)}`));
+    for (const r of results) {
+      const key = `${r.lat.toFixed(3)},${r.lng.toFixed(3)}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        combined.push(r);
+      }
+    }
+
+    searchCache.set(cacheKey, combined);
+    return combined;
   } catch (err) {
-    console.warn('Geocoding search failed:', err);
-    return [];
+    console.warn('Geocoding search failed, returning local matches:', err);
+    return localMatches;
   }
 }

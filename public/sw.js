@@ -1,6 +1,6 @@
-const CACHE_SHELL_NAME = 'bakas-shell-v2';
-const CACHE_TILES_NAME = 'bakas-tiles-v2';
-const MAX_TILES = 600;
+const CACHE_SHELL_NAME = 'bakas-shell-v3';
+const CACHE_TILES_NAME = 'bakas-tiles-v3';
+const MAX_TILES = 800;
 
 const STATIC_ASSETS = [
   '/',
@@ -20,7 +20,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// 2. Activate: Purge ALL old v1 caches (including old watermarked tiles)
+// 2. Activate: Purge old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -36,13 +36,24 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Helper: Trim tile cache to prevent excessive storage
+// Non-blocking throttled tile cache cleanup
+let isTrimming = false;
 async function trimTileCache(cacheName, maxItems) {
-  const cache = await caches.open(cacheName);
-  const keys = await cache.keys();
-  if (keys.length > maxItems) {
-    await cache.delete(keys[0]);
-    trimTileCache(cacheName, maxItems);
+  if (isTrimming) return;
+  isTrimming = true;
+  try {
+    const cache = await caches.open(cacheName);
+    const keys = await cache.keys();
+    if (keys.length > maxItems) {
+      const itemsToDelete = keys.slice(0, keys.length - maxItems);
+      for (const item of itemsToDelete) {
+        await cache.delete(item);
+      }
+    }
+  } catch {
+    // Ignore cache cleanup errors
+  } finally {
+    isTrimming = false;
   }
 }
 
@@ -51,13 +62,12 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // A. Map Tiles (MapTiler, Stadia Maps, Esri, OSM, or CARTO)
+  // A. Map Tiles (CARTO Dark Matter, OSM, or Esri)
   if (
-    url.hostname.includes('maptiler.com') ||
-    url.hostname.includes('stadiamaps.com') ||
+    url.hostname.includes('cartocdn.com') ||
     url.hostname.includes('arcgisonline.com') ||
     url.hostname.includes('openstreetmap.org') ||
-    url.hostname.includes('cartocdn.com')
+    url.hostname.includes('maptiler.com')
   ) {
     event.respondWith(
       caches.open(CACHE_TILES_NAME).then(async (cache) => {

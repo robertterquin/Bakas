@@ -56,7 +56,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
       setResults(data);
       setSelectedIndex(0);
       setIsLoading(false);
-    }, 280);
+    }, 180);
 
     return () => clearTimeout(timer);
   }, [query]);
