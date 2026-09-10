@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { X, AlertTriangle, MapPin } from 'lucide-react';
-import { HazardCategory, HazardSeverity, HazardPayload, Hazard, Coordinates } from '../../types/hazard';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { X, AlertTriangle, MapPin, Camera, Waves } from 'lucide-react';
+import { HazardCategory, HazardSeverity, HazardPayload, Hazard, Coordinates, FloodPassability } from '../../types/hazard';
+import { PASSABILITY_CONFIG } from '../../utils/domain-rules';
+import { compressImageFile } from '../../utils/image.utils';
 import { HazardIcon } from '../ui/HazardIcon';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 
@@ -32,9 +34,13 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
 }) => {
   const [category, setCategory] = useState<HazardCategory>('pothole');
   const [severity, setSeverity] = useState<HazardSeverity>('high');
+  const [passability, setPassability] = useState<FloodPassability>('passable_high_clearance');
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [isCompressing, setIsCompressing] = useState<boolean>(false);
   const [description, setDescription] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [duplicateWarning, setDuplicateWarning] = useState<Hazard | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -57,6 +63,20 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
     }
   }, [isOpen, handleKeyDown]);
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsCompressing(true);
+    try {
+      const compressed = await compressImageFile(file, 1024, 0.75);
+      setImageUrl(compressed);
+    } catch (err) {
+      console.error('Photo compression error:', err);
+    } finally {
+      setIsCompressing(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -69,8 +89,12 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
         lat: targetCoords.lat,
         lng: targetCoords.lng,
         description: description.trim() || undefined,
+        passability: category === 'clogged_drainage' ? passability : undefined,
+        imageUrl: imageUrl || undefined,
       });
       setDescription('');
+      setImageUrl(null);
+      setPassability('passable_high_clearance');
       onClose();
     } finally {
       setIsSubmitting(false);
@@ -166,6 +190,42 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
             </div>
           </div>
 
+          {/* Flood Passability Selector (Only for Flooding / Drainage) */}
+          {category === 'clogged_drainage' && (
+            <div className="p-3 rounded-xl bg-zinc-900/80 border border-zinc-800 space-y-2">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-white">
+                <Waves className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Initial Water Depth & Passability</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1.5">
+                {(['passable_all', 'passable_high_clearance', 'impassable'] as FloodPassability[]).map((p) => {
+                  const meta = PASSABILITY_CONFIG[p];
+                  const isSelected = passability === p;
+                  return (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => setPassability(p)}
+                      className={`p-2 rounded-xl border text-left transition-all ${
+                        isSelected
+                          ? 'bg-zinc-800 border-white text-white shadow-sm'
+                          : 'bg-black/60 border-zinc-800 text-zinc-400 hover:border-zinc-700'
+                      }`}
+                    >
+                      <div className="w-2 h-2 rounded-full mb-1" style={{ backgroundColor: meta.dotColor }} />
+                      <div className="text-[10px] font-bold leading-tight truncate">
+                        {p === 'passable_all' ? 'All Vehicles' : p === 'passable_high_clearance' ? '4x4 / SUVs' : 'Impassable'}
+                      </div>
+                      <div className="text-[9px] text-zinc-500 truncate">
+                        {p === 'passable_all' ? '< 20cm' : p === 'passable_high_clearance' ? '20-45cm' : '> 45cm'}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Severity Picker */}
           <div>
             <label className="block text-xs font-semibold text-zinc-400 mb-2">Severity</label>
@@ -190,6 +250,48 @@ export const ReportBottomSheet: React.FC<ReportBottomSheetProps> = ({
                 );
               })}
             </div>
+          </div>
+
+          {/* Photo Attachment (Optional) */}
+          <div>
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+            />
+            {imageUrl ? (
+              <div className="relative w-full aspect-[16/9] rounded-xl overflow-hidden border border-zinc-700 bg-black">
+                <img src={imageUrl} alt="Hazard preview" className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => setImageUrl(null)}
+                  className="absolute top-2 right-2 p-1.5 rounded-full bg-black/80 text-zinc-300 hover:text-white border border-zinc-700 transition-colors"
+                  title="Remove photo"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+                <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded-full bg-black/80 text-[10px] font-mono text-zinc-300 border border-zinc-700">
+                  Photo Attached
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isCompressing}
+                className="w-full py-2.5 px-3 rounded-xl bg-zinc-900/70 border border-zinc-800 hover:border-zinc-700 text-xs text-zinc-400 hover:text-white flex items-center justify-center gap-2 transition-colors font-sans"
+              >
+                {isCompressing ? (
+                  <LoadingSpinner variant="ring" size={15} className="text-white" />
+                ) : (
+                  <Camera className="w-4 h-4 text-zinc-400" />
+                )}
+                <span>{isCompressing ? 'Compressing photo...' : 'Attach Hazard Photo (Optional)'}</span>
+              </button>
+            )}
           </div>
 
           {/* Optional Short Note */}

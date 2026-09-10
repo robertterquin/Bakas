@@ -1,9 +1,9 @@
-import { Hazard, HazardPayload } from '../types/hazard';
+import { Hazard, HazardPayload, FloodPassability } from '../types/hazard';
 import { supabase, isSupabaseConfigured } from '../config/supabase';
-import { calculateInitialExpiry, calculateExtendedExpiry } from '../utils/domain-rules';
+import { calculateInitialExpiry, calculateExtendedExpiry, calculatePassabilityConsensus } from '../utils/domain-rules';
 import { calculateDistanceInMeters } from './geo.service';
 import { GOLDEN_HAZARDS } from '../data/golden-fixtures';
-import { getCachedHazards, getPendingReports, cacheHazards } from './offline.service';
+import { getCachedHazards, getPendingReports, cacheHazards, savePendingValidation } from './offline.service';
 
 // In-memory runtime store for live session fallback
 let liveLocalHazards: Hazard[] = [...GOLDEN_HAZARDS];
@@ -50,6 +50,10 @@ export async function fetchHazardsInRadius(
             title: item.title ? String(item.title) : undefined,
             description: item.description ? String(item.description) : undefined,
             address: item.address ? String(item.address) : undefined,
+            passability: item.passability as FloodPassability | undefined,
+            passabilityVotes: item.passability_votes as Record<FloodPassability, number> | undefined,
+            imageUrl: item.image_url ? String(item.image_url) : undefined,
+            resolvedImageUrl: item.resolved_image_url ? String(item.resolved_image_url) : undefined,
             upvotes: Number(item.upvotes || 0),
             resolvedCount: Number(item.resolved_count || 0),
             isResolved: Boolean(item.is_resolved),
@@ -221,15 +225,20 @@ export async function submitUpvoteToBackend(
  */
 export async function submitResolveToBackend(
   hazardId: string,
-  deviceHash: string
+  deviceHash: string,
+  proofImageUrl?: string
 ): Promise<{ success: boolean; resolvedCount: number; isResolved: boolean }> {
   // Update in local memory
   const localHazard = liveLocalHazards.find((h) => h.id === hazardId);
   if (localHazard) {
     localHazard.resolvedCount += 1;
+    if (proofImageUrl) {
+      localHazard.resolvedImageUrl = proofImageUrl;
+    }
     if (localHazard.resolvedCount >= 3) {
       localHazard.isResolved = true;
     }
+    cacheHazards([localHazard]).catch(() => {});
   }
 
   if (isSupabaseConfigured && supabase) {
@@ -279,11 +288,53 @@ export async function submitResolveToBackend(
 }
 
 /**
+ * Submit crowdsourced flood passability observation
+ */
+export async function submitPassabilityVote(
+  hazardId: string,
+  status: FloodPassability,
+  deviceHash: string
+): Promise<{ success: boolean; hazard?: Hazard }> {
+  const localHazard = liveLocalHazards.find((h) => h.id === hazardId);
+  if (localHazard) {
+    if (!localHazard.passabilityVotes) {
+      localHazard.passabilityVotes = {
+        passable_all: 0,
+        passable_high_clearance: 0,
+        impassable: 0,
+      };
+    }
+    localHazard.passabilityVotes[status] = (localHazard.passabilityVotes[status] || 0) + 1;
+    localHazard.passability = calculatePassabilityConsensus(localHazard.passabilityVotes, status);
+    cacheHazards([localHazard]).catch(() => {});
+  }
+
+  savePendingValidation({
+    id: generateUUID(),
+    hazardId,
+    actionType: 'passability_vote',
+    passability: status,
+    deviceHash,
+    createdAt: new Date().toISOString(),
+  }).catch(() => {});
+
+  return { success: true, hazard: localHazard };
+}
+
+/**
  * Helper to construct a new Hazard object from UI payload
  */
 export function createNewHazardObject(payload: HazardPayload): Hazard {
   const now = new Date();
   const expiresAt = calculateInitialExpiry(payload.category, now);
+
+  const initialVotes = payload.passability
+    ? {
+        passable_all: payload.passability === 'passable_all' ? 1 : 0,
+        passable_high_clearance: payload.passability === 'passable_high_clearance' ? 1 : 0,
+        impassable: payload.passability === 'impassable' ? 1 : 0,
+      }
+    : undefined;
 
   return {
     id: generateUUID(),
@@ -294,6 +345,9 @@ export function createNewHazardObject(payload: HazardPayload): Hazard {
     address: payload.address || `${payload.lat.toFixed(5)}, ${payload.lng.toFixed(5)}`,
     title: payload.category.replace('_', ' ').toUpperCase(),
     description: payload.description,
+    passability: payload.passability,
+    passabilityVotes: initialVotes,
+    imageUrl: payload.imageUrl,
     upvotes: 1,
     resolvedCount: 0,
     isResolved: false,

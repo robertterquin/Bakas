@@ -1,4 +1,4 @@
-import { HazardCategory, HazardSeverity } from '../types/hazard';
+import { HazardCategory, HazardSeverity, FloodPassability } from '../types/hazard';
 
 export interface CategoryMeta {
   id: HazardCategory;
@@ -89,6 +89,50 @@ export const HAZARD_SEVERITIES: Record<HazardSeverity, SeverityMeta> = {
   },
 };
 
+export interface PassabilityMeta {
+  id: FloodPassability;
+  label: string;
+  depthLabel: string;
+  tagalog: string;
+  colorClass: string;
+  badgeBg: string;
+  dotColor: string;
+  description: string;
+}
+
+export const PASSABILITY_CONFIG: Record<FloodPassability, PassabilityMeta> = {
+  passable_all: {
+    id: 'passable_all',
+    label: 'Passable to All Vehicles',
+    depthLabel: 'Ankle Deep (< 20cm)',
+    tagalog: 'Abot-bukong / Daang-daan',
+    colorClass: 'text-emerald-400 border-emerald-500/30 bg-emerald-950/40',
+    badgeBg: 'bg-emerald-500',
+    dotColor: '#10b981',
+    description: 'Safe for sedans, motorcycles, and all public transit.',
+  },
+  passable_high_clearance: {
+    id: 'passable_high_clearance',
+    label: 'High-Clearance & 4x4 Only',
+    depthLabel: 'Knee Deep (20-45cm)',
+    tagalog: 'Abot-tuhod / Mataas na Sasakyan Lang',
+    colorClass: 'text-amber-400 border-amber-500/30 bg-amber-950/40',
+    badgeBg: 'bg-amber-500',
+    dotColor: '#f59e0b',
+    description: 'Risk of engine stall for sedans and low-clearance scooters.',
+  },
+  impassable: {
+    id: 'impassable',
+    label: 'Impassable / Submerged',
+    depthLabel: 'Waist Deep+ (> 45cm)',
+    tagalog: 'Abot-baywang / Lubog / Hindi Madadaanan',
+    colorClass: 'text-rose-400 border-rose-500/30 bg-rose-950/40',
+    badgeBg: 'bg-rose-500',
+    dotColor: '#f43f5e',
+    description: 'Road impassable to all civilian vehicles. Extreme hydro lock danger.',
+  },
+};
+
 /**
  * Calculates initial expires_at timestamp based on category
  */
@@ -166,4 +210,38 @@ export function hasDeviceVoted(hazardId: string, action: 'upvote' | 'resolve'): 
  */
 export function recordDeviceVote(hazardId: string, action: 'upvote' | 'resolve'): void {
   localStorage.setItem(`bakas_vote_${action}_${hazardId}`, new Date().toISOString());
+}
+
+/**
+ * Retrieves the passability vote cast by this device on a flood hazard
+ */
+export function getDevicePassabilityVote(hazardId: string): FloodPassability | null {
+  return localStorage.getItem(`bakas_vote_passability_${hazardId}`) as FloodPassability | null;
+}
+
+/**
+ * Records a passability vote for this device
+ */
+export function recordDevicePassabilityVote(hazardId: string, status: FloodPassability): void {
+  localStorage.setItem(`bakas_vote_passability_${hazardId}`, status);
+}
+
+/**
+ * Calculates dynamic consensus passability based on community votes
+ */
+export function calculatePassabilityConsensus(
+  votes?: Record<FloodPassability, number>,
+  fallback: FloodPassability = 'passable_high_clearance'
+): FloodPassability {
+  if (!votes) return fallback;
+  const entries: [FloodPassability, number][] = [
+    ['passable_all', votes.passable_all || 0],
+    ['passable_high_clearance', votes.passable_high_clearance || 0],
+    ['impassable', votes.impassable || 0],
+  ];
+  entries.sort((a, b) => b[1] - a[1]);
+  if (entries[0][1] > 0) {
+    return entries[0][0];
+  }
+  return fallback;
 }

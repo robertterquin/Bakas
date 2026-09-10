@@ -320,6 +320,8 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
       // Pure monochrome tactical marker styling
       let outerRing = '';
       let resolvedBadge = '';
+      let passabilityBadge = '';
+      let photoBadge = '';
       let markerColor = 'bg-black border-zinc-700 text-zinc-400';
       let iconColor = '#a1a1aa';
 
@@ -334,13 +336,53 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
             </svg>
           </div>
         `;
-      } else if (isHigh) {
-        markerColor = 'bg-black border-white text-white shadow-[0_0_18px_rgba(255,255,255,0.95)]';
-        iconColor = '#ffffff';
-        outerRing = '<div class="absolute -inset-1.5 rounded-full border border-white/60 animate-ping opacity-75 pointer-events-none"></div>';
-      } else if (isMedium) {
-        markerColor = 'bg-black border-zinc-400 text-zinc-100 shadow-[0_0_10px_rgba(255,255,255,0.35)]';
-        iconColor = '#f4f4f5';
+      } else {
+        // Flood Passability Status Pill
+        if (hazard.category === 'clogged_drainage' && hazard.passability) {
+          const dotColor =
+            hazard.passability === 'passable_all'
+              ? '#10b981'
+              : hazard.passability === 'passable_high_clearance'
+              ? '#f59e0b'
+              : '#f43f5e';
+          const glowColor =
+            hazard.passability === 'passable_all'
+              ? 'rgba(16,185,129,0.7)'
+              : hazard.passability === 'passable_high_clearance'
+              ? 'rgba(245,158,11,0.7)'
+              : 'rgba(244,63,94,0.9)';
+          const pingEffect =
+            hazard.passability === 'impassable'
+              ? '<div class="absolute -inset-1 rounded-full bg-rose-500 animate-ping opacity-75 pointer-events-none"></div>'
+              : '';
+          passabilityBadge = `
+            <div class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-black border border-zinc-700 flex items-center justify-center z-20 shadow-[0_0_8px_${glowColor}]">
+              ${pingEffect}
+              <div class="w-2 h-2 rounded-full" style="background-color: ${dotColor}; box-shadow: 0 0 6px ${glowColor}"></div>
+            </div>
+          `;
+        }
+
+        // Photo Attachment Indicator
+        if (hazard.imageUrl || hazard.resolvedImageUrl) {
+          photoBadge = `
+            <div class="absolute -top-1 -left-1 w-3.5 h-3.5 rounded-full bg-black border border-zinc-700 flex items-center justify-center z-20 text-[7px] text-zinc-300 shadow">
+              <svg xmlns="http://www.w3.org/2000/svg" width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path>
+                <circle cx="12" cy="13" r="3"></circle>
+              </svg>
+            </div>
+          `;
+        }
+
+        if (isHigh) {
+          markerColor = 'bg-black border-white text-white shadow-[0_0_18px_rgba(255,255,255,0.95)]';
+          iconColor = '#ffffff';
+          outerRing = '<div class="absolute -inset-1.5 rounded-full border border-white/60 animate-ping opacity-75 pointer-events-none"></div>';
+        } else if (isMedium) {
+          markerColor = 'bg-black border-zinc-400 text-zinc-100 shadow-[0_0_10px_rgba(255,255,255,0.35)]';
+          iconColor = '#f4f4f5';
+        }
       }
 
       if (isPending && !isResolved) {
@@ -361,6 +403,8 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
           <div class="relative flex items-center justify-center cursor-pointer ${selectedClass}">
             ${outerRing}
             ${resolvedBadge}
+            ${passabilityBadge}
+            ${photoBadge}
             <div class="w-9 h-9 rounded-full ${markerColor} border-2 flex items-center justify-center select-none transition-all">
               ${svgIconMarkup}
             </div>

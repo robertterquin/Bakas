@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Hazard, HazardCategory, HazardPayload, CategoryFilter, RadiusFilter, UserLocation, ValidationAction } from '../types/hazard';
+import { Hazard, HazardCategory, HazardPayload, CategoryFilter, RadiusFilter, UserLocation, ValidationAction, FloodPassability } from '../types/hazard';
 import {
   getOrCreateDeviceFingerprint,
   hasDeviceVoted,
   recordDeviceVote,
+  recordDevicePassabilityVote,
+  calculatePassabilityConsensus,
   calculateExtendedExpiry,
 } from '../utils/domain-rules';
 import { calculateDistanceInMeters } from '../services/geo.service';
@@ -12,6 +14,7 @@ import {
   submitHazardToBackend,
   submitUpvoteToBackend,
   submitResolveToBackend,
+  submitPassabilityVote,
   createNewHazardObject,
 } from '../services/hazard.service';
 import { savePendingReport, cacheHazards, savePendingValidation } from '../services/offline.service';
@@ -158,8 +161,11 @@ export function useHazardManager(userLocation: UserLocation, isOnline: boolean, 
     }
   };
 
-  // 3. Resolve Hazard
-  const resolveHazard = async (hazardId: string): Promise<{ success: boolean; message: string }> => {
+  // 3. Resolve Hazard with optional proof photo
+  const resolveHazard = async (
+    hazardId: string,
+    proofImageUrl?: string
+  ): Promise<{ success: boolean; message: string }> => {
     if (hasDeviceVoted(hazardId, 'resolve')) {
       return { success: false, message: 'You already voted to resolve this hazard.' };
     }
@@ -175,6 +181,7 @@ export function useHazardManager(userLocation: UserLocation, isOnline: boolean, 
             ...h,
             resolvedCount: newCount,
             isResolved: true,
+            resolvedImageUrl: proofImageUrl || h.resolvedImageUrl,
           };
         }
         return h;
@@ -196,7 +203,7 @@ export function useHazardManager(userLocation: UserLocation, isOnline: boolean, 
     }
 
     try {
-      const result = await submitResolveToBackend(hazardId, deviceHash);
+      const result = await submitResolveToBackend(hazardId, deviceHash, proofImageUrl);
       if (result?.isResolved) {
         return { success: true, message: 'Community consensus reached! Hazard marked as cleared.' };
       }
@@ -216,6 +223,43 @@ export function useHazardManager(userLocation: UserLocation, isOnline: boolean, 
     }
   };
 
+  // 4. Vote on Flood Passability
+  const votePassability = async (
+    hazardId: string,
+    status: FloodPassability
+  ): Promise<{ success: boolean; message: string }> => {
+    const deviceHash = getOrCreateDeviceFingerprint();
+    recordDevicePassabilityVote(hazardId, status);
+
+    // Optimistic Update
+    setHazards((prev) =>
+      prev.map((h) => {
+        if (h.id === hazardId) {
+          const currentVotes = h.passabilityVotes || {
+            passable_all: 0,
+            passable_high_clearance: 0,
+            impassable: 0,
+          };
+          const updatedVotes = {
+            ...currentVotes,
+            [status]: (currentVotes[status] || 0) + 1,
+          };
+          const consensus = calculatePassabilityConsensus(updatedVotes, status);
+          return {
+            ...h,
+            passability: consensus,
+            passabilityVotes: updatedVotes,
+          };
+        }
+        return h;
+      })
+    );
+
+    await submitPassabilityVote(hazardId, status, deviceHash);
+    if (onQueueChanged) onQueueChanged();
+    return { success: true, message: 'Passability observation recorded.' };
+  };
+
   return {
     hazards,
     filteredHazards,
@@ -231,6 +275,7 @@ export function useHazardManager(userLocation: UserLocation, isOnline: boolean, 
     reportHazard,
     upvoteHazard,
     resolveHazard,
+    votePassability,
     refreshHazards: loadHazards,
   };
 }

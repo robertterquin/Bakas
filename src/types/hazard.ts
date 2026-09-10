@@ -16,6 +16,8 @@ export interface UserLocation extends Coordinates {
   timestamp: number;
 }
 
+export type FloodPassability = 'passable_all' | 'passable_high_clearance' | 'impassable';
+
 export interface Hazard {
   id: string;
   category: HazardCategory;
@@ -28,6 +30,10 @@ export interface Hazard {
   upvotes: number;
   resolvedCount: number;
   isResolved?: boolean;
+  passability?: FloodPassability;
+  passabilityVotes?: Record<FloodPassability, number>;
+  imageUrl?: string;
+  resolvedImageUrl?: string;
   expiresAt: string; // ISO 8601 string
   createdAt: string; // ISO 8601 string
   updatedAt?: string; // ISO 8601 string
@@ -41,12 +47,15 @@ export interface HazardPayload {
   lng: number;
   address?: string;
   description?: string;
+  passability?: FloodPassability;
+  imageUrl?: string;
 }
 
 export interface ValidationAction {
   id: string;
   hazardId: string;
-  actionType: 'upvote' | 'resolve';
+  actionType: 'upvote' | 'resolve' | 'passability_vote';
+  passability?: FloodPassability;
   deviceHash: string;
   createdAt: string;
 }

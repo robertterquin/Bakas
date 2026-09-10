@@ -72,6 +72,7 @@ export default function App() {
     reportHazard,
     upvoteHazard,
     resolveHazard,
+    votePassability,
     refreshHazards,
   } = useHazardManager(userLocation, isOnline, refreshPendingCount);
 
@@ -223,6 +224,7 @@ export default function App() {
         onClose={() => setSelectedHazardId(null)}
         onUpvote={upvoteHazard}
         onResolve={resolveHazard}
+        onVotePassability={votePassability}
         onShowToast={notifyUser}
       />
 
