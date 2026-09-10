@@ -56,24 +56,37 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
       preferCanvas: true,
     });
 
-    // 100% Zero-Key, Zero-Watermark CartoDB Dark Matter Radar Canvas (4-Subdomain Sharded CDN)
-    const tileLayer = L.tileLayer(
-      'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    // 100% Zero-Key, Zero-Watermark Esri ArcGIS Dark Canvas (Global CDN)
+    const baseTileLayer = L.tileLayer(
+      'https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
       {
-        subdomains: 'abcd',
-        attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap contributors',
-        maxZoom: 19,
+        attribution: '&copy; Esri &mdash; OpenStreetMap contributors',
+        maxZoom: 16,
         minZoom: 3,
-        keepBuffer: 3,
+        keepBuffer: 2,
         updateWhenIdle: false,
         updateWhenZooming: false,
         crossOrigin: 'anonymous',
       }
     ).addTo(map);
 
-    tileLayer.on('loading', () => setIsTileLoading(true));
-    tileLayer.on('load', () => setIsTileLoading(false));
-    tileLayer.on('tileerror', () => setIsTileLoading(false));
+    // Clean reference road and locality labels
+    L.tileLayer(
+      'https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
+      {
+        attribution: '',
+        maxZoom: 16,
+        minZoom: 3,
+        keepBuffer: 2,
+        updateWhenIdle: false,
+        updateWhenZooming: false,
+        crossOrigin: 'anonymous',
+      }
+    ).addTo(map);
+
+    baseTileLayer.on('loading', () => setIsTileLoading(true));
+    baseTileLayer.on('load', () => setIsTileLoading(false));
+    baseTileLayer.on('tileerror', () => setIsTileLoading(false));
 
     // Zoom controls positioned at top right (safe from thumb HUD)
     L.control.zoom({ position: 'topright' }).addTo(map);

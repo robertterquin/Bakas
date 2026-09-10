@@ -1,6 +1,6 @@
-const CACHE_SHELL_NAME = 'bakas-shell-v3';
-const CACHE_TILES_NAME = 'bakas-tiles-v3';
-const MAX_TILES = 800;
+const CACHE_SHELL_NAME = 'bakas-shell-v4';
+const CACHE_TILES_NAME = 'bakas-tiles-v4';
+const MAX_TILES = 1000;
 
 const STATIC_ASSETS = [
   '/',
@@ -20,7 +20,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// 2. Activate: Purge old caches
+// 2. Activate: Purge ALL old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -57,17 +57,21 @@ async function trimTileCache(cacheName, maxItems) {
   }
 }
 
-// 3. Fetch: Cache-first for Clean Map Tiles & Stale-while-revalidate for Shell
+// 3. Fetch: Cache-first for Clean Map Tiles & Network-First for Navigation
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // A. Map Tiles (CARTO Dark Matter, OSM, or Esri)
+  // A. Bypass Service Worker completely in local development to protect Vite HMR
+  if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+    return;
+  }
+
+  // B. Map Tiles (Esri CDN, CARTO, or OSM)
   if (
-    url.hostname.includes('cartocdn.com') ||
     url.hostname.includes('arcgisonline.com') ||
-    url.hostname.includes('openstreetmap.org') ||
-    url.hostname.includes('maptiler.com')
+    url.hostname.includes('cartocdn.com') ||
+    url.hostname.includes('openstreetmap.org')
   ) {
     event.respondWith(
       caches.open(CACHE_TILES_NAME).then(async (cache) => {
@@ -91,13 +95,32 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // B. Bypass caching for Supabase REST / RPC API endpoints
+  // C. Bypass caching for Supabase REST / RPC API endpoints
   if (url.hostname.includes('supabase.co')) {
     return;
   }
 
-  // C. App Shell Assets (Stale-While-Revalidate)
-  if (request.mode === 'navigate' || request.destination === 'script' || request.destination === 'style') {
+  // D. App Navigation (Network-First: ensures users always receive latest app version online)
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const clone = networkResponse.clone();
+            caches.open(CACHE_SHELL_NAME).then((cache) => cache.put(request, clone));
+          }
+          return networkResponse;
+        })
+        .catch(async () => {
+          const cache = await caches.open(CACHE_SHELL_NAME);
+          return (await cache.match(request)) || (await cache.match('/index.html'));
+        })
+    );
+    return;
+  }
+
+  // E. Hashed Static Assets (Stale-While-Revalidate)
+  if (request.destination === 'script' || request.destination === 'style' || request.destination === 'image') {
     event.respondWith(
       caches.open(CACHE_SHELL_NAME).then(async (cache) => {
         const cachedResponse = await cache.match(request);
