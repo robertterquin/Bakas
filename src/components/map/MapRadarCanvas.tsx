@@ -398,14 +398,14 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
       <AnimatePresence>
         {isTileLoading && (
           <motion.div
-            initial={{ opacity: 0, y: -6 }}
+            initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
+            exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2 }}
-            className="absolute top-4 left-1/2 -translate-x-1/2 z-[400] flex items-center gap-2 bg-black/85 backdrop-blur-md border border-zinc-800 text-zinc-300 text-xs px-3.5 py-1.5 rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.8)] pointer-events-none select-none"
+            className="absolute top-16 sm:top-18 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-black/85 backdrop-blur-md border border-white/15 text-zinc-300 text-xs px-3.5 py-1.5 rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.85)] pointer-events-none select-none"
           >
             <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_#22d3ee]" />
-            <span className="font-mono text-[11px] tracking-wider uppercase">Streaming Radar Data...</span>
+            <span className="font-mono text-[10px] tracking-wider uppercase">Streaming Radar Data...</span>
           </motion.div>
         )}
       </AnimatePresence>
