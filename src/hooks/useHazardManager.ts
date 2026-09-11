@@ -4,6 +4,7 @@ import {
   getOrCreateDeviceFingerprint,
   hasDeviceVoted,
   recordDeviceVote,
+  getDevicePassabilityVote,
   recordDevicePassabilityVote,
   calculatePassabilityConsensus,
   calculateExtendedExpiry,
@@ -229,27 +230,36 @@ export function useHazardManager(userLocation: UserLocation, isOnline: boolean, 
     status: FloodPassability
   ): Promise<{ success: boolean; message: string }> => {
     const deviceHash = getOrCreateDeviceFingerprint();
+    const previousVote = getDevicePassabilityVote(hazardId);
     recordDevicePassabilityVote(hazardId, status);
 
     // Optimistic Update
     setHazards((prev) =>
       prev.map((h) => {
         if (h.id === hazardId) {
-          const currentVotes = h.passabilityVotes || {
-            passable_all: 0,
-            passable_high_clearance: 0,
-            impassable: 0,
+          const currentVotes = {
+            passable_all: h.passabilityVotes?.passable_all || 0,
+            passable_high_clearance: h.passabilityVotes?.passable_high_clearance || 0,
+            impassable: h.passabilityVotes?.impassable || 0,
           };
-          const updatedVotes = {
-            ...currentVotes,
-            [status]: (currentVotes[status] || 0) + 1,
-          };
-          const consensus = calculatePassabilityConsensus(updatedVotes, status);
-          return {
+          // Decrement old vote if switching to a new one
+          if (previousVote && previousVote !== status && currentVotes[previousVote] > 0) {
+            currentVotes[previousVote] = Math.max(0, currentVotes[previousVote] - 1);
+          }
+          // Increment new status (or ensure at least 1)
+          if (previousVote !== status) {
+            currentVotes[status] = (currentVotes[status] || 0) + 1;
+          } else if (currentVotes[status] === 0) {
+            currentVotes[status] = 1;
+          }
+          const consensus = calculatePassabilityConsensus(currentVotes, status);
+          const updated: Hazard = {
             ...h,
             passability: consensus,
-            passabilityVotes: updatedVotes,
+            passabilityVotes: currentVotes,
           };
+          cacheHazards([updated]).catch(() => {});
+          return updated;
         }
         return h;
       })

@@ -9,6 +9,7 @@ import {
   submitHazardToBackend,
   submitUpvoteToBackend,
   submitResolveToBackend,
+  submitPassabilityVote,
 } from '../services/hazard.service';
 
 export interface SyncState {
@@ -79,6 +80,8 @@ export function useSyncManager(onSyncCompleted?: (count: number) => void) {
         try {
           if (val.actionType === 'upvote') {
             await submitUpvoteToBackend(val.hazardId, val.deviceHash);
+          } else if (val.actionType === 'passability_vote' && val.passability) {
+            await submitPassabilityVote(val.hazardId, val.passability, val.deviceHash);
           } else {
             await submitResolveToBackend(val.hazardId, val.deviceHash);
           }

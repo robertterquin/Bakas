@@ -235,73 +235,80 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
         ) : null}
 
         {/* Live Crowdsourced Flood Passability Assessment */}
-        {hazard.category === 'clogged_drainage' && (
-          <div className="p-3 rounded-2xl bg-zinc-900/70 border border-zinc-800 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-white">
-                <Waves className="w-4 h-4 text-cyan-400" />
-                <span>Live Passability Consensus</span>
+        {hazard.category === 'clogged_drainage' && (() => {
+          const effectivePassability = hazard.passability || currentDevicePassability || undefined;
+          return (
+            <div className="p-3 rounded-2xl bg-zinc-900/70 border border-zinc-800 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-white">
+                  <Waves className="w-4 h-4 text-cyan-400" />
+                  <span>Live Passability Consensus</span>
+                </div>
+                {effectivePassability && (
+                  <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${PASSABILITY_CONFIG[effectivePassability].colorClass}`}>
+                    {PASSABILITY_CONFIG[effectivePassability].label}
+                  </span>
+                )}
               </div>
-              {hazard.passability && (
-                <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${PASSABILITY_CONFIG[hazard.passability].colorClass}`}>
-                  {PASSABILITY_CONFIG[hazard.passability].label}
-                </span>
-              )}
-            </div>
 
-            {/* Depth & Vehicle Advice */}
-            <div className="text-[11px] text-zinc-300 bg-black/50 p-2.5 rounded-xl border border-zinc-800/80 flex items-center justify-between">
-              <div>
-                <span className="font-semibold text-white block">
-                  {hazard.passability ? PASSABILITY_CONFIG[hazard.passability].depthLabel : 'Observation Needed'}
-                </span>
-                <span className="text-[10px] text-zinc-400">
-                  {hazard.passability ? PASSABILITY_CONFIG[hazard.passability].description : 'Tap your observation below to update community telemetry.'}
-                </span>
+              {/* Depth & Vehicle Advice */}
+              <div className="text-[11px] text-zinc-300 bg-black/50 p-2.5 rounded-xl border border-zinc-800/80 flex items-center justify-between">
+                <div>
+                  <span className="font-semibold text-white block">
+                    {effectivePassability ? PASSABILITY_CONFIG[effectivePassability].depthLabel : 'Observation Needed'}
+                  </span>
+                  <span className="text-[10px] text-zinc-400">
+                    {effectivePassability ? PASSABILITY_CONFIG[effectivePassability].description : 'Tap your observation below to update community telemetry.'}
+                  </span>
+                </div>
               </div>
-            </div>
 
-            {/* 1-Click Commuter Observation Buttons */}
-            <div className="space-y-1">
-              <div className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider px-0.5">
-                Log your vehicle observation:
-              </div>
-              <div className="grid grid-cols-3 gap-1.5">
-                {(['passable_all', 'passable_high_clearance', 'impassable'] as FloodPassability[]).map((status) => {
-                  const config = PASSABILITY_CONFIG[status];
-                  const isVoted = currentDevicePassability === status;
-                  const voteCount = hazard.passabilityVotes?.[status] || 0;
-                  return (
-                    <button
-                      key={status}
-                      type="button"
-                      onClick={() => handlePassabilityVote(status)}
-                      disabled={isVotingPassability}
-                      className={`p-2 rounded-xl border text-left transition-all flex flex-col justify-between min-h-[58px] ${
-                        isVoted
-                          ? 'bg-zinc-800 border-white text-white shadow-sm'
-                          : 'bg-black/60 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between w-full">
-                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: config.dotColor }} />
-                        <span className="text-[10px] font-mono text-zinc-500 font-semibold">
-                          <NumberFlow value={voteCount} />
-                        </span>
-                      </div>
-                      <div className="text-[10px] font-bold leading-tight mt-1 truncate">
-                        {status === 'passable_all' ? 'All Vehicles' : status === 'passable_high_clearance' ? '4x4 / SUVs' : 'Impassable'}
-                      </div>
-                      <div className="text-[9px] text-zinc-500 truncate">
-                        {status === 'passable_all' ? 'Ankle deep' : status === 'passable_high_clearance' ? 'Knee deep' : 'Submerged'}
-                      </div>
-                    </button>
-                  );
-                })}
+              {/* 1-Click Commuter Observation Buttons */}
+              <div className="space-y-1">
+                <div className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider px-0.5">
+                  Log your vehicle observation:
+                </div>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {(['passable_all', 'passable_high_clearance', 'impassable'] as FloodPassability[]).map((status) => {
+                    const config = PASSABILITY_CONFIG[status];
+                    const isVoted = currentDevicePassability === status;
+                    let voteCount = hazard.passabilityVotes?.[status] || 0;
+                    if (isVoted && voteCount === 0) {
+                      voteCount = 1;
+                    }
+
+                    return (
+                      <button
+                        key={status}
+                        type="button"
+                        onClick={() => handlePassabilityVote(status)}
+                        disabled={isVotingPassability}
+                        className={`p-2 rounded-xl border text-left transition-all flex flex-col justify-between min-h-[58px] ${
+                          isVoted
+                            ? 'bg-zinc-800 border-white text-white shadow-sm'
+                            : 'bg-black/60 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between w-full">
+                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: config.dotColor }} />
+                          <span className="text-[10px] font-mono text-zinc-500 font-semibold">
+                            <NumberFlow value={voteCount} />
+                          </span>
+                        </div>
+                        <div className="text-[10px] font-bold leading-tight mt-1 truncate">
+                          {status === 'passable_all' ? 'All Vehicles' : status === 'passable_high_clearance' ? '4x4 / SUVs' : 'Impassable'}
+                        </div>
+                        <div className="text-[9px] text-zinc-500 truncate">
+                          {status === 'passable_all' ? 'Ankle deep' : status === 'passable_high_clearance' ? 'Knee deep' : 'Submerged'}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Details Note */}
         {hazard.description && (

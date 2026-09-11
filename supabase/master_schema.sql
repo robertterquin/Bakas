@@ -48,6 +48,10 @@ CREATE TABLE IF NOT EXISTS public.hazards (
   title TEXT,
   description TEXT,
   address TEXT,
+  passability TEXT,
+  passability_votes JSONB DEFAULT '{"passable_all": 0, "passable_high_clearance": 0, "impassable": 0}'::jsonb,
+  image_url TEXT,
+  resolved_image_url TEXT,
   upvotes INTEGER NOT NULL DEFAULT 1,
   resolved_count INTEGER NOT NULL DEFAULT 0,
   is_resolved BOOLEAN NOT NULL DEFAULT FALSE,
@@ -55,6 +59,13 @@ CREATE TABLE IF NOT EXISTS public.hazards (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Ensure extended columns exist if the table was created previously (Idempotent update)
+ALTER TABLE public.hazards
+  ADD COLUMN IF NOT EXISTS passability TEXT,
+  ADD COLUMN IF NOT EXISTS passability_votes JSONB DEFAULT '{"passable_all": 0, "passable_high_clearance": 0, "impassable": 0}'::jsonb,
+  ADD COLUMN IF NOT EXISTS image_url TEXT,
+  ADD COLUMN IF NOT EXISTS resolved_image_url TEXT;
 
 -- 4. High-Performance Spatial & Filtering Indexes
 CREATE INDEX IF NOT EXISTS idx_hazards_location ON public.hazards USING GIST (location);
@@ -75,15 +86,33 @@ CREATE TABLE IF NOT EXISTS public.hazard_validations (
 CREATE INDEX IF NOT EXISTS idx_validations_hazard ON public.hazard_validations(hazard_id);
 CREATE INDEX IF NOT EXISTS idx_validations_device ON public.hazard_validations(device_hash);
 
+-- 5b. Hazard Passability Votes Table (1 vote per device per hazard)
+CREATE TABLE IF NOT EXISTS public.hazard_passability_votes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  hazard_id UUID NOT NULL REFERENCES public.hazards(id) ON DELETE CASCADE,
+  passability TEXT NOT NULL CHECK (passability IN ('passable_all', 'passable_high_clearance', 'impassable')),
+  device_hash TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_hazard_device_passability UNIQUE (hazard_id, device_hash)
+);
+
+CREATE INDEX IF NOT EXISTS idx_passability_votes_hazard ON public.hazard_passability_votes(hazard_id);
+CREATE INDEX IF NOT EXISTS idx_passability_votes_device ON public.hazard_passability_votes(device_hash);
+
 -- 6. Row Level Security (RLS) - Zero-Login Civic Policy
 ALTER TABLE public.hazards ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.hazard_validations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.hazard_passability_votes ENABLE ROW LEVEL SECURITY;
 
 -- Drop existing policies if updating
 DROP POLICY IF EXISTS "Public anonymous select active hazards" ON public.hazards;
 DROP POLICY IF EXISTS "Public anonymous insert hazards" ON public.hazards;
 DROP POLICY IF EXISTS "Public anonymous select validations" ON public.hazard_validations;
 DROP POLICY IF EXISTS "Public anonymous insert validations" ON public.hazard_validations;
+DROP POLICY IF EXISTS "Public anonymous select passability votes" ON public.hazard_passability_votes;
+DROP POLICY IF EXISTS "Public anonymous insert passability votes" ON public.hazard_passability_votes;
+DROP POLICY IF EXISTS "Public anonymous update passability votes" ON public.hazard_passability_votes;
 
 -- Allow anonymous public reads on active hazards
 CREATE POLICY "Public anonymous select active hazards"
@@ -112,7 +141,29 @@ CREATE POLICY "Public anonymous insert validations"
   TO anon, authenticated
   WITH CHECK (true);
 
+-- Allow anonymous passability reads, inserts & updates
+CREATE POLICY "Public anonymous select passability votes"
+  ON public.hazard_passability_votes
+  FOR SELECT
+  TO anon, authenticated
+  USING (true);
+
+CREATE POLICY "Public anonymous insert passability votes"
+  ON public.hazard_passability_votes
+  FOR INSERT
+  TO anon, authenticated
+  WITH CHECK (true);
+
+CREATE POLICY "Public anonymous update passability votes"
+  ON public.hazard_passability_votes
+  FOR UPDATE
+  TO anon, authenticated
+  USING (true)
+  WITH CHECK (true);
+
 -- 7. Stored Procedure: Get Hazards within Radius (5km PostGIS Query)
+DROP FUNCTION IF EXISTS public.get_hazards_in_radius(DOUBLE PRECISION, DOUBLE PRECISION, DOUBLE PRECISION);
+DROP FUNCTION IF EXISTS public.get_hazards_in_radius;
 CREATE OR REPLACE FUNCTION public.get_hazards_in_radius(
   user_lat DOUBLE PRECISION,
   user_lng DOUBLE PRECISION,
@@ -127,6 +178,10 @@ RETURNS TABLE (
   title TEXT,
   description TEXT,
   address TEXT,
+  passability TEXT,
+  passability_votes JSONB,
+  image_url TEXT,
+  resolved_image_url TEXT,
   upvotes INTEGER,
   resolved_count INTEGER,
   is_resolved BOOLEAN,
@@ -147,6 +202,10 @@ AS $$
     h.title,
     h.description,
     h.address,
+    h.passability,
+    h.passability_votes,
+    h.image_url,
+    h.resolved_image_url,
     h.upvotes,
     h.resolved_count,
     h.is_resolved,
@@ -161,6 +220,8 @@ AS $$
 $$;
 
 -- 8. Stored Procedure: Upvote Hazard with Philippine-Tuned Dynamic TTL Extension
+DROP FUNCTION IF EXISTS public.upvote_hazard(UUID, TEXT);
+DROP FUNCTION IF EXISTS public.upvote_hazard;
 CREATE OR REPLACE FUNCTION public.upvote_hazard(
   target_hazard_id UUID,
   voter_device_hash TEXT
@@ -226,6 +287,8 @@ END;
 $$;
 
 -- 9. Stored Procedure: Mark Cleared / Resolved with 3-Vote Soft Decay
+DROP FUNCTION IF EXISTS public.resolve_hazard(UUID, TEXT);
+DROP FUNCTION IF EXISTS public.resolve_hazard;
 CREATE OR REPLACE FUNCTION public.resolve_hazard(
   target_hazard_id UUID,
   resolver_device_hash TEXT
@@ -268,7 +331,85 @@ BEGIN
 END;
 $$;
 
+-- 9b. Stored Procedure: Vote on Hazard Flood Passability with Live Consensus Calculation
+DROP FUNCTION IF EXISTS public.vote_hazard_passability(UUID, TEXT, TEXT);
+DROP FUNCTION IF EXISTS public.vote_hazard_passability;
+CREATE OR REPLACE FUNCTION public.vote_hazard_passability(
+  target_hazard_id UUID,
+  vote_status TEXT,
+  voter_device_hash TEXT
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  target_rec RECORD;
+  count_all INT;
+  count_high INT;
+  count_imp INT;
+  consensus TEXT;
+  votes_obj JSONB;
+BEGIN
+  -- Validate vote status
+  IF vote_status NOT IN ('passable_all', 'passable_high_clearance', 'impassable') THEN
+    RAISE EXCEPTION 'Invalid passability status: %', vote_status;
+  END IF;
+
+  -- Ensure target hazard exists
+  SELECT * INTO target_rec FROM public.hazards WHERE id = target_hazard_id;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Hazard not found.';
+  END IF;
+
+  -- Upsert device passability vote (switch vote if previously voted)
+  INSERT INTO public.hazard_passability_votes (hazard_id, passability, device_hash, updated_at)
+  VALUES (target_hazard_id, vote_status, voter_device_hash, NOW())
+  ON CONFLICT (hazard_id, device_hash)
+  DO UPDATE SET passability = EXCLUDED.passability, updated_at = NOW();
+
+  -- Tally votes
+  SELECT
+    COUNT(*) FILTER (WHERE passability = 'passable_all'),
+    COUNT(*) FILTER (WHERE passability = 'passable_high_clearance'),
+    COUNT(*) FILTER (WHERE passability = 'impassable')
+  INTO count_all, count_high, count_imp
+  FROM public.hazard_passability_votes
+  WHERE hazard_id = target_hazard_id;
+
+  -- Compute majority consensus
+  IF count_imp >= count_high AND count_imp >= count_all AND count_imp > 0 THEN
+    consensus := 'impassable';
+  ELSIF count_high >= count_all AND count_high > 0 THEN
+    consensus := 'passable_high_clearance';
+  ELSIF count_all > 0 THEN
+    consensus := 'passable_all';
+  ELSE
+    consensus := vote_status;
+  END IF;
+
+  votes_obj := jsonb_build_object(
+    'passable_all', count_all,
+    'passable_high_clearance', count_high,
+    'impassable', count_imp
+  );
+
+  -- Update hazard record
+  UPDATE public.hazards
+  SET
+    passability = consensus,
+    passability_votes = votes_obj,
+    updated_at = NOW()
+  WHERE id = target_hazard_id
+  RETURNING * INTO target_rec;
+
+  RETURN to_jsonb(target_rec);
+END;
+$$;
+
 -- 10. Maintenance Procedure: Purge Expired Hazards
+DROP FUNCTION IF EXISTS public.purge_expired_hazards();
+DROP FUNCTION IF EXISTS public.purge_expired_hazards;
 CREATE OR REPLACE FUNCTION public.purge_expired_hazards()
 RETURNS INTEGER
 LANGUAGE plpgsql
