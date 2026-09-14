@@ -112,10 +112,12 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
   };
 
   const handleCopyCoords = () => {
-    const coordsStr = `${hazard.lat.toFixed(5)}, ${hazard.lng.toFixed(5)}`;
+    const textToCopy = hazard.address
+      ? `${hazard.title ? hazard.title + ' — ' : ''}${hazard.address} (${hazard.lat.toFixed(5)}, ${hazard.lng.toFixed(5)})`
+      : `${hazard.lat.toFixed(5)}, ${hazard.lng.toFixed(5)}`;
     if (navigator.clipboard) {
-      navigator.clipboard.writeText(coordsStr);
-      onShowToast(`Copied coordinates: ${coordsStr}`);
+      navigator.clipboard.writeText(textToCopy);
+      onShowToast('Copied hazard location details');
     }
   };
 

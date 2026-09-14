@@ -1,7 +1,6 @@
 import React, { useEffect, useCallback } from 'react';
 import { X, Shield, EyeOff, Zap, Lock, AlertTriangle } from 'lucide-react';
 import { BakasLogo } from '../ui/BakasLogo';
-import { getOrCreateDeviceFingerprint } from '../../utils/domain-rules';
 
 interface AboutModalProps {
   isOpen: boolean;
@@ -9,7 +8,6 @@ interface AboutModalProps {
 }
 
 export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
-  const deviceHash = getOrCreateDeviceFingerprint();
 
   // Escape key accessibility
   const handleKeyDown = useCallback(
@@ -65,19 +63,19 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
 
         {/* Content */}
         <div className="p-6 overflow-y-auto space-y-4 text-xs text-zinc-300">
-          {/* User Anonymous Civic Token Card */}
-          <div className="p-3 rounded-2xl bg-black border border-zinc-800 flex items-center justify-between">
+          {/* User Anonymous Civic Privacy Card */}
+          <div className="p-3 rounded-2xl bg-black border border-zinc-800/90 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white">
+              <div className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-emerald-400">
                 <Shield className="w-4 h-4" />
               </div>
               <div>
-                <div className="font-bold text-xs text-white">Anonymous Civic ID</div>
-                <div className="text-[10px] font-mono text-zinc-500">Token: {deviceHash.substring(0, 16)}...</div>
+                <div className="font-bold text-xs text-white">100% Anonymous & Private</div>
+                <div className="text-[10px] text-zinc-400 font-sans">No account, tracking, or personal data collected</div>
               </div>
             </div>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-900 text-white border border-zinc-700 font-mono font-semibold">
-              Verified
+            <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-950/60 text-emerald-400 border border-emerald-500/30 font-mono font-semibold">
+              Zero-Trace
             </span>
           </div>
 
