@@ -1,6 +1,7 @@
 import React, { useEffect, useCallback } from 'react';
-import { X, Shield, EyeOff, Zap, Lock, AlertTriangle } from 'lucide-react';
+import { X, Shield, EyeOff, Zap, Lock, AlertTriangle, RotateCcw } from 'lucide-react';
 import { BakasLogo } from '../ui/BakasLogo';
+import { clearCachedHazards, clearPendingQueue } from '../../services/offline.service';
 
 interface AboutModalProps {
   isOpen: boolean;
@@ -145,13 +146,26 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
           </div>
         </div>
 
-        <div className="p-4 border-t border-zinc-800 text-center">
+        <div className="p-4 border-t border-zinc-800 space-y-2 text-center">
           <button
             type="button"
             onClick={onClose}
             className="w-full py-3.5 rounded-2xl bg-white text-black font-bold text-xs hover:bg-zinc-200 transition-colors min-h-12"
           >
             Back to Radar Canvas
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              await clearCachedHazards();
+              await clearPendingQueue();
+              localStorage.clear();
+              window.location.reload();
+            }}
+            className="w-full py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors text-[11px] flex items-center justify-center gap-1.5"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Reset Local Cache & Storage</span>
           </button>
         </div>
       </div>
