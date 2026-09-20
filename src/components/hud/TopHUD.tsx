@@ -48,12 +48,12 @@ export const TopHUD: React.FC<TopHUDProps> = ({
   const scopeInfo = formatScopeDistance(radiusFilter > 0 ? radiusFilter : visibleScopeMeters);
 
   return (
-    <header className="absolute top-3 left-0 right-0 z-30 pointer-events-none px-2.5 sm:px-4">
+    <header className="absolute top-3 left-0 right-0 z-30 pointer-events-none px-2.5 sm:px-4 flex justify-center">
       <motion.div
         initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: 'spring', stiffness: 350, damping: 28 }}
-        className="max-w-2xl mx-auto h-11 px-1.5 sm:px-2 flex items-center justify-between gap-1.5 sm:gap-2 rounded-full bg-black/80 border border-white/12 shadow-[0_12px_36px_rgba(0,0,0,0.85),inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-2xl pointer-events-auto transition-all"
+        className="w-fit max-w-full h-11 px-2 sm:px-2.5 flex items-center justify-between gap-1.5 sm:gap-2.5 rounded-full bg-black/80 border border-white/12 shadow-[0_12px_36px_rgba(0,0,0,0.85),inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-2xl pointer-events-auto transition-all"
       >
         {/* Brand Mark with Live Telemetry Radar Beacon */}
         <motion.button
@@ -79,7 +79,7 @@ export const TopHUD: React.FC<TopHUDProps> = ({
         </motion.button>
 
         {/* Dynamic Segmented Category Tabs with Motion Sliding Magnetic Pill */}
-        <nav className="flex items-center gap-1 overflow-x-auto no-scrollbar shrink-0 relative">
+        <nav className="flex items-center gap-1 overflow-x-auto no-scrollbar min-w-0 relative">
           {CATEGORIES.map((cat) => {
             const isSelected = activeFilter === cat.id;
             return (
@@ -152,7 +152,7 @@ export const TopHUD: React.FC<TopHUDProps> = ({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
               whileTap={{ scale: 0.9 }}
-              className={`h-7.5 px-2 rounded-full border transition-all flex items-center gap-1 shadow-sm ${
+              className={`h-7.5 px-2 rounded-full border transition-all flex items-center gap-1 shadow-sm shrink-0 ${
                 !isOnline
                   ? 'bg-zinc-900 border-zinc-700 text-zinc-300'
                   : pendingCount > 0
