@@ -9,15 +9,16 @@ export const MANILA_DEFAULT_COORDS = {
 };
 
 export const GOLDEN_HAZARDS: Hazard[] = [
+  // 1. MANILA (Ermita) — Pothole (High) with Before/After Slider
   {
     id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
     category: 'pothole',
     severity: 'high',
-    lat: 14.5985,
-    lng: 120.9835,
+    lat: 14.5825,
+    lng: 120.9850,
     title: 'Open Sewer Grate / Missing Manhole Lid',
     description: 'Coverless manhole trap marked only with a tree branch in center lane.',
-    address: 'Taft Ave cor. Ayala Blvd, Ermita, Manila',
+    address: 'Taft Ave cor. UN Ave, Ermita, Manila',
     imageUrl: 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=800&auto=format&fit=crop&q=80',
     resolvedImageUrl: 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=800&auto=format&fit=crop&q=80',
     upvotes: 31,
@@ -27,6 +28,8 @@ export const GOLDEN_HAZARDS: Hazard[] = [
     expiresAt: calculateInitialExpiry('pothole', new Date(NOW.getTime() - 14 * 60 * 60 * 1000)),
     syncStatus: 'synced',
   },
+
+  // 2. MANILA (Sampaloc) — Clogged Drainage (High) with Flood Photo & Passability
   {
     id: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
     category: 'clogged_drainage',
@@ -50,137 +53,35 @@ export const GOLDEN_HAZARDS: Hazard[] = [
     expiresAt: calculateInitialExpiry('clogged_drainage', new Date(NOW.getTime() - 8 * 60 * 60 * 1000)),
     syncStatus: 'synced',
   },
+
+  // 3. MAKATI (Ayala CBD) — Road Obstruction (Medium)
   {
-    id: '550e8400-e29b-41d4-a716-446655440000',
+    id: '3c4d5e6f-7a8b-9c0d-1e2f-3a4b5c6d7e8f',
     category: 'road_obstruction',
     severity: 'medium',
-    lat: 14.5795,
-    lng: 120.9845,
-    title: 'Fallen Tree Branch & Construction Debris',
-    description: 'Large broken acacia branch blocking the outer lane near pedestrian crossing.',
-    address: 'Padre Faura St cor. Maria Orosa St, Ermita, Manila',
-    upvotes: 11,
-    resolvedCount: 0,
-    isResolved: false,
-    createdAt: new Date(NOW.getTime() - 3 * 60 * 60 * 1000).toISOString(),
-    expiresAt: calculateInitialExpiry('road_obstruction', new Date(NOW.getTime() - 3 * 60 * 60 * 1000)),
-    syncStatus: 'synced',
-  },
-  {
-    id: '3c9909af-94a8-4448-9c12-32b0a1d48950',
-    category: 'dark_street',
-    severity: 'medium',
-    lat: 14.5821,
-    lng: 120.9782,
-    title: 'Unlit Baywalk Promenade & Broken Lampposts',
-    description: 'Series of 6 non-functional lamp posts creating blackout corridor for cyclists and joggers.',
-    address: 'Roxas Blvd Promenade, Malate, Manila',
-    upvotes: 15,
-    resolvedCount: 0,
-    isResolved: false,
-    createdAt: new Date(NOW.getTime() - 22 * 60 * 60 * 1000).toISOString(),
-    expiresAt: calculateInitialExpiry('dark_street', new Date(NOW.getTime() - 22 * 60 * 60 * 1000)),
-    syncStatus: 'synced',
-  },
-  {
-    id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3d0bed',
-    category: 'road_obstruction',
-    severity: 'low',
-    lat: 14.5825,
-    lng: 120.9850,
-    title: 'Stalled Delivery Tricycle on Shoulder',
-    description: 'Disabled delivery tricycle with flat tire causing minor slowdown during peak hours.',
-    address: 'United Nations Ave near Taft Ave, Ermita, Manila',
-    upvotes: 4,
+    lat: 14.5550,
+    lng: 121.0210,
+    title: 'Stalled Delivery Van on Outer Shoulder',
+    description: 'Disabled cargo van blocking outer turn lane toward Makati Ave.',
+    address: 'Ayala Ave cor. V.A. Rufino St, Makati CBD',
+    upvotes: 8,
     resolvedCount: 0,
     isResolved: false,
     createdAt: new Date(NOW.getTime() - 2 * 60 * 60 * 1000).toISOString(),
     expiresAt: calculateInitialExpiry('road_obstruction', new Date(NOW.getTime() - 2 * 60 * 60 * 1000)),
     syncStatus: 'synced',
   },
-  {
-    id: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
-    category: 'pothole',
-    severity: 'medium',
-    lat: 14.5990,
-    lng: 120.9855,
-    title: 'Cracked Asphalt & Sunken Trench',
-    description: 'Deep utility trench cut with settling asphalt causing hard jolts for motorcycles.',
-    address: 'Quezon Blvd near Plaza Miranda, Quiapo, Manila',
-    upvotes: 19,
-    resolvedCount: 0,
-    isResolved: false,
-    createdAt: new Date(NOW.getTime() - 30 * 60 * 60 * 1000).toISOString(),
-    expiresAt: calculateInitialExpiry('pothole', new Date(NOW.getTime() - 30 * 60 * 60 * 1000)),
-    syncStatus: 'synced',
-  },
-  {
-    id: '48f12a3b-7c6d-49e0-b1a2-8e3f5d7c9a1b',
-    category: 'clogged_drainage',
-    severity: 'low',
-    lat: 14.5975,
-    lng: 120.9868,
-    title: 'Slow Draining Curb Puddle',
-    description: 'Standing water covering the curb after light rain, passable for all vehicles.',
-    address: 'R. Hidalgo St, Quiapo, Manila',
-    passability: 'passable_all',
-    passabilityVotes: {
-      passable_all: 8,
-      passable_high_clearance: 1,
-      impassable: 0,
-    },
-    upvotes: 6,
-    resolvedCount: 0,
-    isResolved: false,
-    createdAt: new Date(NOW.getTime() - 6 * 60 * 60 * 1000).toISOString(),
-    expiresAt: calculateInitialExpiry('clogged_drainage', new Date(NOW.getTime() - 6 * 60 * 60 * 1000)),
-    syncStatus: 'synced',
-  },
-  {
-    id: '8b7a6c5d-4e3f-2a1b-0c9d-8e7f6a5b4c3d',
-    category: 'dark_street',
-    severity: 'low',
-    lat: 14.5940,
-    lng: 120.9810,
-    title: 'Flickering Streetlight along Forest Park',
-    description: 'Intermittent streetlight causing dark patches along the sidewalk perimeter.',
-    address: 'Arroceros St near Mehan Garden, Ermita, Manila',
-    upvotes: 5,
-    resolvedCount: 0,
-    isResolved: false,
-    createdAt: new Date(NOW.getTime() - 18 * 60 * 60 * 1000).toISOString(),
-    expiresAt: calculateInitialExpiry('dark_street', new Date(NOW.getTime() - 18 * 60 * 60 * 1000)),
-    syncStatus: 'synced',
-  },
 
-  // --------------------------------------------------------------------------
-  // MAKATI CITY
-  // --------------------------------------------------------------------------
-  {
-    id: '1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d',
-    category: 'pothole',
-    severity: 'high',
-    lat: 14.5682,
-    lng: 121.0315,
-    title: 'Deep Crater Pothole (J.P. Rizal)',
-    description: 'Rim-bending crater near Makati City Hall approaching Poblacion.',
-    address: 'J.P. Rizal Ave near Makati City Hall, Poblacion, Makati',
-    upvotes: 16,
-    resolvedCount: 0,
-    isResolved: false,
-    createdAt: new Date(NOW.getTime() - 12 * 60 * 60 * 1000).toISOString(),
-    expiresAt: calculateInitialExpiry('pothole', new Date(NOW.getTime() - 12 * 60 * 60 * 1000)),
-    syncStatus: 'synced',
-  },
+  // 4. MAKATI (Chino Roces / Magallanes) — Clogged Drainage (High, Impassable)
   {
     id: '2b3c4d5e-6f7a-8b9c-0d1e-2f3a4b5c6d7e',
     category: 'clogged_drainage',
     severity: 'high',
-    lat: 14.5458,
-    lng: 121.0142,
-    title: 'Gutter Flood & Submerged Curbs',
+    lat: 14.5420,
+    lng: 121.0150,
+    title: 'Waterlogged Road & Inundated Curbs',
     description: 'Waterlogged section near Don Bosco causing severe motorcycle stalls during rain.',
-    address: 'Chino Roces Ave cor. Arnaiz Ave, Makati',
+    address: 'Chino Roces Ave near Pasong Tamo Ext., Makati',
     passability: 'impassable',
     passabilityVotes: {
       passable_all: 1,
@@ -195,51 +96,17 @@ export const GOLDEN_HAZARDS: Hazard[] = [
     expiresAt: calculateInitialExpiry('clogged_drainage', new Date(NOW.getTime() - 5 * 60 * 60 * 1000)),
     syncStatus: 'synced',
   },
-  {
-    id: '3c4d5e6f-7a8b-9c0d-1e2f-3a4b5c6d7e8f',
-    category: 'road_obstruction',
-    severity: 'medium',
-    lat: 14.5547,
-    lng: 121.0244,
-    title: 'Stalled Delivery Van on Shoulder',
-    description: 'Disabled cargo van blocking outer turn lane toward Makati Ave.',
-    address: 'Sen. Gil Puyat Ave (Buendia) cor. Makati Ave, Makati',
-    upvotes: 8,
-    resolvedCount: 0,
-    isResolved: false,
-    createdAt: new Date(NOW.getTime() - 2 * 60 * 60 * 1000).toISOString(),
-    expiresAt: calculateInitialExpiry('road_obstruction', new Date(NOW.getTime() - 2 * 60 * 60 * 1000)),
-    syncStatus: 'synced',
-  },
-  {
-    id: '4d5e6f7a-8b9c-0d1e-2f3a-4b5c6d7e8f9a',
-    category: 'dark_street',
-    severity: 'low',
-    lat: 14.5505,
-    lng: 121.0185,
-    title: 'Flickering Lampposts along Arnaiz',
-    description: 'Intermittent sidewalk lighting near Greenbelt perimeter.',
-    address: 'Arnaiz Ave near Paseo de Roxas, San Lorenzo, Makati',
-    upvotes: 4,
-    resolvedCount: 0,
-    isResolved: false,
-    createdAt: new Date(NOW.getTime() - 40 * 60 * 60 * 1000).toISOString(),
-    expiresAt: calculateInitialExpiry('dark_street', new Date(NOW.getTime() - 40 * 60 * 60 * 1000)),
-    syncStatus: 'synced',
-  },
 
-  // --------------------------------------------------------------------------
-  // TAGUIG / BGC
-  // --------------------------------------------------------------------------
+  // 5. TAGUIG (BGC) — Road Obstruction (Low)
   {
     id: '5e6f7a8b-9c0d-1e2f-3a4b-5c6d7e8f9a0b',
     category: 'road_obstruction',
     severity: 'low',
-    lat: 14.5532,
-    lng: 121.0515,
-    title: 'Loose Construction Steel Plate',
+    lat: 14.5515,
+    lng: 121.0505,
+    title: 'Loose Construction Steel Road Plate',
     description: 'Metal road plate clattering and shifting under heavy vehicle tires.',
-    address: '32nd St cor. 9th Ave, Bonifacio Global City, Taguig',
+    address: '32nd St cor. 7th Ave, Bonifacio Global City, Taguig',
     upvotes: 9,
     resolvedCount: 0,
     isResolved: false,
@@ -247,6 +114,8 @@ export const GOLDEN_HAZARDS: Hazard[] = [
     expiresAt: calculateInitialExpiry('road_obstruction', new Date(NOW.getTime() - 7 * 60 * 60 * 1000)),
     syncStatus: 'synced',
   },
+
+  // 6. TAGUIG (C-5 Pinagsama) — Pothole (High)
   {
     id: '6f7a8b9c-0d1e-2f3a-4b5c-6d7e8f9a0b1c',
     category: 'pothole',
@@ -263,6 +132,8 @@ export const GOLDEN_HAZARDS: Hazard[] = [
     expiresAt: calculateInitialExpiry('pothole', new Date(NOW.getTime() - 26 * 60 * 60 * 1000)),
     syncStatus: 'synced',
   },
+
+  // 7. TAGUIG (Bayani Road) — Dark Street (High)
   {
     id: '7a8b9c0d-1e2f-3a4b-5c6d-7e8f9a0b1c2d',
     category: 'dark_street',
@@ -279,41 +150,17 @@ export const GOLDEN_HAZARDS: Hazard[] = [
     expiresAt: calculateInitialExpiry('dark_street', new Date(NOW.getTime() - 15 * 60 * 60 * 1000)),
     syncStatus: 'synced',
   },
-  {
-    id: '8b9c0d1e-2f3a-4b5c-6d7e-8f9a0b1c2d3e',
-    category: 'clogged_drainage',
-    severity: 'medium',
-    lat: 14.5265,
-    lng: 121.0692,
-    title: 'Overflowing Gutter & Sidewalk Ponding',
-    description: 'Clogged drainage causing road water buildup during afternoon downpours.',
-    address: 'Levi Mariano Ave, Ususan, Taguig',
-    passability: 'passable_high_clearance',
-    passabilityVotes: {
-      passable_all: 5,
-      passable_high_clearance: 12,
-      impassable: 2,
-    },
-    upvotes: 13,
-    resolvedCount: 0,
-    isResolved: false,
-    createdAt: new Date(NOW.getTime() - 9 * 60 * 60 * 1000).toISOString(),
-    expiresAt: calculateInitialExpiry('clogged_drainage', new Date(NOW.getTime() - 9 * 60 * 60 * 1000)),
-    syncStatus: 'synced',
-  },
 
-  // --------------------------------------------------------------------------
-  // PASIG & MANDALUYONG (ORTIGAS CORRIDOR)
-  // --------------------------------------------------------------------------
+  // 8. MANDALUYONG (EDSA Ortigas) — Pothole (High)
   {
     id: '9c0d1e2f-3a4b-5c6d-7e8f-9a0b1c2d3e4f',
     category: 'pothole',
     severity: 'high',
-    lat: 14.5839,
-    lng: 121.0545,
-    title: 'Deep Crater Pothole (EDSA Ortigas)',
+    lat: 14.5855,
+    lng: 121.0560,
+    title: 'Deep Crater Pothole (EDSA Northbound)',
     description: 'Deep rim-bending pothole on the inner northbound lane after Ortigas flyover.',
-    address: 'EDSA Northbound near Ortigas Ave Flyover, Mandaluyong',
+    address: 'EDSA Northbound after Ortigas Ave Flyover, Mandaluyong',
     upvotes: 35,
     resolvedCount: 0,
     isResolved: false,
@@ -321,6 +168,8 @@ export const GOLDEN_HAZARDS: Hazard[] = [
     expiresAt: calculateInitialExpiry('pothole', new Date(NOW.getTime() - 32 * 60 * 60 * 1000)),
     syncStatus: 'synced',
   },
+
+  // 9. PASIG (C-5 Bagong Ilog) — Road Obstruction (Medium)
   {
     id: '0d1e2f3a-4b5c-6d7e-8f9a-0b1c2d3e4f5a',
     category: 'road_obstruction',
@@ -337,6 +186,8 @@ export const GOLDEN_HAZARDS: Hazard[] = [
     expiresAt: calculateInitialExpiry('road_obstruction', new Date(NOW.getTime() - 4 * 60 * 60 * 1000)),
     syncStatus: 'synced',
   },
+
+  // 10. PASIG (Shaw Blvd / Kapitolyo) — Clogged Drainage (Medium, Passable)
   {
     id: '1f2a3b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c',
     category: 'clogged_drainage',
@@ -360,9 +211,7 @@ export const GOLDEN_HAZARDS: Hazard[] = [
     syncStatus: 'synced',
   },
 
-  // --------------------------------------------------------------------------
-  // QUEZON CITY
-  // --------------------------------------------------------------------------
+  // 11. QUEZON CITY (Katipunan) — Dark Street (Medium)
   {
     id: '2a3b4c5d-6e7f-8a9b-0c1d-2e3f4a5b6c7d',
     category: 'dark_street',
@@ -379,6 +228,8 @@ export const GOLDEN_HAZARDS: Hazard[] = [
     expiresAt: calculateInitialExpiry('dark_street', new Date(NOW.getTime() - 20 * 60 * 60 * 1000)),
     syncStatus: 'synced',
   },
+
+  // 12. QUEZON CITY (EDSA Cubao) — Pothole (High)
   {
     id: '3b4c5d6e-7f8a-9b0c-1d2e-3f4a5b6c7d8e',
     category: 'pothole',
@@ -395,29 +246,8 @@ export const GOLDEN_HAZARDS: Hazard[] = [
     expiresAt: calculateInitialExpiry('pothole', new Date(NOW.getTime() - 16 * 60 * 60 * 1000)),
     syncStatus: 'synced',
   },
-  {
-    id: '4c5d6e7f-8a9b-0c1d-2e3f-4a5b6c7d8e9f',
-    category: 'clogged_drainage',
-    severity: 'high',
-    lat: 14.6285,
-    lng: 121.0125,
-    title: 'Severe Underpass Flash Flood',
-    description: 'Submerged underpass approach with waist-deep water during storms.',
-    address: 'Quezon Ave near Araneta Ave Underpass, Quezon City',
-    passability: 'impassable',
-    passabilityVotes: {
-      passable_all: 0,
-      passable_high_clearance: 4,
-      impassable: 26,
-    },
-    imageUrl: 'https://images.unsplash.com/photo-1547683905-f686c993aae5?w=800&auto=format&fit=crop&q=80',
-    upvotes: 42,
-    resolvedCount: 0,
-    isResolved: false,
-    createdAt: new Date(NOW.getTime() - 6 * 60 * 60 * 1000).toISOString(),
-    expiresAt: calculateInitialExpiry('clogged_drainage', new Date(NOW.getTime() - 6 * 60 * 60 * 1000)),
-    syncStatus: 'synced',
-  },
+
+  // 13. QUEZON CITY (Commonwealth) — Road Obstruction (High)
   {
     id: '5d6e7f8a-9b0c-1d2e-3f4a-5b6c7d8e9f0a',
     category: 'road_obstruction',
@@ -435,9 +265,7 @@ export const GOLDEN_HAZARDS: Hazard[] = [
     syncStatus: 'synced',
   },
 
-  // --------------------------------------------------------------------------
-  // PASAY & PARAÑAQUE
-  // --------------------------------------------------------------------------
+  // 14. PASAY (Macapagal Blvd) — Dark Street (Low)
   {
     id: '6e7f8a9b-0c1d-2e3f-4a5b-6c7d8e9f0a1b',
     category: 'dark_street',
@@ -454,6 +282,8 @@ export const GOLDEN_HAZARDS: Hazard[] = [
     expiresAt: calculateInitialExpiry('dark_street', new Date(NOW.getTime() - 25 * 60 * 60 * 1000)),
     syncStatus: 'synced',
   },
+
+  // 15. PARAÑAQUE (Roxas Blvd Baclaran) — Clogged Drainage (Medium, Tidal)
   {
     id: '7f8a9b0c-1d2e-3f4a-5b6c-7d8e9f0a1b2c',
     category: 'clogged_drainage',
