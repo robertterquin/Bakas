@@ -8,7 +8,7 @@ import {
 } from '../utils/domain-rules';
 import { calculateDistanceInMeters } from './geo.service';
 import { GOLDEN_HAZARDS } from '../data/golden-fixtures';
-import { getCachedHazards, getPendingReports, cacheHazards, savePendingValidation } from './offline.service';
+import { getCachedHazards, getPendingReports, cacheHazards, savePendingValidation, clearCachedHazards } from './offline.service';
 
 // In-memory runtime store for live session fallback
 let liveLocalHazards: Hazard[] = [...GOLDEN_HAZARDS];
@@ -45,77 +45,82 @@ export async function fetchHazardsInRadius(
       });
 
       if (!error && Array.isArray(data)) {
-        if (data.length > 0) {
-          const cached = await getCachedHazards().catch(() => []);
-          const cachedMap = new Map(cached.map((c) => [c.id, c]));
+        const cached = await getCachedHazards().catch(() => []);
+        const cachedMap = new Map(cached.map((c) => [c.id, c]));
 
-          const remoteHazards: Hazard[] = data.map((item: Record<string, unknown>) => {
-            const id = String(item.id);
-            const cachedItem = cachedMap.get(id);
-            const deviceVote = getDevicePassabilityVote(id);
+        const remoteHazards: Hazard[] = data.map((item: Record<string, unknown>) => {
+          const id = String(item.id);
+          const cachedItem = cachedMap.get(id);
+          const deviceVote = getDevicePassabilityVote(id);
 
-            let passabilityVotes = (item.passability_votes as Record<FloodPassability, number>) || cachedItem?.passabilityVotes;
-            let passability = (item.passability as FloodPassability) || cachedItem?.passability;
+          let passabilityVotes = (item.passability_votes as Record<FloodPassability, number>) || cachedItem?.passabilityVotes;
+          let passability = (item.passability as FloodPassability) || cachedItem?.passability;
 
-            // If this device voted locally and remote/cache hasn't registered it yet
-            if (deviceVote && (!passabilityVotes || (passabilityVotes[deviceVote] || 0) === 0)) {
-              passabilityVotes = {
-                passable_all: passabilityVotes?.passable_all || 0,
-                passable_high_clearance: passabilityVotes?.passable_high_clearance || 0,
-                impassable: passabilityVotes?.impassable || 0,
-              };
-              passabilityVotes[deviceVote] = (passabilityVotes[deviceVote] || 0) + 1;
-              passability = calculatePassabilityConsensus(passabilityVotes, deviceVote);
-            }
-
-            return {
-              id,
-              category: item.category as Hazard['category'],
-              severity: item.severity as Hazard['severity'],
-              lat: Number(item.lat),
-              lng: Number(item.lng),
-              title: item.title ? String(item.title) : undefined,
-              description: item.description ? String(item.description) : undefined,
-              address: item.address ? String(item.address) : undefined,
-              passability,
-              passabilityVotes,
-              imageUrl: item.image_url ? String(item.image_url) : cachedItem?.imageUrl,
-              resolvedImageUrl: item.resolved_image_url ? String(item.resolved_image_url) : cachedItem?.resolvedImageUrl,
-              upvotes: Number(item.upvotes || 0),
-              resolvedCount: Number(item.resolved_count || 0),
-              isResolved: Boolean(item.is_resolved),
-              expiresAt: String(item.expires_at),
-              createdAt: String(item.created_at),
-              syncStatus: 'synced' as const,
+          // If this device voted locally and remote/cache hasn't registered it yet
+          if (deviceVote && (!passabilityVotes || (passabilityVotes[deviceVote] || 0) === 0)) {
+            passabilityVotes = {
+              passable_all: passabilityVotes?.passable_all || 0,
+              passable_high_clearance: passabilityVotes?.passable_high_clearance || 0,
+              impassable: passabilityVotes?.impassable || 0,
             };
-          });
-
-          // Sync into liveLocalHazards so upvote/resolve/votePassability can always find them
-          for (const rh of remoteHazards) {
-            const idx = liveLocalHazards.findIndex((lh) => lh.id === rh.id);
-            if (idx >= 0) {
-              liveLocalHazards[idx] = { ...liveLocalHazards[idx], ...rh };
-            } else {
-              liveLocalHazards.push(rh);
-            }
+            passabilityVotes[deviceVote] = (passabilityVotes[deviceVote] || 0) + 1;
+            passability = calculatePassabilityConsensus(passabilityVotes, deviceVote);
           }
 
-          // Merge any pending offline reports that have not synced yet
-          try {
-            const pending = await getPendingReports();
-            const existingIds = new Set(remoteHazards.map((h) => h.id));
-            for (const p of pending) {
-              if (!existingIds.has(p.id)) {
-                remoteHazards.unshift(p);
-              }
-            }
-          } catch {
-            // Ignore IndexedDB read error in memory mode
-          }
+          return {
+            id,
+            category: item.category as Hazard['category'],
+            severity: item.severity as Hazard['severity'],
+            lat: Number(item.lat),
+            lng: Number(item.lng),
+            title: item.title ? String(item.title) : undefined,
+            description: item.description ? String(item.description) : undefined,
+            address: item.address ? String(item.address) : undefined,
+            passability,
+            passabilityVotes,
+            imageUrl: item.image_url ? String(item.image_url) : cachedItem?.imageUrl,
+            resolvedImageUrl: item.resolved_image_url ? String(item.resolved_image_url) : cachedItem?.resolvedImageUrl,
+            upvotes: Number(item.upvotes || 0),
+            resolvedCount: Number(item.resolved_count || 0),
+            isResolved: Boolean(item.is_resolved),
+            expiresAt: String(item.expires_at),
+            createdAt: String(item.created_at),
+            syncStatus: 'synced' as const,
+          };
+        });
 
-          cacheHazards(remoteHazards).catch(() => {});
-          return remoteHazards;
+        // Sync into liveLocalHazards so upvote/resolve/votePassability can always find them
+        for (const rh of remoteHazards) {
+          const idx = liveLocalHazards.findIndex((lh) => lh.id === rh.id);
+          if (idx >= 0) {
+            liveLocalHazards[idx] = { ...liveLocalHazards[idx], ...rh };
+          } else {
+            liveLocalHazards.push(rh);
+          }
         }
+
+        // Merge any pending offline reports that have not synced yet
+        try {
+          const pending = await getPendingReports();
+          const existingIds = new Set(remoteHazards.map((h) => h.id));
+          for (const p of pending) {
+            if (!existingIds.has(p.id)) {
+              remoteHazards.unshift(p);
+            }
+          }
+        } catch {
+          // Ignore IndexedDB read error in memory mode
+        }
+
+        if (data.length === 0) {
+          // Database has 0 hazards in this area: clear stale cache
+          clearCachedHazards().catch(() => {});
+          liveLocalHazards = [];
+        } else {
+          cacheHazards(remoteHazards).catch(() => {});
+        }
+
+        return remoteHazards;
       } else if (error) {
         console.warn('Supabase RPC get_hazards_in_radius notice:', error.message);
       }
