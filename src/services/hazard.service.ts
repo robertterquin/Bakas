@@ -113,7 +113,16 @@ export async function fetchHazardsInRadius(
         }
 
         if (data.length === 0) {
-          // Database has 0 hazards in this area: clear stale cache
+          // If Supabase returned 0 hazards in this area, display showcase fixtures if available
+          if (GOLDEN_HAZARDS.length > 0) {
+            const showcase = GOLDEN_HAZARDS.filter((h) => {
+              const distance = calculateDistanceInMeters(lat, lng, h.lat, h.lng);
+              return distance <= radiusMeters;
+            });
+            if (showcase.length > 0) {
+              return showcase;
+            }
+          }
           clearCachedHazards().catch(() => {});
           liveLocalHazards = [];
         } else {
