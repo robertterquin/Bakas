@@ -1,0 +1,26 @@
+{
+  "name": "bakas-showcase",
+  "version": "1.0.0",
+  "description": "Bakás Urban Road Hazard Radar Remotion Showcase Video",
+  "private": true,
+  "dependencies": {
+    "@remotion/cli": "4.0.509",
+    "@remotion/tailwind-v4": "4.0.509",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "remotion": "4.0.509",
+    "tailwindcss": "4.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.7",
+    "typescript": "5.9.3"
+  },
+  "scripts": {
+    "dev": "remotion studio",
+    "build": "remotion bundle",
+    "render": "remotion render BakasShowcase out/bakas-showcase.mp4"
+  },
+  "sideEffects": [
+    "*.css"
+  ]
+}
