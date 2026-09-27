@@ -152,7 +152,7 @@ export const TopHUD: React.FC<TopHUDProps> = ({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
               whileTap={{ scale: 0.9 }}
-              className={`h-7.5 px-2 rounded-full border transition-all flex items-center gap-1 shadow-sm shrink-0 ${
+              className={`h-7.5 px-2 rounded-full border transition-all flex items-center gap-1.5 shadow-sm shrink-0 ${
                 !isOnline
                   ? 'bg-zinc-900 border-zinc-700 text-zinc-300'
                   : pendingCount > 0
@@ -172,18 +172,18 @@ export const TopHUD: React.FC<TopHUDProps> = ({
               ) : isSyncing ? (
                 <LoadingSpinner variant="dual-arc" size={13} className="text-white" />
               ) : (
-                <div className="relative flex items-center justify-center">
-                  <Wifi className="w-3.5 h-3.5" />
-                  <span className="absolute -top-1 -right-1 flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
-                  </span>
-                </div>
+                <Wifi className="w-3.5 h-3.5" />
               )}
               {pendingCount > 0 && (
-                <span className="text-[10px] font-mono font-bold text-white leading-none">
-                  <NumberFlow value={pendingCount} />
-                </span>
+                <div className="flex items-center gap-1">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
+                  </span>
+                  <span className="text-[10px] font-mono font-bold text-white leading-none">
+                    <NumberFlow value={pendingCount} />
+                  </span>
+                </div>
               )}
             </motion.button>
           )}
