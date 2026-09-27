@@ -192,83 +192,10 @@ export const BackgroundSonar: React.FC<{ sweepAngle?: number; opacity?: number }
             position: 'absolute',
             inset: 0,
             borderRadius: '50%',
-            background: `conic-gradient(from ${sweepAngle}deg at 50% 50%, rgba(56, 189, 248, 0.18) 0deg, rgba(56, 189, 248, 0.04) 45deg, transparent 75deg)`,
+            background: `conic-gradient(from ${sweepAngle}deg at 50% 50%, rgba(56, 189, 248, 0.14) 0deg, rgba(56, 189, 248, 0.03) 45deg, transparent 75deg)`,
             transformOrigin: '50% 50%',
           }}
         />
-      </div>
-
-      {/* Top Left HUD Telemetry Tag */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 36,
-          left: 48,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          fontFamily: monoFont,
-          fontSize: 13,
-          color: colors.textMuted,
-          letterSpacing: 1.5,
-          textTransform: 'uppercase',
-        }}
-      >
-        <div
-          style={{
-            width: 8,
-            height: 8,
-            borderRadius: '50%',
-            backgroundColor: colors.emerald,
-            boxShadow: '0 0 8px #10b981',
-          }}
-        />
-        <span>RADAR ENGAGED // NCR METRO SECTOR</span>
-      </div>
-
-      {/* Top Right Coordinates */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 36,
-          right: 48,
-          fontFamily: monoFont,
-          fontSize: 13,
-          color: colors.sky,
-          letterSpacing: 1.5,
-          opacity: 0.8,
-        }}
-      >
-        14.5995° N, 120.9842° E • ELEV 16M
-      </div>
-
-      {/* Technical Telemetry Sub-Tags */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 66,
-          left: 48,
-          fontFamily: monoFont,
-          fontSize: 11,
-          color: colors.textDim,
-          letterSpacing: 2,
-        }}
-      >
-        [ BAKÁS PROTOCOL v2.4 // CIVIC TELEMETRY ]
-      </div>
-
-      <div
-        style={{
-          position: 'absolute',
-          top: 66,
-          right: 48,
-          fontFamily: monoFont,
-          fontSize: 11,
-          color: colors.textDim,
-          letterSpacing: 2,
-        }}
-      >
-        FREQUENCY 1090 MHZ • RANGE 5000M
       </div>
     </div>
   )

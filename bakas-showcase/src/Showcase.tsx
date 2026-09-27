@@ -17,7 +17,8 @@ import {
 } from './scenes/shared'
 
 // =============================================================================
-// Split-Column Feature Slide (Hapag Format: Alternating Left / Right)
+// Split-Column Feature Slide (Hapag Layout: Alternating Left / Right)
+// Natural Human-Made Design: concise text, relaxed rhythm, authentic UI
 // =============================================================================
 const SplitSlideScene: React.FC<{
   kicker: string
@@ -36,6 +37,7 @@ const SplitSlideScene: React.FC<{
 }) => {
   const frame = useCurrentFrame()
   const { durationInFrames } = useVideoConfig()
+
   // Smooth entrance & exit interpolation for seamless slide flow
   const enterOpacity = interpolate(frame, [0, 14], [0, 1], { extrapolateRight: 'clamp' })
   const exitOpacity = interpolate(
@@ -46,16 +48,16 @@ const SplitSlideScene: React.FC<{
   )
   const slideOpacity = enterOpacity * exitOpacity
 
-  const textTranslate = interpolate(frame, [0, 16], [cardSide === 'right' ? -22 : 22, 0], {
+  const textTranslate = interpolate(frame, [0, 16], [cardSide === 'right' ? -20 : 20, 0], {
     extrapolateRight: 'clamp',
   })
 
-  const cardTranslate = interpolate(frame, [2, 18], [cardSide === 'right' ? 26 : -26, 0], {
+  const cardTranslate = interpolate(frame, [2, 18], [cardSide === 'right' ? 24 : -24, 0], {
     extrapolateRight: 'clamp',
   })
 
   // Subtle breathing float on card
-  const zoom = interpolate(frame, [0, durationInFrames], [1.0, 1.03], {
+  const zoom = interpolate(frame, [0, durationInFrames], [1.0, 1.025], {
     extrapolateRight: 'clamp',
   })
 
@@ -63,7 +65,7 @@ const SplitSlideScene: React.FC<{
     <div
       style={{
         flex: '1 1 50%',
-        maxWidth: 640,
+        maxWidth: 580,
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
@@ -72,54 +74,58 @@ const SplitSlideScene: React.FC<{
         zIndex: 10,
       }}
     >
+      {/* Category Kicker */}
       <div
         style={{
           color: kickerColor,
-          fontSize: 20,
-          fontWeight: 800,
-          letterSpacing: 2.4,
+          fontSize: 15,
+          fontWeight: 700,
+          letterSpacing: 2,
           textTransform: 'uppercase',
-          marginBottom: 16,
+          marginBottom: 14,
           fontFamily: monoFont,
           display: 'flex',
           alignItems: 'center',
-          gap: 10,
+          gap: 8,
         }}
       >
         <span
           style={{
-            width: 8,
-            height: 8,
+            width: 7,
+            height: 7,
             borderRadius: '50%',
             backgroundColor: kickerColor,
-            boxShadow: `0 0 10px ${kickerColor}`,
+            boxShadow: `0 0 8px ${kickerColor}`,
           }}
         />
         <span>{kicker}</span>
       </div>
 
+      {/* Main Headline */}
       <h2
         style={{
-          fontSize: 58,
-          fontWeight: 900,
+          fontSize: 54,
+          fontWeight: 800,
           color: colors.white,
-          lineHeight: 1.12,
-          letterSpacing: -1.8,
+          lineHeight: 1.15,
+          letterSpacing: -1.5,
           margin: 0,
-          marginBottom: 20,
+          marginBottom: 16,
           fontFamily,
         }}
       >
         {headline}
       </h2>
 
+      {/* Short, Natural Human Body Text */}
       <p
         style={{
-          fontSize: 24,
-          fontWeight: 450,
-          color: colors.textMuted,
-          lineHeight: 1.5,
+          fontSize: 22,
+          fontWeight: 400,
+          color: 'rgba(255, 255, 255, 0.65)',
+          lineHeight: 1.55,
           margin: 0,
+          maxWidth: 480,
           fontFamily,
         }}
       >
@@ -144,12 +150,12 @@ const SplitSlideScene: React.FC<{
         style={{
           width: 580,
           height: 760,
-          borderRadius: 30,
+          borderRadius: 28,
           overflow: 'hidden',
           backgroundColor: colors.dark,
-          border: '1.5px solid rgba(56, 189, 248, 0.28)',
+          border: '1.5px solid rgba(56, 189, 248, 0.24)',
           boxShadow:
-            '0 25px 60px rgba(0, 0, 0, 0.9), 0 0 35px rgba(56, 189, 248, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
+            '0 24px 60px rgba(0, 0, 0, 0.85), 0 0 30px rgba(56, 189, 248, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.12)',
           position: 'relative',
         }}
       >
@@ -197,6 +203,7 @@ const SplitSlideScene: React.FC<{
 
 // =============================================================================
 // Scene 1: Natural Brand Intro (0.0s – 3.0s | Frames 0 – 90)
+// Clean, minimal, human-made
 // =============================================================================
 const IntroScene: React.FC = () => {
   const frame = useCurrentFrame()
@@ -206,7 +213,7 @@ const IntroScene: React.FC = () => {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   })
-  const translateY = interpolate(frame, [0, 18], [16, 0], { extrapolateRight: 'clamp' })
+  const translateY = interpolate(frame, [0, 18], [14, 0], { extrapolateRight: 'clamp' })
   const subOpacity = interpolate(frame, [8, 20], [0, 1], { extrapolateRight: 'clamp' })
   const finalOpacity = opacity * exitOpacity
 
@@ -221,7 +228,7 @@ const IntroScene: React.FC = () => {
         overflow: 'hidden',
       }}
     >
-      <BackgroundSonar sweepAngle={frame * 3} opacity={0.7 * exitOpacity} />
+      <BackgroundSonar sweepAngle={frame * 2.5} opacity={0.65 * exitOpacity} />
       <div
         style={{
           display: 'flex',
@@ -233,15 +240,15 @@ const IntroScene: React.FC = () => {
         }}
       >
         <div style={{ transform: `rotate(${frame * 0.25}deg)` }}>
-          <BakasBrandMark size={110} withGlow={true} />
+          <BakasBrandMark size={104} withGlow={true} />
         </div>
 
         <h1
           style={{
-            fontSize: 84,
+            fontSize: 82,
             fontWeight: 900,
             color: colors.white,
-            marginTop: 20,
+            marginTop: 18,
             marginBottom: 0,
             letterSpacing: -2,
             fontFamily,
@@ -252,40 +259,29 @@ const IntroScene: React.FC = () => {
 
         <p
           style={{
-            fontSize: 32,
-            fontWeight: 700,
+            fontSize: 30,
+            fontWeight: 600,
             color: colors.sky,
-            marginTop: 10,
-            marginBottom: 6,
+            marginTop: 8,
+            marginBottom: 10,
             fontFamily,
           }}
         >
-          Urban Road Hazard Radar
+          Road Hazard Radar
         </p>
-      </div>
 
-      <div
-        style={{
-          opacity: subOpacity,
-          textAlign: 'center',
-          marginTop: 12,
-          zIndex: 10,
-        }}
-      >
-        <span
+        <p
           style={{
             fontSize: 20,
-            fontWeight: 500,
-            color: colors.textMuted,
-            background: 'rgba(56, 189, 248, 0.06)',
-            padding: '8px 24px',
-            borderRadius: 999,
-            border: '1px solid rgba(56, 189, 248, 0.2)',
+            fontWeight: 400,
+            color: 'rgba(255, 255, 255, 0.62)',
+            margin: 0,
+            opacity: subOpacity,
             fontFamily,
           }}
         >
-          Real-time spatial alerts and route defense for Philippine roads
-        </span>
+          Live road hazard alerts for Philippine drivers
+        </p>
       </div>
     </AbsoluteFill>
   )
@@ -293,6 +289,7 @@ const IntroScene: React.FC = () => {
 
 // =============================================================================
 // Scene 7: Natural Brand Outro (24.5s – 27.0s | Frames 735 – 810)
+// Simple, elegant, clear call to action
 // =============================================================================
 const OutroScene: React.FC = () => {
   const frame = useCurrentFrame()
@@ -312,7 +309,7 @@ const OutroScene: React.FC = () => {
         overflow: 'hidden',
       }}
     >
-      <BackgroundSonar sweepAngle={frame * 3} opacity={0.7} />
+      <BackgroundSonar sweepAngle={frame * 2.5} opacity={0.65} />
       <div
         style={{
           display: 'flex',
@@ -324,12 +321,12 @@ const OutroScene: React.FC = () => {
         }}
       >
         <div style={{ transform: `rotate(${frame * 0.25}deg)` }}>
-          <BakasBrandMark size={100} withGlow={true} />
+          <BakasBrandMark size={96} withGlow={true} />
         </div>
 
         <h1
           style={{
-            fontSize: 78,
+            fontSize: 76,
             fontWeight: 900,
             color: colors.white,
             marginTop: 16,
@@ -343,11 +340,11 @@ const OutroScene: React.FC = () => {
 
         <p
           style={{
-            fontSize: 28,
-            fontWeight: 600,
-            color: colors.textMuted,
+            fontSize: 26,
+            fontWeight: 500,
+            color: 'rgba(255, 255, 255, 0.72)',
             marginTop: 8,
-            marginBottom: 28,
+            marginBottom: 26,
             fontFamily,
           }}
         >
@@ -362,32 +359,32 @@ const OutroScene: React.FC = () => {
             gap: 12,
             background: 'linear-gradient(135deg, #0284c7, #38bdf8)',
             color: colors.white,
-            padding: '16px 42px',
+            padding: '15px 38px',
             borderRadius: 999,
-            fontSize: 22,
+            fontSize: 21,
             fontWeight: 700,
             boxShadow:
-              '0 10px 30px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+              '0 10px 30px rgba(56, 189, 248, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25)',
             fontFamily,
           }}
         >
-          <span>Launch Road Radar</span>
-          <span style={{ fontSize: 24 }}>→</span>
+          <span>Open Road Radar</span>
+          <span style={{ fontSize: 22 }}>→</span>
         </div>
 
         <span
           style={{
             opacity: buttonOpacity,
-            fontSize: 14,
-            fontWeight: 700,
+            fontSize: 13,
+            fontWeight: 600,
             color: colors.textDim,
-            letterSpacing: 2.2,
+            letterSpacing: 2,
             textTransform: 'uppercase',
-            marginTop: 26,
+            marginTop: 24,
             fontFamily: monoFont,
           }}
         >
-          CIVIC ROUTE TELEMETRY • NCR METRO PILIPINAS • OPEN SOURCE
+          Free &amp; Open Source • Built for Philippine Roads
         </span>
       </div>
     </AbsoluteFill>
@@ -396,8 +393,7 @@ const OutroScene: React.FC = () => {
 
 // =============================================================================
 // Master Composition: 810 frames @ 30fps (27.0 seconds)
-// Hapag Format: Intro -> Slide 1 (Right) -> Slide 2 (Left) -> Slide 3 (Right)
-//                    -> Slide 4 (Left) -> Slide 5 (Right) -> Outro
+// Hapag Format with Natural Human-Written Copy & Clean Visual Rhythm
 // =============================================================================
 export const BakasShowcase: React.FC = () => {
   return (
@@ -407,61 +403,61 @@ export const BakasShowcase: React.FC = () => {
         <IntroScene />
       </Sequence>
 
-      {/* 3.0s – 7.5s (135f): Slide 1 - Spatial Radar Map (Left Text, Right Card) */}
+      {/* 3.0s – 7.5s (135f): Slide 1 - Radar Map (Left Text, Right Card) */}
       <Sequence from={90} durationInFrames={135} layout="absolute-fill">
         <SplitSlideScene
           cardSide="right"
-          kicker="SPATIAL RADAR"
-          headline="Find what's reported nearby."
-          body="Concentric radar rings scan your driving perimeter in real time, alerting you to active hazards across Metro Manila."
+          kicker="RADAR MAP"
+          headline="See hazards reported nearby."
+          body="Live community alerts for potholes, floods, and road hazards along your route."
           capture="capture-1-radar-overview.png"
           kickerColor={colors.sky}
         />
       </Sequence>
 
-      {/* 7.5s – 12.0s (135f): Slide 2 - 1-Tap Hazard Pinning (Left Card, Right Text) */}
+      {/* 7.5s – 12.0s (135f): Slide 2 - 1-Tap Pinning (Left Card, Right Text) */}
       <Sequence from={225} durationInFrames={135} layout="absolute-fill">
         <SplitSlideScene
           cardSide="left"
-          kicker="REPORT IN SECONDS"
-          headline="Pin road hazards in 1 tap."
-          body="Drop hazard traces for open manholes, floodwaters, or dark unlit roads in under 15ms with automatic GPS precision."
+          kicker="QUICK REPORT"
+          headline="Report hazards in one tap."
+          body="Pin potholes, flooded streets, or obstacles in seconds. No login required."
           capture="capture-2-report-drawer.png"
           kickerColor={colors.amber}
         />
       </Sequence>
 
-      {/* 12.0s – 16.5s (135f): Slide 3 - Ground-Truth Verification (Left Text, Right Card) */}
+      {/* 12.0s – 16.5s (135f): Slide 3 - Resolution Verification (Left Text, Right Card) */}
       <Sequence from={360} durationInFrames={135} layout="absolute-fill">
         <SplitSlideScene
           cardSide="right"
-          kicker="GROUND-TRUTH CONSENSUS"
-          headline="Verify repairs with split sliders."
-          body="Before-and-after resolution verification sliders allow the commuter community to vouch for fixed roads and clear ghost markers."
+          kicker="COMMUNITY VERIFIED"
+          headline="Confirm when roads are fixed."
+          body="Compare before-and-after photos and vote with fellow drivers to clear resolved reports."
           capture="capture-3-flood-passability.png"
           kickerColor={colors.emerald}
         />
       </Sequence>
 
-      {/* 16.5s – 21.0s (135f): Slide 4 - Corridor Navigation (Left Card, Right Text) */}
+      {/* 16.5s – 21.0s (135f): Slide 4 - Route Search (Left Card, Right Text) */}
       <Sequence from={495} durationInFrames={135} layout="absolute-fill">
         <SplitSlideScene
           cardSide="left"
-          kicker="COMMAND PALETTE"
-          headline="Jump to any Philippine artery."
-          body="Instant search for EDSA, Commonwealth, C-5, Aguinaldo, or España with real-time distance and zero tile latency."
+          kicker="FAST SEARCH"
+          headline="Check major routes instantly."
+          body="Search EDSA, C-5, Commonwealth, and major roads to see current hazards."
           capture="capture-4-search-modal.png"
           kickerColor={colors.sky}
         />
       </Sequence>
 
-      {/* 21.0s – 24.5s (105f): Slide 5 - Offline-First Resilience (Left Text, Right Card) */}
+      {/* 21.0s – 24.5s (105f): Slide 5 - Offline Ready (Left Text, Right Card) */}
       <Sequence from={630} durationInFrames={105} layout="absolute-fill">
         <SplitSlideScene
           cardSide="right"
-          kicker="OFFLINE RESILIENCE"
-          headline="Zero data loss in dead zones."
-          body="IndexedDB caches local hazard traces when driving through underpasses or tunnels, then auto-syncs with Supabase."
+          kicker="OFFLINE READY"
+          headline="Works even without signal."
+          body="Saves reports offline in tunnels and dead zones, then syncs automatically."
           capture="capture-5-about-modal.png"
           kickerColor={colors.cyan}
         />
