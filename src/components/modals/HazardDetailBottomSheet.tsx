@@ -6,6 +6,8 @@ import {
   HAZARD_CATEGORIES,
   PASSABILITY_CONFIG,
   formatTtlRemaining,
+  formatUpvoteBonus,
+  formatUpvoteBonusLabel,
   hasDeviceVoted,
   getDevicePassabilityVote,
 } from '../../utils/domain-rules';
@@ -63,7 +65,7 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
 
   const categoryMeta = HAZARD_CATEGORIES[hazard.category];
   const distanceMeters = calculateDistanceInMeters(userLocation.lat, userLocation.lng, hazard.lat, hazard.lng);
-  const ttl = formatTtlRemaining(hazard.expiresAt);
+  const ttl = formatTtlRemaining(hazard.expiresAt, hazard.category);
   const hasUpvoted = hasDeviceVoted(hazard.id, 'upvote');
   const hasResolved = hasDeviceVoted(hazard.id, 'resolve');
   const currentDevicePassability = getDevicePassabilityVote(hazard.id);
@@ -206,8 +208,8 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
                 {hazard.isResolved
                   ? 'Resolved by community • Auto-decaying'
                   : hasUpvoted
-                  ? `Vouched by you (+${categoryMeta.upvoteBonusHours}h extended)`
-                  : `Tap "+1 Still Here" to spark +${categoryMeta.upvoteBonusHours}h visibility`}
+                  ? `Vouched by you (${formatUpvoteBonus(categoryMeta.upvoteBonusHours)} extended)`
+                  : `Tap "+1 Still Here" to spark ${formatUpvoteBonusLabel(categoryMeta.upvoteBonusHours)} visibility`}
               </p>
               <div className="text-[10px] text-zinc-500 font-mono pt-0.5">
                 Trace ID: {hazard.id.substring(0, 8)}... • Verified Civic Signal
@@ -222,7 +224,7 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
               <NumberFlow value={hazard.upvotes} /> {hazard.upvotes === 1 ? 'vouch' : 'vouches'}
             </span>
             <span className="text-[9px] font-mono text-zinc-500">
-              +{categoryMeta.upvoteBonusHours}h / vouch
+              {formatUpvoteBonus(categoryMeta.upvoteBonusHours)} / vouch
             </span>
           </div>
         </div>

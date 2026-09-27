@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import NumberFlow from '@number-flow/react';
 import { Sparkles } from 'lucide-react';
 import { HazardCategory } from '../../types/hazard';
-import { HAZARD_CATEGORIES } from '../../utils/domain-rules';
+import { HAZARD_CATEGORIES, formatUpvoteBonus } from '../../utils/domain-rules';
 
 interface CircularTtlGaugeProps {
   expiresAt: string;
@@ -20,7 +20,6 @@ interface CircularTtlGaugeProps {
 
 export const CircularTtlGauge: React.FC<CircularTtlGaugeProps> = ({
   expiresAt,
-  createdAt,
   category,
   isResolved = false,
   vouchTrigger = 0,
@@ -57,20 +56,19 @@ export const CircularTtlGauge: React.FC<CircularTtlGaugeProps> = ({
   }, [vouchTrigger]);
 
   const { fraction, value, unit, isExpiringSoon } = useMemo(() => {
-    const createdTime = new Date(createdAt).getTime();
     const expiresTime = new Date(expiresAt).getTime();
     const diffMs = Math.max(0, expiresTime - now);
     const categoryMeta = HAZARD_CATEGORIES[category];
 
-    // Reference window: at least 48 hours or the category's initial duration
-    const totalDurationMs = Math.max(
-      expiresTime - createdTime,
-      (categoryMeta?.initialTtlHours || 72) * 60 * 60 * 1000
-    );
+    // Reference window: scaled to category maximum consensus ceiling
+    const maxTtlMs = (categoryMeta?.maxTtlHours || 48) * 60 * 60 * 1000;
+    const cautionThresholdHours = categoryMeta
+      ? Math.max(2, Math.floor(categoryMeta.initialTtlHours * 0.25))
+      : 6;
 
     const calculatedFraction = isResolved
       ? 0.05
-      : Math.min(1, Math.max(0.04, diffMs / totalDurationMs));
+      : Math.min(1, Math.max(0.04, diffMs / maxTtlMs));
 
     if (diffMs <= 0 || isResolved) {
       return {
@@ -78,7 +76,6 @@ export const CircularTtlGauge: React.FC<CircularTtlGaugeProps> = ({
         value: 0,
         unit: isResolved ? 'FIXED' : 'EXP',
         isExpiringSoon: true,
-        isExpired: true,
       };
     }
 
@@ -90,7 +87,6 @@ export const CircularTtlGauge: React.FC<CircularTtlGaugeProps> = ({
         value: mins,
         unit: 'MIN',
         isExpiringSoon: true,
-        isExpired: false,
       };
     }
 
@@ -99,8 +95,7 @@ export const CircularTtlGauge: React.FC<CircularTtlGaugeProps> = ({
         fraction: calculatedFraction,
         value: totalHours,
         unit: 'HRS',
-        isExpiringSoon: totalHours <= 6,
-        isExpired: false,
+        isExpiringSoon: totalHours <= cautionThresholdHours,
       };
     }
 
@@ -109,10 +104,9 @@ export const CircularTtlGauge: React.FC<CircularTtlGaugeProps> = ({
       fraction: calculatedFraction,
       value: days,
       unit: days === 1 ? 'DAY' : 'DAYS',
-      isExpiringSoon: days <= 2,
-      isExpired: false,
+      isExpiringSoon: totalHours <= cautionThresholdHours,
     };
-  }, [expiresAt, createdAt, category, now, isResolved]);
+  }, [expiresAt, category, now, isResolved]);
 
   // Geometry
   const center = size / 2;
@@ -253,7 +247,7 @@ export const CircularTtlGauge: React.FC<CircularTtlGaugeProps> = ({
           >
             <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white text-black font-mono font-extrabold text-[9px] shadow-[0_0_18px_rgba(255,255,255,0.9),0_4px_16px_rgba(0,0,0,0.8)] border border-black/20">
               <Sparkles className="w-2.5 h-2.5" />
-              <span>{bonusHoursText || `+${HAZARD_CATEGORIES[category]?.upvoteBonusHours || 24}h EXTENDED`}</span>
+              <span>{bonusHoursText || `${formatUpvoteBonus(HAZARD_CATEGORIES[category]?.upvoteBonusHours || 24)} EXTENDED`}</span>
             </div>
           </motion.div>
         )}

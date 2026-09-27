@@ -12,7 +12,11 @@ export interface CategoryMeta {
 }
 
 /**
- * Tuned for Philippine Urban Road Reality (DPWH / LGU road repair timelines)
+ * Calibrated for Philippine Urban Road Reality (MMDA / DPWH / LGU response benchmarks)
+ * - Road Obstruction: Fast-clearing transient obstacles (stalls/branches cleared in 1-8h).
+ * - Clogged Drainage / Flood: Volatile flash-flood & monsoon water recedes in 2-8h.
+ * - Dark Street: Streetlight bulb/ballast dispatch by Meralco/LGU in 2-5 days.
+ * - Pothole: Asphalt patching teams dispatched by DPWH/City Engineering in 3-7 days.
  */
 export const HAZARD_CATEGORIES: Record<HazardCategory, CategoryMeta> = {
   pothole: {
@@ -20,9 +24,9 @@ export const HAZARD_CATEGORIES: Record<HazardCategory, CategoryMeta> = {
     name: 'Pothole & Manhole',
     tagalogName: 'Butas / Lubak / Bukas na Manhole',
     description: 'Damaged asphalt, deep road craters, or missing sewer covers.',
-    initialTtlHours: 30 * 24, // 30 days (1 Month base)
-    upvoteBonusHours: 14 * 24, // +14 days per community upvote
-    maxTtlHours: 90 * 24, // Up to 90 days (3 Months max cap)
+    initialTtlHours: 72, // 3 days base
+    upvoteBonusHours: 24, // +1 day (+24h) per community upvote
+    maxTtlHours: 168, // 7 days (1 week max consensus cap)
     iconName: 'AlertCircle',
   },
   dark_street: {
@@ -30,9 +34,9 @@ export const HAZARD_CATEGORIES: Record<HazardCategory, CategoryMeta> = {
     name: 'Unlit / Dark Street',
     tagalogName: 'Madilim na Kalsada',
     description: 'Broken lamppost, zero visibility road sector, or blackout zone.',
-    initialTtlHours: 14 * 24, // 14 days (2 Weeks base)
-    upvoteBonusHours: 7 * 24, // +7 days per upvote
-    maxTtlHours: 60 * 24, // Up to 60 days (2 Months max cap)
+    initialTtlHours: 48, // 2 days base
+    upvoteBonusHours: 12, // +12 hours per upvote
+    maxTtlHours: 120, // 5 days max consensus cap
     iconName: 'Moon',
   },
   clogged_drainage: {
@@ -40,9 +44,9 @@ export const HAZARD_CATEGORIES: Record<HazardCategory, CategoryMeta> = {
     name: 'Clogged Drainage / Flood',
     tagalogName: 'Baradong Kanal / Baha',
     description: 'Waterlogged road section, flash flood risk, or overflowing culvert.',
-    initialTtlHours: 7 * 24, // 7 days (1 Week base)
-    upvoteBonusHours: 7 * 24, // +7 days per upvote
-    maxTtlHours: 30 * 24, // Up to 30 days (1 Month max cap)
+    initialTtlHours: 12, // 12 hours base (waters usually recede within half a day)
+    upvoteBonusHours: 6, // +6 hours per upvote
+    maxTtlHours: 36, // 1.5 days max consensus cap
     iconName: 'Droplets',
   },
   road_obstruction: {
@@ -50,9 +54,9 @@ export const HAZARD_CATEGORIES: Record<HazardCategory, CategoryMeta> = {
     name: 'Road Obstruction',
     tagalogName: 'Harang sa Daan / Debris',
     description: 'Construction debris, stalled vehicle, fallen branches, or road works.',
-    initialTtlHours: 3 * 24, // 3 days (72 hours base)
-    upvoteBonusHours: 2 * 24, // +48 hours per upvote
-    maxTtlHours: 14 * 24, // Up to 14 days (2 Weeks max cap)
+    initialTtlHours: 8, // 8 hours base (towed or cleared within a work shift)
+    upvoteBonusHours: 4, // +4 hours per upvote
+    maxTtlHours: 24, // 1 day max consensus cap
     iconName: 'ShieldAlert',
   },
 };
@@ -164,24 +168,56 @@ export function calculateExtendedExpiry(
 }
 
 /**
- * Formats remaining TTL countdown (e.g., "Expires in 18 hrs" or "Expires in 45 days")
+ * Formats upvote bonus for UI badges (e.g., "+1d", "+12h", "+6h", "+4h")
  */
-export function formatTtlRemaining(expiresAtIso: string): { label: string; isExpiringSoon: boolean; isExpired: boolean } {
+export function formatUpvoteBonus(hours: number): string {
+  if (hours >= 24 && hours % 24 === 0) {
+    const days = hours / 24;
+    return `+${days}d`;
+  }
+  return `+${hours}h`;
+}
+
+/**
+ * Formats upvote bonus for human-readable sentences (e.g., "+1 day", "+12 hours", "+6 hours", "+4 hours")
+ */
+export function formatUpvoteBonusLabel(hours: number): string {
+  if (hours >= 24 && hours % 24 === 0) {
+    const days = hours / 24;
+    return `+${days} ${days === 1 ? 'day' : 'days'}`;
+  }
+  return `+${hours} hours`;
+}
+
+/**
+ * Formats remaining TTL countdown (e.g., "Expires in 4h" or "Expires in 3d")
+ */
+export function formatTtlRemaining(
+  expiresAtIso: string,
+  category?: HazardCategory
+): { label: string; isExpiringSoon: boolean; isExpired: boolean } {
   const diffMs = new Date(expiresAtIso).getTime() - Date.now();
   if (diffMs <= 0) {
     return { label: 'Expired', isExpiringSoon: true, isExpired: true };
   }
 
   const hours = Math.floor(diffMs / (1000 * 60 * 60));
+  const categoryMeta = category ? HAZARD_CATEGORIES[category] : undefined;
+  const cautionThresholdHours = categoryMeta
+    ? Math.max(2, Math.floor(categoryMeta.initialTtlHours * 0.25))
+    : 6;
+
+  const isExpiringSoon = hours <= cautionThresholdHours;
+
   if (hours < 1) {
-    const mins = Math.floor(diffMs / (1000 * 60));
+    const mins = Math.max(1, Math.floor(diffMs / (1000 * 60)));
     return { label: `Expires in ${mins}m`, isExpiringSoon: true, isExpired: false };
   }
   if (hours < 24) {
-    return { label: `Expires in ${hours}h`, isExpiringSoon: hours <= 6, isExpired: false };
+    return { label: `Expires in ${hours}h`, isExpiringSoon, isExpired: false };
   }
   const days = Math.floor(hours / 24);
-  return { label: `Expires in ${days}d`, isExpiringSoon: days <= 2, isExpired: false };
+  return { label: `Expires in ${days}d`, isExpiringSoon, isExpired: false };
 }
 
 /**

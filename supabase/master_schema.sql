@@ -250,20 +250,20 @@ BEGIN
     RAISE EXCEPTION 'Hazard not found or expired.';
   END IF;
 
-  -- 3. Philippine Road Reality TTL Extensions
+  -- 3. Philippine Road Reality TTL Extensions (MMDA / DPWH / LGU response benchmarks)
   CASE target_rec.category
     WHEN 'road_obstruction' THEN
-      bonus_interval := INTERVAL '2 days';
-      max_interval := INTERVAL '14 days';
+      bonus_interval := INTERVAL '4 hours';
+      max_interval := INTERVAL '24 hours';
     WHEN 'clogged_drainage' THEN
-      bonus_interval := INTERVAL '7 days';
-      max_interval := INTERVAL '30 days';
+      bonus_interval := INTERVAL '6 hours';
+      max_interval := INTERVAL '36 hours';
     WHEN 'dark_street' THEN
-      bonus_interval := INTERVAL '7 days';
-      max_interval := INTERVAL '60 days';
+      bonus_interval := INTERVAL '12 hours';
+      max_interval := INTERVAL '5 days';
     WHEN 'pothole' THEN
-      bonus_interval := INTERVAL '14 days';
-      max_interval := INTERVAL '90 days';
+      bonus_interval := INTERVAL '1 day';
+      max_interval := INTERVAL '7 days';
   END CASE;
 
   -- 4. Calculate bounded expiry from now or current expiry
