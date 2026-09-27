@@ -13,9 +13,7 @@ import { FilterDrawer } from './components/modals/FilterDrawer';
 import { SyncStatusModal } from './components/modals/SyncStatusModal';
 import { AboutModal } from './components/modals/AboutModal';
 import { ScreenReaderAnnouncer } from './components/ui/ScreenReaderAnnouncer';
-import { SonarCompassReticle } from './components/hud/SonarCompassReticle';
 import { HazardPayload, Coordinates } from './types/hazard';
-import { MapTelemetry } from './types/telemetry';
 import { GeocodedLocation } from './services/geocoding.service';
 
 export default function App() {
@@ -145,22 +143,6 @@ export default function App() {
     }
   };
 
-  // 8. Sonar Compass & Exploration Azimuth Telemetry
-  const [mapTelemetry, setMapTelemetry] = useState<MapTelemetry>({
-    lat: userLocation.lat,
-    lng: userLocation.lng,
-    bearing: 0,
-    isPanning: false,
-  });
-
-  useEffect(() => {
-    setMapTelemetry((prev) => ({
-      ...prev,
-      lat: userLocation.lat,
-      lng: userLocation.lng,
-    }));
-  }, [userLocation.lat, userLocation.lng]);
-
   const activeTargetCoords: Coordinates = customReportCoords || {
     lat: userLocation.lat,
     lng: userLocation.lng,
@@ -184,14 +166,6 @@ export default function App() {
         searchTarget={searchTarget}
         onMapClick={handleMapClick}
         onViewportScopeChange={setVisibleScopeMeters}
-        onTelemetryChange={setMapTelemetry}
-      />
-
-      {/* 2. Active Sonar Compass Reticle with Azimuth Degree Readout & Liquid Glass Sheen */}
-      <SonarCompassReticle
-        telemetry={mapTelemetry}
-        onResetNorth={() => setMapTelemetry((prev) => ({ ...prev, bearing: 0 }))}
-        onShowToast={notifyUser}
       />
 
       {/* 2. Dynamic Island TopHUD with Rolling Odometer Zoom Scope & Search */}
