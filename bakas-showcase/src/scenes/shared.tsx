@@ -93,9 +93,10 @@ export const BakasBrandMark: React.FC<{ size?: number; withGlow?: boolean }> = (
 /**
  * Tactical Sonar Background with rotating radar sweep, reticle coordinates, and subtle grid
  */
-export const BackgroundSonar: React.FC<{ sweepAngle?: number; opacity?: number }> = ({
+export const BackgroundSonar: React.FC<{ sweepAngle?: number; opacity?: number; size?: number }> = ({
   sweepAngle = 0,
   opacity = 0.9,
+  size = 1400,
 }) => {
   return (
     <div
@@ -121,8 +122,8 @@ export const BackgroundSonar: React.FC<{ sweepAngle?: number; opacity?: number }
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          width: 1400,
-          height: 1400,
+          width: size,
+          height: size,
           pointerEvents: 'none',
         }}
       >
