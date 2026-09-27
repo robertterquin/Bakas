@@ -14,6 +14,7 @@ import { compressImageFile } from '../../utils/image.utils';
 import { HazardIcon } from '../ui/HazardIcon';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { BeforeAfterSlider } from '../ui/BeforeAfterSlider';
+import { CircularTtlGauge } from '../ui/CircularTtlGauge';
 
 interface HazardDetailBottomSheetProps {
   hazard: Hazard | null;
@@ -37,6 +38,7 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
   const [isUpvoting, setIsUpvoting] = useState(false);
   const [isResolving, setIsResolving] = useState(false);
   const [isVotingPassability, setIsVotingPassability] = useState(false);
+  const [vouchTrigger, setVouchTrigger] = useState(0);
   const [proofImage, setProofImage] = useState<string | null>(null);
   const [isCompressingProof, setIsCompressingProof] = useState(false);
   const proofInputRef = useRef<HTMLInputElement | null>(null);
@@ -51,6 +53,7 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
   useEffect(() => {
     if (hazard) {
       setProofImage(null);
+      setVouchTrigger(0);
       window.addEventListener('keydown', handleKeyDown);
       return () => window.removeEventListener('keydown', handleKeyDown);
     }
@@ -66,6 +69,9 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
   const currentDevicePassability = getDevicePassabilityVote(hazard.id);
 
   const handleUpvote = async () => {
+    if (isUpvoting || hasUpvoted || hazard.isResolved) return;
+    // Instant tactile vouch physics feedback
+    setVouchTrigger((prev) => prev + 1);
     setIsUpvoting(true);
     try {
       const res = await onUpvote(hazard.id);
@@ -162,24 +168,63 @@ export const HazardDetailBottomSheet: React.FC<HazardDetailBottomSheetProps> = (
           </button>
         </div>
 
-        {/* Civic Verification Badge with NumberFlow Vouch Counter */}
-        <div className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-900/70 border border-zinc-800 text-xs">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-black border border-zinc-800 text-white">
-              <ShieldCheck className="w-4 h-4" />
+        {/* Interactive Circular TTL Decay Timer (Live Vouch Physics) */}
+        <div className="p-3 sm:p-3.5 rounded-2xl bg-zinc-900/80 border border-zinc-800 flex items-center justify-between gap-3 shadow-inner relative">
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Tactical Circular Countdown Ring */}
+            <div className="relative shrink-0">
+              <CircularTtlGauge
+                expiresAt={hazard.expiresAt}
+                createdAt={hazard.createdAt}
+                category={hazard.category}
+                isResolved={hazard.isResolved}
+                vouchTrigger={vouchTrigger}
+                size={58}
+                strokeWidth={4.5}
+                onTap={!hazard.isResolved && !hasUpvoted ? handleUpvote : undefined}
+                className={!hazard.isResolved && !hasUpvoted ? 'cursor-pointer hover:scale-105 active:scale-95 transition-transform' : ''}
+              />
             </div>
-            <div>
-              <div className="text-[11px] font-semibold text-zinc-200">
-                Verified Civic Trace
+
+            {/* Telemetry & Vouch Physics Explanation */}
+            <div className="space-y-0.5 min-w-0">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-white leading-tight">
+                <span className="truncate">Community TTL</span>
+                <span
+                  className={`text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded-full border whitespace-nowrap shrink-0 ${
+                    ttl.isExpired
+                      ? 'border-zinc-700 bg-zinc-800 text-zinc-400'
+                      : ttl.isExpiringSoon
+                      ? 'border-amber-500/40 bg-amber-950/40 text-amber-400'
+                      : 'border-zinc-700 bg-black/60 text-zinc-300'
+                  }`}
+                >
+                  {ttl.label}
+                </span>
               </div>
-              <div className="text-[10px] text-zinc-500 font-mono">
-                ID: {hazard.id.substring(0, 8)}... • Community Reported
+              <p className="text-[10px] text-zinc-400 leading-snug">
+                {hazard.isResolved
+                  ? 'Resolved by community • Auto-decaying'
+                  : hasUpvoted
+                  ? `Vouched by you (+${categoryMeta.upvoteBonusHours}h extended)`
+                  : `Tap "+1 Still Here" to spark +${categoryMeta.upvoteBonusHours}h visibility`}
+              </p>
+              <div className="text-[10px] text-zinc-500 font-mono pt-0.5">
+                Trace ID: {hazard.id.substring(0, 8)}... • Verified Civic Signal
               </div>
             </div>
           </div>
-          <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-black border border-zinc-800 text-zinc-300 font-mono font-semibold flex items-center gap-1">
-            <NumberFlow value={hazard.upvotes} /> {hazard.upvotes === 1 ? 'vouch' : 'vouches'}
-          </span>
+
+          {/* Vouch Counter Badge */}
+          <div className="flex flex-col items-end shrink-0 gap-1">
+            <span className="text-[10px] px-2.5 py-1 rounded-full bg-black border border-zinc-800 text-zinc-200 font-mono font-semibold flex items-center gap-1 shadow-sm">
+              <ShieldCheck className="w-3 h-3 text-zinc-400" />
+              <NumberFlow value={hazard.upvotes} /> {hazard.upvotes === 1 ? 'vouch' : 'vouches'}
+            </span>
+            <span className="text-[9px] font-mono text-zinc-500">
+              +{categoryMeta.upvoteBonusHours}h / vouch
+            </span>
+          </div>
         </div>
 
         {/* Resolved badge if marked */}

@@ -123,7 +123,7 @@ export function useHazardManager(userLocation: UserLocation, isOnline: boolean, 
           return {
             ...h,
             upvotes: h.upvotes + 1,
-            expiresAt: calculateExtendedExpiry(h.category, h.createdAt, h.expiresAt),
+            expiresAt: calculateExtendedExpiry(h.category, h.expiresAt, h.createdAt),
           };
         }
         return h;

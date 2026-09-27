@@ -239,8 +239,8 @@ export async function submitUpvoteToBackend(
     localHazard.upvotes += 1;
     localHazard.expiresAt = calculateExtendedExpiry(
       localHazard.category,
-      localHazard.createdAt,
-      localHazard.expiresAt
+      localHazard.expiresAt,
+      localHazard.createdAt
     );
   }
 
