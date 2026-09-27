@@ -254,7 +254,7 @@ const IntroScene: React.FC = () => {
             fontFamily,
           }}
         >
-          Bakás
+          Bakas
         </h1>
 
         <p
@@ -335,7 +335,7 @@ const OutroScene: React.FC = () => {
             fontFamily,
           }}
         >
-          Bakás
+          Bakas
         </h1>
 
         <p

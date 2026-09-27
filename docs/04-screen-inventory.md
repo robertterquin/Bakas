@@ -9,7 +9,7 @@
 | **SCR-03: Hazard Detail Sheet** | Bottom sheet (modal slide-up) | Category icon & label, severity badge, distance calculation, age & expiration countdown, "Still Here" & "Cleared" buttons, Share button | Inspect hazard, validate status, share link |
 | **SCR-04: Filter & Radius Drawer** | Side/top dropdown panel | Radius selector (1km, 3km, 5km), Category toggles, Severity filter, Clear all filters | Customize visible map radar pins |
 | **SCR-05: Offline Sync Status Modal** | Centered modal / HUD banner | Pending sync items list, retry button, storage clearance, offline tile status | Inspect offline queue, force manual sync |
-| **SCR-06: About & Safety Guidance** | Full overlay / modal | Product principles, anonymous privacy disclosure, disclaimer ("Not a replacement for alert driving") | Learn about Bakás, review data policies |
+| **SCR-06: About & Safety Guidance** | Full overlay / modal | Product principles, anonymous privacy disclosure, disclaimer ("Not a replacement for alert driving") | Learn about Bakas, review data policies |
 
 ---
 
@@ -19,7 +19,7 @@
 - **`MapContainer`**: Leaflet viewport styled with CartoDB Dark Matter tiles.
 - **`UserLocationMarker`**: Glowing blue-slate circle with animated concentric radar ripples.
 - **`HazardMarkerCluster`**: Dynamic SVG radar markers rendered by severity opacity.
-- **`TopStatusBar`**: Displays brand mark `Bakás`, active hazard counter (`12 hazards in 5km`), and network sync pill.
+- **`TopStatusBar`**: Displays brand mark `Bakas`, active hazard counter (`12 hazards in 5km`), and network sync pill.
 - **`CategoryFilterBar`**: Horizontal scrollable pill buttons: `[ All ] [ ⚠️ Potholes ] [ 🕳️ Manholes ] [ 💧 Drainage ] [ 🌑 Dark Streets ]`.
 - **`ActionHUD`**:
   - Floating `Recenter GPS` button (bottom right).

@@ -27,7 +27,7 @@
 **Scenario:** A driver spots an open drainage manhole in a mountainous or underground road sector with no LTE/5G signal.
 
 ```
-[ Driver Opens Bakás in Dead Zone ]
+[ Driver Opens Bakas in Dead Zone ]
       │ (Service Worker serves app shell + cached CartoDB tiles)
       ▼
 [ Tap "Report Hazard" ]
@@ -79,7 +79,7 @@
 **Scenario:** A cyclist checks their local area before riding home at midnight.
 
 ```
-[ Opens Bakás on mobile browser ]
+[ Opens Bakas on mobile browser ]
       │ (Dark slate monochrome theme prevents night-blindness)
       ▼
 [ Glances at 5km Radar Viewport ]

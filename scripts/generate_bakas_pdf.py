@@ -231,7 +231,7 @@ def create_bakas_pdf(filename="bakas-project-flow.pdf"):
     # ==========================================
     story.append(Spacer(1, 40))
     story.append(Paragraph("URBAN ROAD HAZARD RADAR / PRODUCT PLAN", title_category))
-    story.append(Paragraph("Bakás", cover_title))
+    story.append(Paragraph("Bakas", cover_title))
     story.append(Paragraph("Leaving digital traces to navigate urban road hazards.", cover_subtitle))
     story.append(HRFlowable(width="100%", thickness=1.5, color=C_SLATE_950, spaceAfter=20))
     
@@ -270,7 +270,7 @@ def create_bakas_pdf(filename="bakas-project-flow.pdf"):
     
     story.append(Paragraph("PRODUCT IN ONE SENTENCE", h3_style))
     story.append(Paragraph(
-        "Bakás turns crowdsourced civic awareness into real-time, offline-resilient road hazard intelligence to protect urban commuters.",
+        "Bakas turns crowdsourced civic awareness into real-time, offline-resilient road hazard intelligence to protect urban commuters.",
         body_text
     ))
     story.append(Spacer(1, 4))
@@ -324,7 +324,7 @@ def create_bakas_pdf(filename="bakas-project-flow.pdf"):
     # ==========================================
     story.append(Paragraph("SECTION 01", sec_tag))
     story.append(Paragraph("Product definition and real problem", sec_title))
-    story.append(Paragraph("Bakás is a real-time safety layer for the moment a commuter or motorist navigates urban streets.", sec_subtitle))
+    story.append(Paragraph("Bakas is a real-time safety layer for the moment a commuter or motorist navigates urban streets.", sec_subtitle))
 
     story.append(Paragraph("THE SHARP PROBLEM STATEMENT", h3_style))
     story.append(Paragraph(
@@ -335,7 +335,7 @@ def create_bakas_pdf(filename="bakas-project-flow.pdf"):
     story.append(Spacer(1, 4))
 
     prob_data = [
-        [Paragraph("Observed problem", table_th), Paragraph("Why it matters", table_th), Paragraph("Bakás response", table_th)],
+        [Paragraph("Observed problem", table_th), Paragraph("Why it matters", table_th), Paragraph("Bakas response", table_th)],
         [
             Paragraph("Reporting apps require login, long forms, or deep menus.", table_td),
             Paragraph("Motorists and pedestrians abandon reporting while in transit.", table_td),
@@ -368,7 +368,7 @@ def create_bakas_pdf(filename="bakas-project-flow.pdf"):
 
     story.append(Paragraph("POSITIONING", h3_style))
     pos_data = [
-        [Paragraph("Bakás is", table_th), Paragraph("Bakás is not", table_th)],
+        [Paragraph("Bakas is", table_th), Paragraph("Bakas is not", table_th)],
         [
             Paragraph("A lightweight, anonymous urban road hazard radar", table_td),
             Paragraph("A turn-by-turn routing navigation app (like Waze/Google Maps)", table_td)
@@ -397,7 +397,7 @@ def create_bakas_pdf(filename="bakas-project-flow.pdf"):
     story.append(Paragraph("Serve one clear core job while making room for different transit modalities.", sec_subtitle))
 
     user_data = [
-        [Paragraph("User context", table_th), Paragraph("Need", table_th), Paragraph("Primary Bakás mode", table_th)],
+        [Paragraph("User context", table_th), Paragraph("Need", table_th), Paragraph("Primary Bakas mode", table_th)],
         [
             Paragraph("“Napakadilim ng kalsada dito at may lubak.”", table_td),
             Paragraph("Report an unlit road or deep pothole in 3 seconds before moving on.", table_td),
@@ -445,7 +445,7 @@ def create_bakas_pdf(filename="bakas-project-flow.pdf"):
     story.append(Paragraph("A fast, frictionless sequence: locate, scan, pin, validate, and decay.", sec_subtitle))
 
     flow_data = [
-        [Paragraph("Stage", table_th), Paragraph("User action", table_th), Paragraph("Bakás response", table_th)],
+        [Paragraph("Stage", table_th), Paragraph("User action", table_th), Paragraph("Bakas response", table_th)],
         [
             Paragraph("01 / Locate", table_td_bold),
             Paragraph("Opens PWA or desktop link.", table_td),
@@ -517,7 +517,7 @@ def create_bakas_pdf(filename="bakas-project-flow.pdf"):
     # PAGE 6: SECTION 04 - WHAT BAKÁS PRODUCES
     # ==========================================
     story.append(Paragraph("SECTION 04", sec_tag))
-    story.append(Paragraph("What Bakás produces", sec_title))
+    story.append(Paragraph("What Bakas produces", sec_title))
     story.append(Paragraph("The value is real-time, actionable road intelligence, not static clutter.", sec_subtitle))
 
     story.append(Paragraph("HAZARD RECORD DATA CONTRACT", h3_style))
@@ -633,7 +633,7 @@ def create_bakas_pdf(filename="bakas-project-flow.pdf"):
     story.append(Paragraph("SECURITY & PRIVACY REQUIREMENTS", h3_style))
     story.append(Paragraph("• <b>Zero-Login Row Level Security (RLS):</b> Anonymous public `SELECT` on non-expired hazards (`expires_at > NOW()`).", bullet_text))
     story.append(Paragraph("• <b>Rate-Limited Anonymous Inserts:</b> Public `INSERT` allowed with spatial deduplication and rate-limiting triggers.", bullet_text))
-    story.append(Paragraph("• <b>Zero User Tracking / PII:</b> Bakás never stores user identity, email, IP addresses, or historical GPS breadcrumbs.", bullet_text))
+    story.append(Paragraph("• <b>Zero User Tracking / PII:</b> Bakas never stores user identity, email, IP addresses, or historical GPS breadcrumbs.", bullet_text))
     story.append(Paragraph("• <b>Anti-Tampering Constraints:</b> Check constraints enforce valid enum values (`category`, `severity`) and coordinate bounds.", bullet_text))
     story.append(Paragraph("• <b>Automated Decay Stored Procedure:</b> Scheduled cron job or RPC function to purge stale expired hazards automatically.", bullet_text))
     story.append(PageBreak())
@@ -732,7 +732,7 @@ def create_bakas_pdf(filename="bakas-project-flow.pdf"):
     story.append(Spacer(1, 6))
 
     story.append(Paragraph("FIRST-VIEWPORT CONTENT", h3_style))
-    story.append(Paragraph("• <b>Top HUD:</b> Brand logo 'Bakás', Proximity Counter ('12 hazards in 5.0 km'), Sync Pill ('Online').", bullet_text))
+    story.append(Paragraph("• <b>Top HUD:</b> Brand logo 'Bakas', Proximity Counter ('12 hazards in 5.0 km'), Sync Pill ('Online').", bullet_text))
     story.append(Paragraph("• <b>Radar Canvas:</b> Fullscreen interactive map with pulsing user GPS dot and nearby hazard pins.", bullet_text))
     story.append(Paragraph("• <b>Filter Chips:</b> Floating horizontal pills [ All ] [ ⚠️ Potholes ] [ 💧 Drainage ] [ 🌑 Dark Streets ].", bullet_text))
     story.append(Paragraph("• <b>Bottom Action HUD:</b> Recenter GPS Target + Elevated '+ Report Hazard' Action Pill.", bullet_text))
@@ -993,7 +993,7 @@ def create_bakas_pdf(filename="bakas-project-flow.pdf"):
     story.append(Paragraph("<b>Outcome:</b> One stable civic promise, target user profile, and honest zero-login boundary.", bullet_text))
     story.append(Paragraph("<b>Workstreams:</b> Define commuter & motorcyclist use cases; establish anonymous privacy rules; create golden fixtures.", bullet_text))
     story.append(Paragraph("<b>Deliverables:</b> Product brief, non-goals, trust copy, initial hazard fixture set.", bullet_text))
-    story.append(Paragraph("<b>Exit Gate:</b> A first-time user understands Bakás in 30 seconds.", bullet_text))
+    story.append(Paragraph("<b>Exit Gate:</b> A first-time user understands Bakas in 30 seconds.", bullet_text))
     story.append(Spacer(1, 4))
 
     story.append(Paragraph("PHASE 2: SCOPE AND SUCCESS CRITERIA", h3_style))
@@ -1120,13 +1120,13 @@ def create_bakas_pdf(filename="bakas-project-flow.pdf"):
     # ==========================================
     story.append(Paragraph("SECTION 16", sec_tag))
     story.append(Paragraph("Demo story and decision log", sec_title))
-    story.append(Paragraph("The strongest portfolio story proves that Bakás delivers instant civic safety without friction.", sec_subtitle))
+    story.append(Paragraph("The strongest portfolio story proves that Bakas delivers instant civic safety without friction.", sec_subtitle))
 
     demo_data = [
         [Paragraph("Time", table_th), Paragraph("Action", table_th), Paragraph("What the audience learns", table_th)],
         [
             Paragraph("0:00 - 0:20", table_td_bold),
-            Paragraph("Open Bakás ➔ instant GPS lock on dark radar map.", table_td),
+            Paragraph("Open Bakas ➔ instant GPS lock on dark radar map.", table_td),
             Paragraph("Zero-login entry; tactical dark command center aesthetic.", table_td)
         ],
         [
@@ -1197,7 +1197,7 @@ def create_bakas_pdf(filename="bakas-project-flow.pdf"):
     story.append(Paragraph("FINAL SCOPE TEST", h3_style))
     story.append(Paragraph(
         "If a feature does not directly empower an urban commuter to report a hazard in 5 seconds or view nearby hazards within 5km, "
-        "it should not be part of the first Bakás release.",
+        "it should not be part of the first Bakas release.",
         callout_text
     ))
 

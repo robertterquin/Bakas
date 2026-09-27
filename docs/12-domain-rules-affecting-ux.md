@@ -10,7 +10,7 @@
 
 ## 2. Automated Data Decay & TTL (Time-To-Live) Matrix
 
-To prevent obsolete "ghost hazards" from cluttering the map, Bakás enforces automated time decay based on hazard nature:
+To prevent obsolete "ghost hazards" from cluttering the map, Bakas enforces automated time decay based on hazard nature:
 
 | Hazard Category | Initial TTL | Upvote Bonus | Max Cap | Rationale |
 | :--- | :--- | :--- | :--- | :--- |

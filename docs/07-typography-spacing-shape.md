@@ -2,7 +2,7 @@
 
 ## 1. Typography Hierarchy
 
-Bakás utilizes modern geometric sans-serif fonts optimized for fast visual scanning on mobile devices (e.g., `Inter`, system UI font stack).
+Bakas utilizes modern geometric sans-serif fonts optimized for fast visual scanning on mobile devices (e.g., `Inter`, system UI font stack).
 
 | Level | Size | Weight | Line Height | Tracking | Usage |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -30,7 +30,7 @@ Based on an **8pt grid** system with 4pt half-steps for micro-alignments:
 
 ## 3. Shape & Corner Radii
 
-Bakás utilizes clean, tactile rounded geometry designed for thumb ergonomics:
+Bakas utilizes clean, tactile rounded geometry designed for thumb ergonomics:
 
 - **Pill Shapes (`rounded-full`):**
   - Category filter chips, status badges, floating action buttons (FABs).

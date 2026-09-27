@@ -7,7 +7,7 @@ interface BakasLogoProps {
 }
 
 /**
- * Official Bakás Minimalist Brand Mark
+ * Official Bakas Minimalist Brand Mark
  * Combines an urban road trace (track) sweeping into a central civic radar beacon.
  */
 export const BakasLogo: React.FC<BakasLogoProps> = ({

@@ -1,7 +1,7 @@
 # 05 — Visual Foundation & Aesthetic Philosophy
 
 ## 1. Aesthetic Intent: Tactical Urban Command Center
-Bakás adopts a **Dark Slate Monochrome & Radar Luminescence** design philosophy. Instead of a chaotic, rainbow-colored map filled with saturated red/yellow/green pins that cause visual fatigue during nighttime travel, Bakás operates like an advanced tactical command center or marine sonar radar.
+Bakas adopts a **Dark Slate Monochrome & Radar Luminescence** design philosophy. Instead of a chaotic, rainbow-colored map filled with saturated red/yellow/green pins that cause visual fatigue during nighttime travel, Bakas operates like an advanced tactical command center or marine sonar radar.
 
 ---
 

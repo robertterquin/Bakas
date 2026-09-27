@@ -1,7 +1,7 @@
 # 01 — Product Principles
 
 ## 1. Product Vision
-**Bakás** (*Tagalog for "traces", "tracks", or "footprints"*) is a lightweight, mobile-first Progressive Web App (PWA) designed to empower commuters, motorists, cyclists, and pedestrians in navigating and reporting urban road hazards in real-time. By leaving digital traces, citizens crowdsource live street awareness to protect each other from dangerous urban road traps.
+**Bakas** (*Tagalog for "traces", "tracks", or "footprints"*) is a lightweight, mobile-first Progressive Web App (PWA) designed to empower commuters, motorists, cyclists, and pedestrians in navigating and reporting urban road hazards in real-time. By leaving digital traces, citizens crowdsource live street awareness to protect each other from dangerous urban road traps.
 
 > **Tagline:** *Leaving digital traces to navigate urban road hazards.*
 
@@ -44,9 +44,9 @@
 
 ---
 
-## 4. Product Boundaries (What Bakás Is and Is Not)
+## 4. Product Boundaries (What Bakas Is and Is Not)
 
-| Bakás Is | Bakás Is Not |
+| Bakas Is | Bakas Is Not |
 | :--- | :--- |
 | A lightweight, anonymous road hazard radar | A heavy turn-by-turn navigation system (like Waze/Google Maps) |
 | A community-driven early warning tool | An official government public works dispatch system |

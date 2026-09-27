@@ -2,7 +2,7 @@
 
 ## 1. Core Component Catalog
 
-Bakás utilizes an atomic, highly reusable component library built with React, TypeScript, and Tailwind CSS.
+Bakas utilizes an atomic, highly reusable component library built with React, TypeScript, and Tailwind CSS.
 
 ### 1. `MapRadarCanvas`
 - Wraps Leaflet `<MapContainer>` and renders `<TileLayer>` pointing to CartoDB Dark Matter.

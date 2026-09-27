@@ -1,8 +1,8 @@
-# Bakás (Urban Road Hazard Radar)
+# Bakas (Urban Road Hazard Radar)
 
 > *Leaving digital traces to navigate urban road hazards.*
 
-**Bakás** (*Tagalog for "traces", "tracks", or "footprints"*) is a lightweight, mobile-first Progressive Web App (PWA) designed to empower commuters, motorists, cyclists, and pedestrians in navigating and reporting urban road hazards in real-time. By leaving digital traces, citizens crowdsource live street awareness to protect each other from dangerous potholes, open manholes, flash floods, clogged drainages, and unlit streets with zero login barrier, resilient offline-first synchronization, and 5km PostGIS spatial filtering.
+**Bakas** (*Tagalog for "traces", "tracks", or "footprints"*) is a lightweight, mobile-first Progressive Web App (PWA) designed to empower commuters, motorists, cyclists, and pedestrians in navigating and reporting urban road hazards in real-time. By leaving digital traces, citizens crowdsource live street awareness to protect each other from dangerous potholes, open manholes, flash floods, clogged drainages, and unlit streets with zero login barrier, resilient offline-first synchronization, and 5km PostGIS spatial filtering.
 
 ---
 
@@ -110,6 +110,6 @@ npm run preview
 
 ## 🛡️ License & Safety Disclaimer
 
-Never interact with Bakás while driving. Use handlebar mounts in glanceable radar mode or report while safely stopped or as a passenger.
+Never interact with Bakas while driving. Use handlebar mounts in glanceable radar mode or report while safely stopped or as a passenger.
 
 Built with extreme civic care for urban commuters everywhere.

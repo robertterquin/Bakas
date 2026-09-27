@@ -2,12 +2,12 @@
 
 ## 1. Shell Layout Blueprint
 
-Bakás employs a non-traditional **HUD (Heads-Up Display) Shell** where the live interactive map occupies 100% of the viewport width and height (`100dvh`), with floating UI modules anchored to safe zones:
+Bakas employs a non-traditional **HUD (Heads-Up Display) Shell** where the live interactive map occupies 100% of the viewport width and height (`100dvh`), with floating UI modules anchored to safe zones:
 
 ```
 ┌──────────────────────────────────────────────────────────┐
 │ [Top Left]                [Top Center]       [Top Right] │
-│  Bakás Brand Badge        Proximity Radius    Offline /  │
+│  Bakas Brand Badge        Proximity Radius    Offline /  │
 │  (Radar Status Dot)       "14 in 5.0 km"      Sync Pill  │
 ├──────────────────────────────────────────────────────────┤
 │                                                          │

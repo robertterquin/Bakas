@@ -1,7 +1,7 @@
 # 02 — Information Architecture
 
 ## 1. Structural Overview
-Bakás is engineered as a single-page, map-centric command center. Navigation is minimal and direct, eliminating deep nested menus in favor of modal overlays, bottom sheets, and interactive map pins.
+Bakas is engineered as a single-page, map-centric command center. Navigation is minimal and direct, eliminating deep nested menus in favor of modal overlays, bottom sheets, and interactive map pins.
 
 ```
 [ Root App Shell ]
@@ -12,7 +12,7 @@ Bakás is engineered as a single-page, map-centric command center. Navigation is
   │     └── Quick Filter Control Bar (All, Pothole, Manhole, Drainage, Dark Street)
   │
   ├── [ HUD Top Navigation & Status Header ]
-  │     ├── Brand Badge: "Bakás" & Live Status Indicator (Online / Offline Sync)
+  │     ├── Brand Badge: "Bakas" & Live Status Indicator (Online / Offline Sync)
   │     ├── Proximity Radius Counter (e.g., "14 hazards within 5.0 km")
   │     └── Search / Center-on-Me Control
   │
@@ -57,7 +57,7 @@ Bakás is engineered as a single-page, map-centric command center. Navigation is
 ---
 
 ## 3. URL Routing Strategy
-Because Bakás is a PWA designed for instant utility and low-latency interaction, client-side routing is lightweight:
+Because Bakas is a PWA designed for instant utility and low-latency interaction, client-side routing is lightweight:
 
 | Route Path | View / State | Functionality |
 | :--- | :--- | :--- |

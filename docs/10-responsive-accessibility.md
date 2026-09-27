@@ -2,7 +2,7 @@
 
 ## 1. Responsive Viewport Strategy
 
-Bakás is designed **mobile-first** because 95%+ of usage occurs on smartphones during transit. However, it scales cleanly across tablets and desktop dashboards.
+Bakas is designed **mobile-first** because 95%+ of usage occurs on smartphones during transit. However, it scales cleanly across tablets and desktop dashboards.
 
 | Viewport | Range | Layout Strategy |
 | :--- | :--- | :--- |

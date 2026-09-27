@@ -2,7 +2,7 @@
 
 ## 1. Palette Architecture
 
-Bakás uses a strictly curated palette based on Tailwind CSS `slate` tones paired with radar luminescence accents.
+Bakas uses a strictly curated palette based on Tailwind CSS `slate` tones paired with radar luminescence accents.
 
 | Token Name | Hex Code | Tailwind Equivalent | Purpose & Usage |
 | :--- | :--- | :--- | :--- |

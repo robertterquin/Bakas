@@ -24,7 +24,7 @@ export const monoFont =
   'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace'
 
 /**
- * Official Bakás Brand Mark
+ * Official Bakas Brand Mark
  * Road trace sweeping into a central civic radar beacon
  */
 export const BakasBrandMark: React.FC<{ size?: number; withGlow?: boolean }> = ({

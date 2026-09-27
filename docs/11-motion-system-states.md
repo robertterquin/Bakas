@@ -2,7 +2,7 @@
 
 ## 1. Motion Principles
 
-Bakás uses functional, lightweight motion to communicate spatial context and system responsiveness. Animations never delay user action.
+Bakas uses functional, lightweight motion to communicate spatial context and system responsiveness. Animations never delay user action.
 
 | Motion Type | Duration | Easing | Intent |
 | :--- | :--- | :--- | :--- |
@@ -16,7 +16,7 @@ Bakás uses functional, lightweight motion to communicate spatial context and sy
 
 ## 2. Complete State Matrix
 
-Every core screen and UI module in Bakás defines 6 fundamental states:
+Every core screen and UI module in Bakas defines 6 fundamental states:
 
 ```
 ┌────────────────────────────────────────────────────────┐

@@ -1,7 +1,7 @@
 {
   "name": "bakas-showcase",
   "version": "1.0.0",
-  "description": "Bakás Urban Road Hazard Radar Remotion Showcase Video",
+  "description": "Bakas Urban Road Hazard Radar Remotion Showcase Video",
   "private": true,
   "dependencies": {
     "@remotion/cli": "4.0.509",
