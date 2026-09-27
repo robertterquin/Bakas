@@ -280,7 +280,7 @@ const IntroScene: React.FC = () => {
             fontFamily,
           }}
         >
-          Live road hazard alerts for Philippine drivers
+          Live road hazard alerts for Philippine streets
         </p>
       </div>
     </AbsoluteFill>
@@ -433,7 +433,7 @@ export const BakasShowcase: React.FC = () => {
           cardSide="right"
           kicker="COMMUNITY VERIFIED"
           headline="Confirm when roads are fixed."
-          body="Compare before-and-after photos and vote with fellow drivers to clear resolved reports."
+          body="Compare before-and-after photos and vote with the community to clear resolved reports."
           capture="capture-3-flood-passability.png"
           kickerColor={colors.emerald}
         />
