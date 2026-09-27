@@ -3,6 +3,7 @@ import L from 'leaflet';
 import { motion, AnimatePresence } from 'motion/react';
 import { Hazard, UserLocation, CategoryFilter, RadiusFilter } from '../../types/hazard';
 import { calculateDistanceInMeters } from '../../services/geo.service';
+import { MapTelemetry } from '../../types/telemetry';
 import { getCategorySvgMarkup } from '../ui/HazardIcon';
 import { hasDeviceVoted } from '../../utils/domain-rules';
 
@@ -18,6 +19,7 @@ interface MapRadarCanvasProps {
   searchTarget?: { lat: number; lng: number; count: number } | null;
   onMapClick?: (lat: number, lng: number) => void;
   onViewportScopeChange?: (visibleRadiusMeters: number) => void;
+  onTelemetryChange?: (telemetry: MapTelemetry) => void;
 }
 
 export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
@@ -31,6 +33,7 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
   searchTarget,
   onMapClick,
   onViewportScopeChange,
+  onTelemetryChange,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -41,6 +44,8 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
   const accuracyCircleRef = useRef<L.Circle | null>(null);
   const radiusBoundaryCircleRef = useRef<L.Circle | null>(null);
   const [isTileLoading, setIsTileLoading] = useState<boolean>(false);
+  const lastCenterRef = useRef<{ lat: number; lng: number }>({ lat: userLocation.lat, lng: userLocation.lng });
+  const currentBearingRef = useRef<number>(0);
 
   // Initialize Map with High-Performance Tile Caching
   useEffect(() => {
@@ -106,7 +111,33 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
       onViewportScopeChange(Math.round(radiusMeters));
     };
 
+    // Real-time Sonar Compass Azimuth & Coordinate Telemetry Tracking
+    const computeTelemetry = (isPanning: boolean) => {
+      if (!onTelemetryChange) return;
+      const center = map.getCenter();
+      const last = lastCenterRef.current;
+      const dLat = center.lat - last.lat;
+      const dLng = center.lng - last.lng;
+
+      if (Math.hypot(dLat, dLng) > 0.00002) {
+        let angle = Math.atan2(dLng, dLat) * (180 / Math.PI);
+        if (angle < 0) angle += 360;
+        currentBearingRef.current = Math.round(angle);
+        lastCenterRef.current = { lat: center.lat, lng: center.lng };
+      }
+
+      onTelemetryChange({
+        lat: center.lat,
+        lng: center.lng,
+        bearing: currentBearingRef.current,
+        isPanning,
+      });
+    };
+
     map.on('zoom move zoomend moveend', computeViewportScope);
+    map.on('movestart', () => computeTelemetry(true));
+    map.on('move', () => computeTelemetry(true));
+    map.on('moveend', () => computeTelemetry(false));
 
     // Handle map clicks to drop pin anywhere
     map.on('click', (e: L.LeafletMouseEvent) => {
@@ -119,6 +150,7 @@ export const MapRadarCanvas: React.FC<MapRadarCanvasProps> = ({
     const timer = setTimeout(() => {
       map.invalidateSize();
       computeViewportScope();
+      computeTelemetry(false);
     }, 150);
 
     const handleResize = () => {
