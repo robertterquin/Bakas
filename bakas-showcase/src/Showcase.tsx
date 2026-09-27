@@ -4,7 +4,6 @@ import {
   Img,
   interpolate,
   Sequence,
-  spring,
   staticFile,
   useCurrentFrame,
   useVideoConfig,
@@ -14,682 +13,463 @@ import {
   BakasBrandMark,
   colors,
   fontFamily,
-  GlassCaption,
   monoFont,
-  TacticalFrame,
 } from './scenes/shared'
 
 // =============================================================================
-// Scene 1: System Debut & Radar Canvas (0.0s – 4.0s | Frames 0 – 120)
-// Uses ACTUAL screen: capture-1-radar-overview.png
+// Split-Column Feature Slide (Hapag Format: Alternating Left / Right)
 // =============================================================================
-const SystemDebutScene: React.FC = () => {
+const SplitSlideScene: React.FC<{
+  kicker: string
+  headline: string
+  body: string
+  capture: string
+  cardSide?: 'right' | 'left'
+  kickerColor?: string
+}> = ({
+  kicker,
+  headline,
+  body,
+  capture,
+  cardSide = 'right',
+  kickerColor = colors.sky,
+}) => {
   const frame = useCurrentFrame()
-  const { fps } = useVideoConfig()
+  const { durationInFrames } = useVideoConfig()
+  // Smooth entrance & exit interpolation for seamless slide flow
+  const enterOpacity = interpolate(frame, [0, 14], [0, 1], { extrapolateRight: 'clamp' })
+  const exitOpacity = interpolate(
+    frame,
+    [durationInFrames - 8, durationInFrames],
+    [1, 0],
+    { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
+  )
+  const slideOpacity = enterOpacity * exitOpacity
 
-  const sweepAngle = (frame * 4) % 360
-
-  // Frame spring
-  const frameSpring = spring({ frame, fps, config: { damping: 140, stiffness: 95 } })
-  const cameraScale = interpolate(frame, [0, 120], [1.0, 1.05], { extrapolateRight: 'clamp' })
-
-  // Overlay card (visible at start, dissolves smoothly around frame 60)
-  const overlayOpacity = interpolate(frame, [50, 75], [1, 0], {
-    extrapolateLeft: 'clamp',
+  const textTranslate = interpolate(frame, [0, 16], [cardSide === 'right' ? -22 : 22, 0], {
     extrapolateRight: 'clamp',
   })
-  const overlaySpring = spring({ frame, fps, config: { damping: 130, stiffness: 90 } })
 
-  return (
-    <AbsoluteFill
+  const cardTranslate = interpolate(frame, [2, 18], [cardSide === 'right' ? 26 : -26, 0], {
+    extrapolateRight: 'clamp',
+  })
+
+  // Subtle breathing float on card
+  const zoom = interpolate(frame, [0, durationInFrames], [1.0, 1.03], {
+    extrapolateRight: 'clamp',
+  })
+
+  const textContent = (
+    <div
       style={{
-        backgroundColor: colors.obsidian,
+        flex: '1 1 50%',
+        maxWidth: 640,
         display: 'flex',
-        alignItems: 'center',
+        flexDirection: 'column',
         justifyContent: 'center',
-        overflow: 'hidden',
+        opacity: slideOpacity,
+        transform: `translateX(${textTranslate}px)`,
+        zIndex: 10,
       }}
     >
-      <BackgroundSonar sweepAngle={sweepAngle} opacity={0.65} />
-
-      {/* Actual System Screen inside Tactical Frame */}
       <div
         style={{
-          transform: `scale(${frameSpring * cameraScale})`,
-          opacity: frameSpring,
-          zIndex: 10,
-        }}
-      >
-        <TacticalFrame width={1540} height={860}>
-          <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
-            <Img
-              src={staticFile('captures/capture-1-radar-overview.png')}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                filter: 'brightness(0.97) contrast(1.04)',
-              }}
-            />
-
-            {/* Initial Debut Branding Card (dissolves to unveil live map) */}
-            {overlayOpacity > 0 && (
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexDirection: 'column',
-                  backgroundColor: `rgba(4, 4, 6, ${0.85 * overlayOpacity})`,
-                  backdropFilter: `blur(${16 * overlayOpacity}px)`,
-                  opacity: overlayOpacity,
-                  zIndex: 25,
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    transform: `scale(${interpolate(overlaySpring, [0, 1], [0.88, 1])}) translateY(${interpolate(
-                      overlaySpring,
-                      [0, 1],
-                      [20, 0]
-                    )}px)`,
-                  }}
-                >
-                  <div style={{ transform: `rotate(${frame * 0.3}deg)`, marginBottom: 16 }}>
-                    <BakasBrandMark size={110} withGlow={true} />
-                  </div>
-
-                  <div
-                    style={{
-                      fontFamily: monoFont,
-                      fontSize: 13,
-                      fontWeight: 700,
-                      color: colors.sky,
-                      letterSpacing: 3,
-                      textTransform: 'uppercase',
-                      marginBottom: 8,
-                    }}
-                  >
-                    CIVIC TELEMETRY // ROUTE DEFENSE
-                  </div>
-
-                  <h1
-                    style={{
-                      fontSize: 84,
-                      fontWeight: 900,
-                      color: colors.white,
-                      margin: 0,
-                      letterSpacing: -2.5,
-                      fontFamily,
-                      lineHeight: 1,
-                    }}
-                  >
-                    Bakás
-                  </h1>
-
-                  <p
-                    style={{
-                      fontSize: 28,
-                      fontWeight: 700,
-                      color: colors.sky,
-                      marginTop: 8,
-                      marginBottom: 12,
-                      fontFamily,
-                    }}
-                  >
-                    Urban Road Hazard Radar
-                  </p>
-
-                  <p
-                    style={{
-                      fontSize: 18,
-                      fontWeight: 500,
-                      color: colors.textMuted,
-                      margin: '0 0 20px 0',
-                      fontFamily,
-                    }}
-                  >
-                    Real-time spatial alerts and community route defense for Philippine roads
-                  </p>
-
-                  {/* Clean Status Indicator (Zero emojis) */}
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 10,
-                      background: 'rgba(15, 23, 42, 0.9)',
-                      border: '1px solid rgba(56, 189, 248, 0.35)',
-                      borderRadius: 999,
-                      padding: '8px 20px',
-                      fontFamily: monoFont,
-                      fontSize: 13,
-                      color: colors.white,
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: 7,
-                        height: 7,
-                        borderRadius: '50%',
-                        backgroundColor: colors.emerald,
-                        boxShadow: '0 0 8px #10b981',
-                      }}
-                    />
-                    <span style={{ fontWeight: 700, color: colors.emerald }}>GPS ACTIVE</span>
-                    <span style={{ color: colors.border }}>|</span>
-                    <span style={{ color: colors.textMuted }}>14.5995° N, 120.9842° E</span>
-                    <span style={{ color: colors.border }}>|</span>
-                    <span style={{ color: colors.sky }}>MANILA METRO</span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </TacticalFrame>
-      </div>
-
-      <GlassCaption
-        badgeNumber="01"
-        kicker="CIVIC TELEMETRY"
-        title="Urban Road Hazard Radar"
-        detail="Real-time spatial alerts and route defense for Philippine roads"
-        align="left"
-      />
-    </AbsoluteFill>
-  )
-}
-
-// =============================================================================
-// Scene 2: Real-Time Spatial Radar & Scope HUD (4.0s – 8.5s | Frames 120 – 255)
-// Uses ACTUAL screen: capture-1-radar-overview.png
-// =============================================================================
-const SpatialRadarScene: React.FC = () => {
-  const frame = useCurrentFrame()
-  const { fps } = useVideoConfig()
-
-  const sweepAngle = (frame * 5) % 360
-
-  const introSpring = spring({ frame, fps, config: { damping: 140, stiffness: 100 } })
-
-    // Smooth cinematic push-in toward the active driver radar beacon
-    const cameraScale = interpolate(frame, [0, 135], [1.0, 1.20], { extrapolateRight: 'clamp' })
-    const cameraY = interpolate(frame, [0, 135], [0, -20], { extrapolateRight: 'clamp' })
-
-    return (
-      <AbsoluteFill
-        style={{
-          backgroundColor: colors.obsidian,
+          color: kickerColor,
+          fontSize: 20,
+          fontWeight: 800,
+          letterSpacing: 2.4,
+          textTransform: 'uppercase',
+          marginBottom: 16,
+          fontFamily: monoFont,
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden',
+          gap: 10,
         }}
       >
-        <BackgroundSonar sweepAngle={sweepAngle} opacity={0.65} />
-
-        <div
+        <span
           style={{
-            transform: `scale(${introSpring})`,
-            opacity: introSpring,
-            zIndex: 10,
+            width: 8,
+            height: 8,
+            borderRadius: '50%',
+            backgroundColor: kickerColor,
+            boxShadow: `0 0 10px ${kickerColor}`,
           }}
-        >
-          <TacticalFrame width={1540} height={860}>
-            <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
-              {/* The Actual Running Bakas Radar Screen - Smooth Zoom on Radar Proximity */}
-              <Img
-                src={staticFile('captures/capture-1-radar-overview.png')}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  transform: `scale(${cameraScale}) translateY(${cameraY}px)`,
-                  transformOrigin: '50% 52%',
-                  filter: 'brightness(0.98) contrast(1.05)',
-                }}
-              />
-            </div>
-          </TacticalFrame>
-        </div>
-
-      <GlassCaption
-        badgeNumber="02"
-        kicker="SPATIAL RADAR"
-        title="Sub-Second Proximity Alerts"
-        detail="Concentric radar rings scan your driving perimeter in real time"
-        align="left"
-      />
-    </AbsoluteFill>
-  )
-}
-
-// =============================================================================
-// Scene 3: 1-Tap Civic Hazard Pinning (8.5s – 13.0s | Frames 255 – 390)
-// Uses ACTUAL screen: capture-2-report-drawer.png
-// =============================================================================
-const InstantReportingScene: React.FC = () => {
-  const frame = useCurrentFrame()
-  const { fps } = useVideoConfig()
-
-  const introSpring = spring({ frame, fps, config: { damping: 140, stiffness: 100 } })
-
-  // Gentle camera zoom into the real report modal
-  const cameraScale = interpolate(frame, [0, 135], [1.02, 1.09], { extrapolateRight: 'clamp' })
-  const cameraY = interpolate(frame, [0, 135], [0, -10], { extrapolateRight: 'clamp' })
-
-
-  return (
-    <AbsoluteFill
-      style={{
-        backgroundColor: colors.obsidian,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        overflow: 'hidden',
-      }}
-    >
-      <BackgroundSonar opacity={0.5} />
-
-      <div
-        style={{
-          transform: `scale(${introSpring})`,
-          opacity: introSpring,
-          zIndex: 10,
-        }}
-      >
-        <TacticalFrame width={1540} height={860}>
-          <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
-            {/* The Actual Running Bakas Report Drawer Screen */}
-            <Img
-              src={staticFile('captures/capture-2-report-drawer.png')}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                transform: `scale(${cameraScale}) translateY(${cameraY}px)`,
-                transformOrigin: '50% 50%',
-                filter: 'brightness(0.98) contrast(1.04)',
-              }}
-            />
-          </div>
-        </TacticalFrame>
+        />
+        <span>{kicker}</span>
       </div>
 
-      <GlassCaption
-        badgeNumber="03"
-        kicker="INSTANT REPORTING"
-        title="1-Tap Civic Pinning"
-        detail="Log road hazards in under 15ms with automatic GPS precision"
-        align="left"
-      />
-    </AbsoluteFill>
-  )
-}
-
-// =============================================================================
-// Scene 4: Ground-Truth Resolution Verification (13.0s – 17.5s | Frames 390 – 525)
-// Uses ACTUAL screen: capture-3-flood-passability.png
-// =============================================================================
-const ResolutionSliderScene: React.FC = () => {
-  const frame = useCurrentFrame()
-  const { fps } = useVideoConfig()
-
-  const introSpring = spring({ frame, fps, config: { damping: 140, stiffness: 100 } })
-
-  // Gentle camera drift
-  const cameraScale = interpolate(frame, [0, 135], [1.02, 1.09], { extrapolateRight: 'clamp' })
-  const cameraY = interpolate(frame, [0, 135], [0, -12], { extrapolateRight: 'clamp' })
-
-  return (
-    <AbsoluteFill
-      style={{
-        backgroundColor: colors.obsidian,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        overflow: 'hidden',
-      }}
-    >
-      <BackgroundSonar opacity={0.5} />
-
-      <div
+      <h2
         style={{
-          transform: `scale(${introSpring})`,
-          opacity: introSpring,
-          zIndex: 10,
+          fontSize: 58,
+          fontWeight: 900,
+          color: colors.white,
+          lineHeight: 1.12,
+          letterSpacing: -1.8,
+          margin: 0,
+          marginBottom: 20,
+          fontFamily,
         }}
       >
-        <TacticalFrame width={1540} height={860}>
-          <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
-            {/* The Actual Running Bakas Hazard Details & Resolution Slider Screen */}
-            <Img
-              src={staticFile('captures/capture-3-flood-passability.png')}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                transform: `scale(${cameraScale}) translateY(${cameraY}px)`,
-                transformOrigin: '50% 50%',
-                filter: 'brightness(0.98) contrast(1.04)',
-              }}
-            />
-          </div>
-        </TacticalFrame>
-      </div>
+        {headline}
+      </h2>
 
-      <GlassCaption
-        badgeNumber="04"
-        kicker="GROUND-TRUTH CONSENSUS"
-        title="Resolution Verification Slider"
-        detail="Community vouches and before-and-after sliders verify road repairs"
-        align="left"
-      />
-    </AbsoluteFill>
-  )
-}
-
-// =============================================================================
-// Scene 5: Instant Corridor Search (17.5s – 22.0s | Frames 525 – 660)
-// Uses ACTUAL screen: capture-4-search-modal.png
-// =============================================================================
-const CorridorSearchScene: React.FC = () => {
-  const frame = useCurrentFrame()
-  const { fps } = useVideoConfig()
-
-  const introSpring = spring({ frame, fps, config: { damping: 140, stiffness: 100 } })
-
-  // Camera focus on the popular corridors list
-  const cameraScale = interpolate(frame, [0, 135], [1.03, 1.12], { extrapolateRight: 'clamp' })
-  const cameraY = interpolate(frame, [0, 135], [0, -8], { extrapolateRight: 'clamp' })
-
-
-  return (
-    <AbsoluteFill
-      style={{
-        backgroundColor: colors.obsidian,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        overflow: 'hidden',
-      }}
-    >
-      <BackgroundSonar opacity={0.5} />
-
-      <div
+      <p
         style={{
-          transform: `scale(${introSpring})`,
-          opacity: introSpring,
-          zIndex: 10,
+          fontSize: 24,
+          fontWeight: 450,
+          color: colors.textMuted,
+          lineHeight: 1.5,
+          margin: 0,
+          fontFamily,
         }}
       >
-        <TacticalFrame width={1540} height={860}>
-          <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
-            {/* The Actual Running Bakas Search Palette Screen */}
-            <Img
-              src={staticFile('captures/capture-4-search-modal.png')}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                transform: `scale(${cameraScale}) translateY(${cameraY}px)`,
-                transformOrigin: '50% 50%',
-                filter: 'brightness(0.98) contrast(1.04)',
-              }}
-            />
-          </div>
-        </TacticalFrame>
-      </div>
-
-      <GlassCaption
-        badgeNumber="05"
-        kicker="COMMAND PALETTE"
-        title="Instant Corridor Search"
-        detail="Jump to any Philippine artery or barangay with zero tile latency"
-        align="left"
-      />
-    </AbsoluteFill>
+        {body}
+      </p>
+    </div>
   )
-}
 
-// =============================================================================
-// Scene 6: Architecture, Privacy & Outro (22.0s – 27.0s | Frames 660 – 810)
-// Uses ACTUAL screen: capture-5-about-modal.png + Clean Closing Brand Frame
-// =============================================================================
-const ArchitectureOutroScene: React.FC = () => {
-  const frame = useCurrentFrame()
-  const { fps } = useVideoConfig()
-
-  const sweepAngle = (frame * 3) % 360
-
-  // Phase 1: Actual System Architecture Screen (frames 0 to 65)
-  // Phase 2: Clean Closing Brand Frame (frames 65 to 150)
-  const isOutroPhase = frame >= 65
-
-  const introSpring = spring({ frame, fps, config: { damping: 140, stiffness: 100 } })
-  const outroSpring = spring({ frame: frame - 65, fps, config: { damping: 130, stiffness: 95 } })
-
-  const brandScale = interpolate(outroSpring, [0, 1], [0.9, 1])
+  const cardContent = (
+    <div
+      style={{
+        flex: '0 0 auto',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: cardSide === 'right' ? 'flex-end' : 'flex-start',
+        opacity: slideOpacity,
+        transform: `translateX(${cardTranslate}px)`,
+        zIndex: 10,
+      }}
+    >
+      <div
+        style={{
+          width: 580,
+          height: 760,
+          borderRadius: 30,
+          overflow: 'hidden',
+          backgroundColor: colors.dark,
+          border: '1.5px solid rgba(56, 189, 248, 0.28)',
+          boxShadow:
+            '0 25px 60px rgba(0, 0, 0, 0.9), 0 0 35px rgba(56, 189, 248, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
+          position: 'relative',
+        }}
+      >
+        <Img
+          src={staticFile(`captures/${capture}`)}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            transform: `scale(${zoom})`,
+            transformOrigin: 'center center',
+          }}
+        />
+      </div>
+    </div>
+  )
 
   return (
     <AbsoluteFill
       style={{
         backgroundColor: colors.obsidian,
         display: 'flex',
+        flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'space-between',
+        padding: '0 160px',
         overflow: 'hidden',
       }}
     >
-      <BackgroundSonar sweepAngle={sweepAngle} opacity={0.7} />
-
-      {!isOutroPhase ? (
-        // Phase 1: Real About & Offline-First Screen from the Actual System
+      <BackgroundSonar sweepAngle={frame * 2.5} opacity={0.6} />
+      {cardSide === 'right' ? (
         <>
-          <div
-            style={{
-              transform: `scale(${introSpring})`,
-              opacity: introSpring,
-              zIndex: 10,
-            }}
-          >
-            <TacticalFrame width={1540} height={860}>
-              <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
-                <Img
-                  src={staticFile('captures/capture-5-about-modal.png')}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    filter: 'brightness(0.98) contrast(1.04)',
-                  }}
-                />
-              </div>
-            </TacticalFrame>
-          </div>
-
-          <GlassCaption
-            badgeNumber="06"
-            kicker="OFFLINE-FIRST ARCHITECTURE"
-            title="Zero Data Loss Resilience"
-            detail="IndexedDB caches local reports and syncs automatically with Supabase"
-            align="left"
-          />
+          {textContent}
+          {cardContent}
         </>
       ) : (
-        // Phase 2: Understated, Minimalist Closing Brand Frame (Zero emojis)
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            zIndex: 10,
-            opacity: outroSpring,
-            transform: `scale(${brandScale}) translateY(${interpolate(outroSpring, [0, 1], [18, 0])}px)`,
-          }}
-        >
-          <div style={{ transform: `rotate(${frame * 0.2}deg)`, marginBottom: 14 }}>
-            <BakasBrandMark size={118} withGlow={true} />
-          </div>
-
-          <h1
-            style={{
-              fontSize: 88,
-              fontWeight: 900,
-              color: colors.white,
-              margin: 0,
-              letterSpacing: -2.5,
-              fontFamily,
-              lineHeight: 1,
-            }}
-          >
-            Bakás
-          </h1>
-
-          <p
-            style={{
-              fontSize: 30,
-              fontWeight: 700,
-              color: colors.sky,
-              marginTop: 8,
-              marginBottom: 28,
-              fontFamily,
-              letterSpacing: -0.5,
-            }}
-          >
-            Urban Road Hazard Radar
-          </p>
-
-          {/* 3 Clean Typographic Pillar Badges (NO EMOJIS) */}
-          <div
-            style={{
-              display: 'flex',
-              gap: 16,
-              marginBottom: 30,
-            }}
-          >
-            {['SPATIAL RADAR', 'COMMUNITY CONSENSUS', 'OFFLINE-FIRST PWA'].map((title, idx) => (
-              <div
-                key={idx}
-                style={{
-                  background: 'rgba(15, 23, 42, 0.85)',
-                  border: '1px solid rgba(56, 189, 248, 0.3)',
-                  borderRadius: 999,
-                  padding: '10px 22px',
-                  fontFamily: monoFont,
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: colors.white,
-                  letterSpacing: 1.5,
-                }}
-              >
-                {title}
-              </div>
-            ))}
-          </div>
-
-          {/* Action Button */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              background: 'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)',
-              color: colors.white,
-              padding: '15px 44px',
-              borderRadius: 999,
-              fontSize: 20,
-              fontWeight: 800,
-              boxShadow: '0 10px 30px rgba(56, 189, 248, 0.4)',
-              fontFamily,
-              cursor: 'pointer',
-            }}
-          >
-            <span>Launch Road Radar</span>
-            <span style={{ fontSize: 22 }}>→</span>
-          </div>
-
-          {/* Civic Tagline */}
-          <div
-            style={{
-              marginTop: 22,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 6,
-            }}
-          >
-            <span
-              style={{
-                fontSize: 17,
-                fontWeight: 600,
-                color: colors.textMuted,
-                fontStyle: 'italic',
-                fontFamily,
-              }}
-            >
-              "Protect your route. Leave your digital trace."
-            </span>
-
-            <span
-              style={{
-                fontSize: 12,
-                fontWeight: 700,
-                color: colors.textDim,
-                letterSpacing: 2,
-                textTransform: 'uppercase',
-                fontFamily: monoFont,
-                marginTop: 4,
-              }}
-            >
-              Open Source Civic Tech • NCR Metro Pilipinas • Next.js & Supabase
-            </span>
-          </div>
-        </div>
+        <>
+          {cardContent}
+          {textContent}
+        </>
       )}
     </AbsoluteFill>
   )
 }
 
 // =============================================================================
-// Root Composition (Total 810 frames = 27.0s @ 30fps)
+// Scene 1: Natural Brand Intro (0.0s – 3.0s | Frames 0 – 90)
+// =============================================================================
+const IntroScene: React.FC = () => {
+  const frame = useCurrentFrame()
+
+  const opacity = interpolate(frame, [0, 14], [0, 1], { extrapolateRight: 'clamp' })
+  const exitOpacity = interpolate(frame, [80, 90], [1, 0], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  })
+  const translateY = interpolate(frame, [0, 18], [16, 0], { extrapolateRight: 'clamp' })
+  const subOpacity = interpolate(frame, [8, 20], [0, 1], { extrapolateRight: 'clamp' })
+  const finalOpacity = opacity * exitOpacity
+
+  return (
+    <AbsoluteFill
+      style={{
+        backgroundColor: colors.obsidian,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}
+    >
+      <BackgroundSonar sweepAngle={frame * 3} opacity={0.7 * exitOpacity} />
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          opacity: finalOpacity,
+          transform: `translateY(${translateY}px)`,
+          zIndex: 10,
+        }}
+      >
+        <div style={{ transform: `rotate(${frame * 0.25}deg)` }}>
+          <BakasBrandMark size={110} withGlow={true} />
+        </div>
+
+        <h1
+          style={{
+            fontSize: 84,
+            fontWeight: 900,
+            color: colors.white,
+            marginTop: 20,
+            marginBottom: 0,
+            letterSpacing: -2,
+            fontFamily,
+          }}
+        >
+          Bakás
+        </h1>
+
+        <p
+          style={{
+            fontSize: 32,
+            fontWeight: 700,
+            color: colors.sky,
+            marginTop: 10,
+            marginBottom: 6,
+            fontFamily,
+          }}
+        >
+          Urban Road Hazard Radar
+        </p>
+      </div>
+
+      <div
+        style={{
+          opacity: subOpacity,
+          textAlign: 'center',
+          marginTop: 12,
+          zIndex: 10,
+        }}
+      >
+        <span
+          style={{
+            fontSize: 20,
+            fontWeight: 500,
+            color: colors.textMuted,
+            background: 'rgba(56, 189, 248, 0.06)',
+            padding: '8px 24px',
+            borderRadius: 999,
+            border: '1px solid rgba(56, 189, 248, 0.2)',
+            fontFamily,
+          }}
+        >
+          Real-time spatial alerts and route defense for Philippine roads
+        </span>
+      </div>
+    </AbsoluteFill>
+  )
+}
+
+// =============================================================================
+// Scene 7: Natural Brand Outro (24.5s – 27.0s | Frames 735 – 810)
+// =============================================================================
+const OutroScene: React.FC = () => {
+  const frame = useCurrentFrame()
+
+  const opacity = interpolate(frame, [0, 12], [0, 1], { extrapolateRight: 'clamp' })
+  const translateY = interpolate(frame, [0, 16], [14, 0], { extrapolateRight: 'clamp' })
+  const buttonOpacity = interpolate(frame, [8, 18], [0, 1], { extrapolateRight: 'clamp' })
+
+  return (
+    <AbsoluteFill
+      style={{
+        backgroundColor: colors.obsidian,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}
+    >
+      <BackgroundSonar sweepAngle={frame * 3} opacity={0.7} />
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          opacity,
+          transform: `translateY(${translateY}px)`,
+          zIndex: 10,
+        }}
+      >
+        <div style={{ transform: `rotate(${frame * 0.25}deg)` }}>
+          <BakasBrandMark size={100} withGlow={true} />
+        </div>
+
+        <h1
+          style={{
+            fontSize: 78,
+            fontWeight: 900,
+            color: colors.white,
+            marginTop: 16,
+            marginBottom: 0,
+            letterSpacing: -2,
+            fontFamily,
+          }}
+        >
+          Bakás
+        </h1>
+
+        <p
+          style={{
+            fontSize: 28,
+            fontWeight: 600,
+            color: colors.textMuted,
+            marginTop: 8,
+            marginBottom: 28,
+            fontFamily,
+          }}
+        >
+          &ldquo;Protect your route. Leave your digital trace.&rdquo;
+        </p>
+
+        <div
+          style={{
+            opacity: buttonOpacity,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            background: 'linear-gradient(135deg, #0284c7, #38bdf8)',
+            color: colors.white,
+            padding: '16px 42px',
+            borderRadius: 999,
+            fontSize: 22,
+            fontWeight: 700,
+            boxShadow:
+              '0 10px 30px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+            fontFamily,
+          }}
+        >
+          <span>Launch Road Radar</span>
+          <span style={{ fontSize: 24 }}>→</span>
+        </div>
+
+        <span
+          style={{
+            opacity: buttonOpacity,
+            fontSize: 14,
+            fontWeight: 700,
+            color: colors.textDim,
+            letterSpacing: 2.2,
+            textTransform: 'uppercase',
+            marginTop: 26,
+            fontFamily: monoFont,
+          }}
+        >
+          CIVIC ROUTE TELEMETRY • NCR METRO PILIPINAS • OPEN SOURCE
+        </span>
+      </div>
+    </AbsoluteFill>
+  )
+}
+
+// =============================================================================
+// Master Composition: 810 frames @ 30fps (27.0 seconds)
+// Hapag Format: Intro -> Slide 1 (Right) -> Slide 2 (Left) -> Slide 3 (Right)
+//                    -> Slide 4 (Left) -> Slide 5 (Right) -> Outro
 // =============================================================================
 export const BakasShowcase: React.FC = () => {
   return (
-    <AbsoluteFill style={{ backgroundColor: colors.obsidian }}>
-      {/* 0.0s – 4.0s (120f): System Debut & Radar Canvas */}
-      <Sequence durationInFrames={120} layout="absolute-fill">
-        <SystemDebutScene />
+    <AbsoluteFill>
+      {/* 0.0s – 3.0s (90f): Brand Intro Hook */}
+      <Sequence durationInFrames={90} layout="absolute-fill">
+        <IntroScene />
       </Sequence>
 
-      {/* 4.0s – 8.5s (135f): Real-Time Spatial Radar & Scope HUD */}
-      <Sequence from={120} durationInFrames={135} layout="absolute-fill">
-        <SpatialRadarScene />
+      {/* 3.0s – 7.5s (135f): Slide 1 - Spatial Radar Map (Left Text, Right Card) */}
+      <Sequence from={90} durationInFrames={135} layout="absolute-fill">
+        <SplitSlideScene
+          cardSide="right"
+          kicker="SPATIAL RADAR"
+          headline="Find what's reported nearby."
+          body="Concentric radar rings scan your driving perimeter in real time, alerting you to active hazards across Metro Manila."
+          capture="capture-1-radar-overview.png"
+          kickerColor={colors.sky}
+        />
       </Sequence>
 
-      {/* 8.5s – 13.0s (135f): 1-Tap Civic Hazard Pinning */}
-      <Sequence from={255} durationInFrames={135} layout="absolute-fill">
-        <InstantReportingScene />
+      {/* 7.5s – 12.0s (135f): Slide 2 - 1-Tap Hazard Pinning (Left Card, Right Text) */}
+      <Sequence from={225} durationInFrames={135} layout="absolute-fill">
+        <SplitSlideScene
+          cardSide="left"
+          kicker="REPORT IN SECONDS"
+          headline="Pin road hazards in 1 tap."
+          body="Drop hazard traces for open manholes, floodwaters, or dark unlit roads in under 15ms with automatic GPS precision."
+          capture="capture-2-report-drawer.png"
+          kickerColor={colors.amber}
+        />
       </Sequence>
 
-      {/* 13.0s – 17.5s (135f): Ground-Truth Resolution Verification */}
-      <Sequence from={390} durationInFrames={135} layout="absolute-fill">
-        <ResolutionSliderScene />
+      {/* 12.0s – 16.5s (135f): Slide 3 - Ground-Truth Verification (Left Text, Right Card) */}
+      <Sequence from={360} durationInFrames={135} layout="absolute-fill">
+        <SplitSlideScene
+          cardSide="right"
+          kicker="GROUND-TRUTH CONSENSUS"
+          headline="Verify repairs with split sliders."
+          body="Before-and-after resolution verification sliders allow the commuter community to vouch for fixed roads and clear ghost markers."
+          capture="capture-3-flood-passability.png"
+          kickerColor={colors.emerald}
+        />
       </Sequence>
 
-      {/* 17.5s – 22.0s (135f): Instant Corridor Search */}
-      <Sequence from={525} durationInFrames={135} layout="absolute-fill">
-        <CorridorSearchScene />
+      {/* 16.5s – 21.0s (135f): Slide 4 - Corridor Navigation (Left Card, Right Text) */}
+      <Sequence from={495} durationInFrames={135} layout="absolute-fill">
+        <SplitSlideScene
+          cardSide="left"
+          kicker="COMMAND PALETTE"
+          headline="Jump to any Philippine artery."
+          body="Instant search for EDSA, Commonwealth, C-5, Aguinaldo, or España with real-time distance and zero tile latency."
+          capture="capture-4-search-modal.png"
+          kickerColor={colors.sky}
+        />
       </Sequence>
 
-      {/* 22.0s – 27.0s (150f): Architecture, Privacy & Outro */}
-      <Sequence from={660} durationInFrames={150} layout="absolute-fill">
-        <ArchitectureOutroScene />
+      {/* 21.0s – 24.5s (105f): Slide 5 - Offline-First Resilience (Left Text, Right Card) */}
+      <Sequence from={630} durationInFrames={105} layout="absolute-fill">
+        <SplitSlideScene
+          cardSide="right"
+          kicker="OFFLINE RESILIENCE"
+          headline="Zero data loss in dead zones."
+          body="IndexedDB caches local hazard traces when driving through underpasses or tunnels, then auto-syncs with Supabase."
+          capture="capture-5-about-modal.png"
+          kickerColor={colors.cyan}
+        />
+      </Sequence>
+
+      {/* 24.5s – 27.0s (75f): Closing Outro */}
+      <Sequence from={735} durationInFrames={75} layout="absolute-fill">
+        <OutroScene />
       </Sequence>
     </AbsoluteFill>
   )
