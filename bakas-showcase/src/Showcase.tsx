@@ -27,6 +27,9 @@ const SplitSlideScene: React.FC<{
   capture: string
   cardSide?: 'right' | 'left'
   kickerColor?: string
+  cardWidth?: number
+  cardHeight?: number
+  fit?: 'cover' | 'contain'
 }> = ({
   kicker,
   headline,
@@ -34,6 +37,9 @@ const SplitSlideScene: React.FC<{
   capture,
   cardSide = 'right',
   kickerColor = colors.sky,
+  cardWidth = 880,
+  cardHeight = 840,
+  fit = 'contain',
 }) => {
   const frame = useCurrentFrame()
   const { durationInFrames } = useVideoConfig()
@@ -48,7 +54,7 @@ const SplitSlideScene: React.FC<{
   )
   const slideOpacity = enterOpacity * exitOpacity
 
-  const textTranslate = interpolate(frame, [0, 16], [cardSide === 'right' ? -20 : 20, 0], {
+  const textTranslate = interpolate(frame, [0, 16], [cardSide === 'right' ? -24 : 24, 0], {
     extrapolateRight: 'clamp',
   })
 
@@ -57,15 +63,15 @@ const SplitSlideScene: React.FC<{
   })
 
   // Subtle breathing float on card
-  const zoom = interpolate(frame, [0, durationInFrames], [1.0, 1.025], {
+  const zoom = interpolate(frame, [0, durationInFrames], [1.0, 1.02], {
     extrapolateRight: 'clamp',
   })
 
   const textContent = (
     <div
       style={{
-        flex: '1 1 50%',
-        maxWidth: 580,
+        flex: '0 0 540px',
+        maxWidth: 540,
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
@@ -80,22 +86,22 @@ const SplitSlideScene: React.FC<{
           color: kickerColor,
           fontSize: 15,
           fontWeight: 700,
-          letterSpacing: 2,
+          letterSpacing: 2.5,
           textTransform: 'uppercase',
-          marginBottom: 14,
+          marginBottom: 16,
           fontFamily: monoFont,
           display: 'flex',
           alignItems: 'center',
-          gap: 8,
+          gap: 10,
         }}
       >
         <span
           style={{
-            width: 7,
-            height: 7,
+            width: 8,
+            height: 8,
             borderRadius: '50%',
             backgroundColor: kickerColor,
-            boxShadow: `0 0 8px ${kickerColor}`,
+            boxShadow: `0 0 10px ${kickerColor}`,
           }}
         />
         <span>{kicker}</span>
@@ -110,7 +116,7 @@ const SplitSlideScene: React.FC<{
           lineHeight: 1.15,
           letterSpacing: -1.5,
           margin: 0,
-          marginBottom: 16,
+          marginBottom: 18,
           fontFamily,
         }}
       >
@@ -122,10 +128,10 @@ const SplitSlideScene: React.FC<{
         style={{
           fontSize: 22,
           fontWeight: 400,
-          color: 'rgba(255, 255, 255, 0.65)',
+          color: 'rgba(255, 255, 255, 0.68)',
           lineHeight: 1.55,
           margin: 0,
-          maxWidth: 480,
+          maxWidth: 500,
           fontFamily,
         }}
       >
@@ -146,30 +152,58 @@ const SplitSlideScene: React.FC<{
         zIndex: 10,
       }}
     >
-      <div
-        style={{
-          width: 580,
-          height: 760,
-          borderRadius: 28,
-          overflow: 'hidden',
-          backgroundColor: colors.dark,
-          border: '1.5px solid rgba(56, 189, 248, 0.24)',
-          boxShadow:
-            '0 24px 60px rgba(0, 0, 0, 0.85), 0 0 30px rgba(56, 189, 248, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.12)',
-          position: 'relative',
-        }}
-      >
-        <Img
-          src={staticFile(`captures/${capture}`)}
+      {fit === 'cover' ? (
+        <div
           style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
+            width: cardWidth,
+            height: cardHeight,
+            borderRadius: 28,
+            overflow: 'hidden',
+            backgroundColor: colors.dark,
+            border: '1.5px solid rgba(56, 189, 248, 0.25)',
+            boxShadow:
+              '0 28px 70px rgba(0, 0, 0, 0.85), 0 0 35px rgba(56, 189, 248, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
+            position: 'relative',
+          }}
+        >
+          <Img
+            src={staticFile(`captures/${capture}`)}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              transform: `scale(${zoom})`,
+              transformOrigin: 'center center',
+            }}
+          />
+        </div>
+      ) : (
+        <div
+          style={{
+            borderRadius: 26,
+            overflow: 'hidden',
+            border: '1.5px solid rgba(56, 189, 248, 0.25)',
+            boxShadow:
+              '0 28px 70px rgba(0, 0, 0, 0.9), 0 0 40px rgba(56, 189, 248, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
+            display: 'inline-flex',
+            position: 'relative',
             transform: `scale(${zoom})`,
             transformOrigin: 'center center',
+            backgroundColor: '#0a0f1d',
           }}
-        />
-      </div>
+        >
+          <Img
+            src={staticFile(`captures/${capture}`)}
+            style={{
+              height: cardHeight,
+              width: 'auto',
+              maxWidth: cardWidth,
+              objectFit: 'contain',
+              display: 'block',
+            }}
+          />
+        </div>
+      )}
     </div>
   )
 
@@ -180,8 +214,9 @@ const SplitSlideScene: React.FC<{
         display: 'flex',
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 160px',
+        justifyContent: 'center',
+        gap: 90,
+        padding: '0 80px',
         overflow: 'hidden',
       }}
     >
@@ -289,14 +324,14 @@ const IntroScene: React.FC = () => {
 
 // =============================================================================
 // Scene 7: Natural Brand Outro (24.5s – 27.0s | Frames 735 – 810)
-// Simple, elegant, clear call to action
+// Simple, authentic, minimal brand lockup
 // =============================================================================
 const OutroScene: React.FC = () => {
   const frame = useCurrentFrame()
 
   const opacity = interpolate(frame, [0, 12], [0, 1], { extrapolateRight: 'clamp' })
   const translateY = interpolate(frame, [0, 16], [14, 0], { extrapolateRight: 'clamp' })
-  const buttonOpacity = interpolate(frame, [8, 18], [0, 1], { extrapolateRight: 'clamp' })
+  const subOpacity = interpolate(frame, [8, 18], [0, 1], { extrapolateRight: 'clamp' })
 
   return (
     <AbsoluteFill
@@ -344,47 +379,54 @@ const OutroScene: React.FC = () => {
             fontWeight: 500,
             color: 'rgba(255, 255, 255, 0.72)',
             marginTop: 8,
-            marginBottom: 26,
+            marginBottom: 24,
             fontFamily,
           }}
         >
-          &ldquo;Protect your route. Leave your digital trace.&rdquo;
+          Community Road Safety Radar
         </p>
 
+        {/* Domain Badge */}
         <div
           style={{
-            opacity: buttonOpacity,
+            opacity: subOpacity,
             display: 'flex',
             alignItems: 'center',
-            gap: 12,
-            background: 'linear-gradient(135deg, #0284c7, #38bdf8)',
-            color: colors.white,
-            padding: '15px 38px',
+            gap: 10,
+            background: 'rgba(255, 255, 255, 0.06)',
+            border: '1px solid rgba(56, 189, 248, 0.3)',
+            padding: '10px 28px',
             borderRadius: 999,
-            fontSize: 21,
-            fontWeight: 700,
             boxShadow:
-              '0 10px 30px rgba(56, 189, 248, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25)',
-            fontFamily,
+              '0 12px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
           }}
         >
-          <span>Open Road Radar</span>
-          <span style={{ fontSize: 22 }}>→</span>
+          <span
+            style={{
+              fontSize: 18,
+              fontWeight: 700,
+              fontFamily: monoFont,
+              letterSpacing: 2,
+              color: colors.sky,
+            }}
+          >
+            bakas.ph
+          </span>
         </div>
 
         <span
           style={{
-            opacity: buttonOpacity,
+            opacity: subOpacity,
             fontSize: 13,
             fontWeight: 600,
             color: colors.textDim,
-            letterSpacing: 2,
+            letterSpacing: 2.5,
             textTransform: 'uppercase',
             marginTop: 24,
             fontFamily: monoFont,
           }}
         >
-          Free &amp; Open Source • Built for Philippine Roads
+          Zero Login • Offline First • Built for Philippine Roads
         </span>
       </div>
     </AbsoluteFill>
@@ -407,11 +449,14 @@ export const BakasShowcase: React.FC = () => {
       <Sequence from={90} durationInFrames={135} layout="absolute-fill">
         <SplitSlideScene
           cardSide="right"
-          kicker="RADAR MAP"
-          headline="See hazards reported nearby."
-          body="Live community alerts for potholes, floods, and road hazards along your route."
+          kicker="RADAR OVERVIEW"
+          headline="Real-time road hazard radar."
+          body="Track potholes, flash floods, and dark streets across Metro Manila with live GPS telemetry."
           capture="capture-1-radar-overview.png"
           kickerColor={colors.sky}
+          cardWidth={1040}
+          cardHeight={860}
+          fit="cover"
         />
       </Sequence>
 
@@ -419,23 +464,29 @@ export const BakasShowcase: React.FC = () => {
       <Sequence from={225} durationInFrames={135} layout="absolute-fill">
         <SplitSlideScene
           cardSide="left"
-          kicker="QUICK REPORT"
-          headline="Report hazards in one tap."
-          body="Pin potholes, flooded streets, or obstacles in seconds. No login required."
+          kicker="INSTANT REPORTING"
+          headline="Pin hazards in two taps."
+          body="Drop a pinpoint trace for flooded roads, manholes, or obstructions. No account or sign-up needed."
           capture="capture-2-report-drawer.png"
           kickerColor={colors.amber}
+          cardWidth={920}
+          cardHeight={860}
+          fit="contain"
         />
       </Sequence>
 
-      {/* 12.0s – 16.5s (135f): Slide 3 - Resolution Verification (Left Text, Right Card) */}
+      {/* 12.0s – 16.5s (135f): Slide 3 - Resolution & TTL (Left Text, Right Card) */}
       <Sequence from={360} durationInFrames={135} layout="absolute-fill">
         <SplitSlideScene
           cardSide="right"
-          kicker="COMMUNITY VERIFIED"
-          headline="Confirm when roads are fixed."
-          body="Compare before-and-after photos and vote with the community to clear resolved reports."
+          kicker="DYNAMIC TTL & PASSABILITY"
+          headline="Community-verified road status."
+          body="Vote on flood depth passability for SUVs and cars. Community vouches extend TTL timers in real time."
           capture="capture-3-flood-passability.png"
           kickerColor={colors.emerald}
+          cardWidth={920}
+          cardHeight={860}
+          fit="contain"
         />
       </Sequence>
 
@@ -443,11 +494,14 @@ export const BakasShowcase: React.FC = () => {
       <Sequence from={495} durationInFrames={135} layout="absolute-fill">
         <SplitSlideScene
           cardSide="left"
-          kicker="FAST SEARCH"
-          headline="Check major routes instantly."
-          body="Search EDSA, C-5, Commonwealth, and major roads to see current hazards."
+          kicker="CORRIDOR SEARCH"
+          headline="Instant major route status."
+          body="Quick-check conditions along EDSA, C-5, Commonwealth, and key Philippine commuting arteries."
           capture="capture-4-search-modal.png"
           kickerColor={colors.sky}
+          cardWidth={1000}
+          cardHeight={720}
+          fit="contain"
         />
       </Sequence>
 
@@ -455,11 +509,14 @@ export const BakasShowcase: React.FC = () => {
       <Sequence from={630} durationInFrames={105} layout="absolute-fill">
         <SplitSlideScene
           cardSide="right"
-          kicker="OFFLINE READY"
-          headline="Works even without signal."
-          body="Saves reports offline in tunnels and dead zones, then syncs automatically."
+          kicker="OFFLINE FIRST"
+          headline="Zero signal? Still works."
+          body="Local IndexedDB caching stores reports in tunnels and dead zones, automatically syncing when reconnected."
           capture="capture-5-about-modal.png"
           kickerColor={colors.cyan}
+          cardWidth={560}
+          cardHeight={860}
+          fit="contain"
         />
       </Sequence>
 

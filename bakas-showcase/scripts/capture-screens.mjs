@@ -6,6 +6,7 @@ import { spawn } from 'node:child_process'
 const DIST_DIR = 'C:/Bakas/dist'
 const CAPTURES_DIR = 'C:/Bakas/bakas-showcase/public/captures'
 const PORT = 5178
+const DEBUG_PORT = 9244
 
 const mimeTypes = {
   '.html': 'text/html',
@@ -53,7 +54,6 @@ if (!browserExe) {
   process.exit(1)
 }
 
-const DEBUG_PORT = 9244
 const browserProcess = spawn(browserExe, [
   '--headless=new',
   `--remote-debugging-port=${DEBUG_PORT}`,
@@ -76,7 +76,7 @@ if (!pageTarget || !pageTarget.webSocketDebuggerUrl) {
 }
 
 const ws = new WebSocket(pageTarget.webSocketDebuggerUrl)
-await new Promise((resolve) => ws.onopen = resolve)
+await new Promise((resolve) => (ws.onopen = resolve))
 
 let msgId = 1
 const callbacks = new Map()
@@ -96,6 +96,15 @@ function sendCDP(method, params = {}) {
     callbacks.set(id, resolve)
     ws.send(JSON.stringify({ id, method, params }))
   })
+}
+
+async function evalExpr(expr) {
+  const res = await sendCDP('Runtime.evaluate', {
+    expression: expr,
+    awaitPromise: true,
+    returnByValue: true,
+  })
+  return res.result?.result?.value
 }
 
 await sendCDP('Page.enable')
@@ -124,6 +133,39 @@ async function captureScreen(filename) {
   }
 }
 
+async function captureModalClipped(filename, scale = 2.0, pad = 0) {
+  const box = await evalExpr(`
+    (() => {
+      const modal = document.querySelector('[role="dialog"] > div') || document.querySelector('[role="dialog"]');
+      if (!modal) return null;
+      const r = modal.getBoundingClientRect();
+      return { x: Math.floor(r.x), y: Math.floor(r.y), width: Math.ceil(r.width), height: Math.ceil(r.height) };
+    })()
+  `)
+  if (!box) {
+    console.error(`Could not find modal bounding box for ${filename}`)
+    return
+  }
+  console.log(`Clipping ${filename} to exact box:`, box)
+
+  const clip = {
+    x: Math.max(0, box.x - pad),
+    y: Math.max(0, box.y - pad),
+    width: Math.min(1920 - Math.max(0, box.x - pad), box.width + pad * 2),
+    height: Math.min(1080 - Math.max(0, box.y - pad), box.height + pad * 2),
+    scale,
+  }
+
+  const result = await sendCDP('Page.captureScreenshot', { format: 'png', clip })
+  if (result.result && result.result.data) {
+    const buffer = Buffer.from(result.result.data, 'base64')
+    fs.writeFileSync(path.join(CAPTURES_DIR, filename), buffer)
+    console.log(`Saved clipped ${filename} (${buffer.length} bytes)`)
+  } else {
+    console.error(`Failed to capture clipped ${filename}`, result)
+  }
+}
+
 try {
   await setViewport(1920, 1080, 1)
 
@@ -133,78 +175,67 @@ try {
   await new Promise((r) => setTimeout(r, 3500))
   await captureScreen('capture-1-radar-overview.png')
 
-  // 2. Report Drawer (+ Report Hazard clicked)
+  // 2. Report Modal (Click on map to drop pin and open ReportBottomSheet)
   console.log('Capturing capture-2-report-drawer.png...')
-  await sendCDP('Runtime.evaluate', {
-    expression: `
-      const reportBtn = Array.from(document.querySelectorAll('button')).find(b => b.textContent && b.textContent.includes('Report Hazard'));
-      if (reportBtn) reportBtn.click();
-    `,
+  await sendCDP('Input.dispatchMouseEvent', {
+    type: 'mousePressed',
+    x: 960,
+    y: 540,
+    button: 'left',
+    clickCount: 1,
+  })
+  await sendCDP('Input.dispatchMouseEvent', {
+    type: 'mouseReleased',
+    x: 960,
+    y: 540,
+    button: 'left',
+    clickCount: 1,
   })
   await new Promise((r) => setTimeout(r, 1200))
-  await captureScreen('capture-2-report-drawer.png')
+  await captureModalClipped('capture-2-report-drawer.png', 2.0, 0)
 
-  // Close report drawer
-  await sendCDP('Runtime.evaluate', {
-    expression: `
-      const closeBtn = document.querySelector('button[aria-label="Close"]') || document.querySelector('button');
-      const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
-      window.dispatchEvent(escapeEvent);
-    `,
-  })
+  // Close report modal
+  await evalExpr(`window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`)
   await new Promise((r) => setTimeout(r, 800))
 
-  // 3. Flood Hazard Detail (Click flood pin or trigger select)
+  // 3. Flood Hazard Detail (Click flood marker to open HazardDetailBottomSheet)
   console.log('Capturing capture-3-flood-passability.png...')
-  await sendCDP('Runtime.evaluate', {
-    expression: `
-      const pins = Array.from(document.querySelectorAll('.leaflet-marker-icon'));
-      if (pins.length > 1) {
-        pins[1].click();
-      } else if (pins.length > 0) {
-        pins[0].click();
-      }
-    `,
-  })
-  await new Promise((r) => setTimeout(r, 1500))
-  await captureScreen('capture-3-flood-passability.png')
+  await evalExpr(`
+    const markers = document.querySelectorAll('.custom-hazard-marker');
+    if (markers.length > 0) markers[0].click();
+  `)
+  await new Promise((r) => setTimeout(r, 1200))
+  await captureModalClipped('capture-3-flood-passability.png', 2.0, 0)
 
-  // Close detail drawer
-  await sendCDP('Runtime.evaluate', {
-    expression: `
-      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-    `,
-  })
+  // Close detail sheet
+  await evalExpr(`window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`)
   await new Promise((r) => setTimeout(r, 800))
 
-  // 4. Search Modal (Ctrl+K or Search button clicked)
+  // 4. Search Modal (Ctrl+K)
   console.log('Capturing capture-4-search-modal.png...')
-  await sendCDP('Runtime.evaluate', {
-    expression: `
-      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true }));
-    `,
-  })
-  await new Promise((r) => setTimeout(r, 1000))
-  await captureScreen('capture-4-search-modal.png')
+  await evalExpr(`window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true }))`)
+  await new Promise((r) => setTimeout(r, 1200))
+  await captureModalClipped('capture-4-search-modal.png', 2.0, 0)
 
-  // Close search modal
-  await sendCDP('Runtime.evaluate', {
-    expression: `
-      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-    `,
-  })
-  await new Promise((r) => setTimeout(r, 800))
+  // Close search modal reliably
+  await evalExpr(`
+    const escBtn = Array.from(document.querySelectorAll('button')).find(b => b.textContent && b.textContent.trim() === 'ESC');
+    if (escBtn) escBtn.click();
+    else {
+      const dialog = document.querySelector('[role="dialog"]');
+      if (dialog) dialog.click();
+    }
+  `)
+  await new Promise((r) => setTimeout(r, 1000))
 
   // 5. About / Telemetry modal
   console.log('Capturing capture-5-about-modal.png...')
-  await sendCDP('Runtime.evaluate', {
-    expression: `
-      const brandBtn = document.querySelector('button[title*="About Bakas"]');
-      if (brandBtn) brandBtn.click();
-    `,
-  })
+  await evalExpr(`
+    const brandBtn = document.querySelector('button[title*="About Bakas"]');
+    if (brandBtn) brandBtn.click();
+  `)
   await new Promise((r) => setTimeout(r, 1200))
-  await captureScreen('capture-5-about-modal.png')
+  await captureModalClipped('capture-5-about-modal.png', 2.0, 0)
 
 } catch (err) {
   console.error('Error during screen capture:', err)
