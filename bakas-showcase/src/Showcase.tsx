@@ -15,6 +15,13 @@ import {
   fontFamily,
   monoFont,
 } from './scenes/shared'
+import {
+  InteractiveSlide1Overlay,
+  InteractiveSlide2Overlay,
+  InteractiveSlide3Overlay,
+  InteractiveSlide4Overlay,
+  InteractiveSlide5Overlay,
+} from './scenes/InteractiveOverlay'
 
 // =============================================================================
 // Split-Column Feature Slide (Hapag Layout: Alternating Left / Right)
@@ -30,6 +37,7 @@ const SplitSlideScene: React.FC<{
   cardWidth?: number
   cardHeight?: number
   fit?: 'cover' | 'contain'
+  overlay?: React.ReactNode
 }> = ({
   kicker,
   headline,
@@ -40,6 +48,7 @@ const SplitSlideScene: React.FC<{
   cardWidth = 880,
   cardHeight = 840,
   fit = 'contain',
+  overlay,
 }) => {
   const frame = useCurrentFrame()
   const { durationInFrames } = useVideoConfig()
@@ -176,6 +185,7 @@ const SplitSlideScene: React.FC<{
               transformOrigin: 'center center',
             }}
           />
+          {overlay}
         </div>
       ) : (
         <div
@@ -202,6 +212,7 @@ const SplitSlideScene: React.FC<{
               display: 'block',
             }}
           />
+          {overlay}
         </div>
       )}
     </div>
@@ -386,31 +397,43 @@ const OutroScene: React.FC = () => {
           Community Road Safety Radar
         </p>
 
-        {/* Domain Badge */}
+        {/* GitHub Repository Badge */}
         <div
           style={{
             opacity: subOpacity,
             display: 'flex',
             alignItems: 'center',
-            gap: 10,
+            gap: 12,
             background: 'rgba(255, 255, 255, 0.06)',
-            border: '1px solid rgba(56, 189, 248, 0.3)',
-            padding: '10px 28px',
+            border: '1px solid rgba(56, 189, 248, 0.35)',
+            padding: '12px 28px',
             borderRadius: 999,
             boxShadow:
               '0 12px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
           }}
         >
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke={colors.sky}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
+          </svg>
           <span
             style={{
               fontSize: 18,
               fontWeight: 700,
               fontFamily: monoFont,
-              letterSpacing: 2,
+              letterSpacing: 1.5,
               color: colors.sky,
             }}
           >
-            bakas.ph
+            robertterquin / Bakas
           </span>
         </div>
 
@@ -426,7 +449,7 @@ const OutroScene: React.FC = () => {
             fontFamily: monoFont,
           }}
         >
-          Zero Login • Offline First • Built for Philippine Roads
+          Zero Login • Offline First • Open Source Civic Radar
         </span>
       </div>
     </AbsoluteFill>
@@ -457,6 +480,7 @@ export const BakasShowcase: React.FC = () => {
           cardWidth={1040}
           cardHeight={860}
           fit="cover"
+          overlay={<InteractiveSlide1Overlay />}
         />
       </Sequence>
 
@@ -472,6 +496,7 @@ export const BakasShowcase: React.FC = () => {
           cardWidth={920}
           cardHeight={860}
           fit="contain"
+          overlay={<InteractiveSlide2Overlay />}
         />
       </Sequence>
 
@@ -487,6 +512,7 @@ export const BakasShowcase: React.FC = () => {
           cardWidth={920}
           cardHeight={860}
           fit="contain"
+          overlay={<InteractiveSlide3Overlay />}
         />
       </Sequence>
 
@@ -502,6 +528,7 @@ export const BakasShowcase: React.FC = () => {
           cardWidth={1000}
           cardHeight={720}
           fit="contain"
+          overlay={<InteractiveSlide4Overlay />}
         />
       </Sequence>
 
@@ -517,6 +544,7 @@ export const BakasShowcase: React.FC = () => {
           cardWidth={560}
           cardHeight={860}
           fit="contain"
+          overlay={<InteractiveSlide5Overlay />}
         />
       </Sequence>
 
