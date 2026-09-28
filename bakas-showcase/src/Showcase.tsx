@@ -164,54 +164,66 @@ const SplitSlideScene: React.FC<{
       {fit === 'cover' ? (
         <div
           style={{
+            position: 'relative',
             width: cardWidth,
             height: cardHeight,
-            borderRadius: 28,
-            overflow: 'hidden',
-            backgroundColor: colors.dark,
-            border: '1.5px solid rgba(56, 189, 248, 0.25)',
-            boxShadow:
-              '0 28px 70px rgba(0, 0, 0, 0.85), 0 0 35px rgba(56, 189, 248, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
-            position: 'relative',
           }}
         >
-          <Img
-            src={staticFile(`captures/${capture}`)}
+          <div
             style={{
               width: '100%',
               height: '100%',
-              objectFit: 'cover',
-              transform: `scale(${zoom})`,
-              transformOrigin: 'center center',
+              borderRadius: 28,
+              overflow: 'hidden',
+              backgroundColor: colors.dark,
+              border: '1.5px solid rgba(56, 189, 248, 0.25)',
+              boxShadow:
+                '0 28px 70px rgba(0, 0, 0, 0.85), 0 0 35px rgba(56, 189, 248, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
             }}
-          />
+          >
+            <Img
+              src={staticFile(`captures/${capture}`)}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                transform: `scale(${zoom})`,
+                transformOrigin: 'center center',
+              }}
+            />
+          </div>
           {overlay}
         </div>
       ) : (
         <div
           style={{
-            borderRadius: 26,
-            overflow: 'hidden',
-            border: '1.5px solid rgba(56, 189, 248, 0.25)',
-            boxShadow:
-              '0 28px 70px rgba(0, 0, 0, 0.9), 0 0 40px rgba(56, 189, 248, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
             display: 'inline-flex',
             position: 'relative',
             transform: `scale(${zoom})`,
             transformOrigin: 'center center',
-            backgroundColor: '#0a0f1d',
           }}
         >
-          <Img
-            src={staticFile(`captures/${capture}`)}
+          <div
             style={{
-              height: cardHeight,
-              width: 'auto',
-              maxWidth: cardWidth,
-              objectFit: 'contain',
-              display: 'block',
+              borderRadius: 26,
+              overflow: 'hidden',
+              border: '1.5px solid rgba(56, 189, 248, 0.25)',
+              boxShadow:
+                '0 28px 70px rgba(0, 0, 0, 0.9), 0 0 40px rgba(56, 189, 248, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
+              backgroundColor: '#0a0f1d',
             }}
-          />
+          >
+            <Img
+              src={staticFile(`captures/${capture}`)}
+              style={{
+                height: cardHeight,
+                width: 'auto',
+                maxWidth: cardWidth,
+                objectFit: 'contain',
+                display: 'block',
+              }}
+            />
+          </div>
           {overlay}
         </div>
       )}
